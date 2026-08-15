@@ -1,0 +1,339 @@
+import { useEffect, useMemo, useState } from 'react';
+import Head from 'next/head';
+
+const EMPTY_FORM = {
+  id: '',
+  title: '',
+  description: '',
+  workstream: '',
+  deadline: '',
+  status: '',
+  assignees: [],
+  notes: ''
+};
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr + 'T00:00:00');
+  return Math.round((d - today) / 86400000);
+}
+
+function statusClass(s) {
+  return 'status-' + String(s || '').replace(/\s+/g, '-');
+}
+
+export default function Home() {
+  const [tasks, setTasks] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [workstreams, setWorkstreams] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const [search, setSearch] = useState('');
+  const [filterWorkstream, setFilterWorkstream] = useState('');
+  const [filterAssignee, setFilterAssignee] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [toast, setToast] = useState('');
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2200);
+  }
+
+  async function loadData() {
+    const res = await fetch('/api/tasks');
+    const data = await res.json();
+    setTasks(data.tasks || []);
+    setMembers(data.members || []);
+    setStatuses(data.statuses || []);
+    setWorkstreams(data.workstreams || []);
+    setLoaded(true);
+  }
+
+  useEffect(() => {
+    loadData().catch((e) => showToast('Error: ' + e.message));
+  }, []);
+
+  function openAddModal() {
+    setForm({ ...EMPTY_FORM, status: statuses[0] || '' });
+    setModalOpen(true);
+  }
+
+  function openEditModal(task) {
+    setForm({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      workstream: task.workstream,
+      deadline: task.deadline,
+      status: task.status,
+      assignees: task.assignees,
+      notes: task.notes
+    });
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+  }
+
+  function toggleAssignee(name) {
+    setForm((f) => {
+      const has = f.assignees.includes(name);
+      return { ...f, assignees: has ? f.assignees.filter((a) => a !== name) : [...f.assignees, name] };
+    });
+  }
+
+  async function handleSave() {
+    if (!form.title.trim()) {
+      showToast('Title is required');
+      return;
+    }
+    const payload = {
+      title: form.title.trim(),
+      description: form.description.trim(),
+      workstream: form.workstream.trim() || 'Unsorted',
+      deadline: form.deadline,
+      status: form.status,
+      assignees: form.assignees,
+      notes: form.notes.trim()
+    };
+    setModalOpen(false);
+    try {
+      if (form.id) {
+        await fetch('/api/tasks/' + form.id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        showToast('Task updated');
+      } else {
+        await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        showToast('Task added');
+      }
+      await loadData();
+    } catch (e) {
+      showToast('Error: ' + e.message);
+    }
+  }
+
+  async function handleDelete() {
+    if (!form.id) return;
+    if (!confirm('Delete this task? This cannot be undone.')) return;
+    setModalOpen(false);
+    try {
+      await fetch('/api/tasks/' + form.id, { method: 'DELETE' });
+      showToast('Task deleted');
+      await loadData();
+    } catch (e) {
+      showToast('Error: ' + e.message);
+    }
+  }
+
+  async function quickStatus(task) {
+    const idx = statuses.indexOf(task.status);
+    const next = statuses[(idx + 1) % statuses.length];
+    try {
+      await fetch('/api/tasks/' + task.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...task, status: next })
+      });
+      await loadData();
+    } catch (e) {
+      showToast('Error: ' + e.message);
+    }
+  }
+
+  const filteredTasks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return tasks.filter((t) => {
+      if (filterWorkstream && t.workstream !== filterWorkstream) return false;
+      if (filterAssignee && !t.assignees.includes(filterAssignee)) return false;
+      if (filterStatus && t.status !== filterStatus) return false;
+      if (q && !(t.title + ' ' + t.description).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [tasks, search, filterWorkstream, filterAssignee, filterStatus]);
+
+  const summary = useMemo(() => {
+    let overdue = 0, inProgress = 0, done = 0, blocked = 0;
+    tasks.forEach((t) => {
+      const du = daysUntil(t.deadline);
+      if (t.status !== 'Done' && du !== null && du < 0) overdue++;
+      if (t.status === 'In Progress') inProgress++;
+      if (t.status === 'Done') done++;
+      if (t.status === 'Blocked') blocked++;
+    });
+    return { total: tasks.length, overdue, inProgress, done, blocked };
+  }, [tasks]);
+
+  const groups = useMemo(() => {
+    const g = {};
+    filteredTasks.forEach((t) => {
+      const w = t.workstream || 'Unsorted';
+      (g[w] = g[w] || []).push(t);
+    });
+    Object.keys(g).forEach((w) => {
+      g[w].sort((a, b) => {
+        const da = a.deadline || '9999';
+        const db = b.deadline || '9999';
+        return da < db ? -1 : da > db ? 1 : 0;
+      });
+    });
+    return g;
+  }, [filteredTasks]);
+  const groupNames = Object.keys(groups).sort();
+
+  return (
+    <>
+      <Head>
+        <title>RSBC Workstream Tracker</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+      <header>
+        <div>
+          <h1>RSBC Workstream Tracker</h1>
+          <div className="sub">Riverside School Building Committee — Leadership task board</div>
+        </div>
+        <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
+      </header>
+
+      <div className="summary">
+        <div className="stat"><div className="n">{summary.total}</div><div className="l">Total tasks</div></div>
+        <div className="stat overdue"><div className="n">{summary.overdue}</div><div className="l">Overdue</div></div>
+        <div className="stat"><div className="n">{summary.inProgress}</div><div className="l">In progress</div></div>
+        <div className="stat"><div className="n">{summary.blocked}</div><div className="l">Blocked</div></div>
+        <div className="stat"><div className="n">{summary.done}</div><div className="l">Done</div></div>
+      </div>
+
+      <div className="filters">
+        <input type="text" placeholder="Search tasks..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <select value={filterWorkstream} onChange={(e) => setFilterWorkstream(e.target.value)}>
+          <option value="">All workstreams</option>
+          {workstreams.map((w) => <option key={w} value={w}>{w}</option>)}
+        </select>
+        <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
+          <option value="">All assignees</option>
+          {members.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+        </select>
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <option value="">All statuses</option>
+          {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+
+      <main>
+        {!loaded ? null : groupNames.length === 0 ? (
+          <div className="empty">No tasks match. Try clearing filters, or add a new task.</div>
+        ) : (
+          groupNames.map((w) => (
+            <div className="workstream-group" key={w}>
+              <h2>{w} ({groups[w].length})</h2>
+              <div className="cards">
+                {groups[w].map((t) => {
+                  const du = daysUntil(t.deadline);
+                  let deadlineClass = '';
+                  let deadlineLabel = 'No deadline set';
+                  if (t.deadline) {
+                    if (t.status !== 'Done' && du < 0) {
+                      deadlineClass = 'overdue';
+                      deadlineLabel = 'Overdue — was due ' + t.deadline;
+                    } else if (t.status !== 'Done' && du <= 7) {
+                      deadlineClass = 'soon';
+                      deadlineLabel = 'Due ' + t.deadline + ' (' + du + 'd)';
+                    } else {
+                      deadlineLabel = 'Due ' + t.deadline;
+                    }
+                  }
+                  return (
+                    <div className={'card ' + statusClass(t.status)} key={t.id} onClick={() => openEditModal(t)}>
+                      <div className="card-actions">
+                        <button className="icon-btn" onClick={(e) => { e.stopPropagation(); quickStatus(t); }}>&#8635;</button>
+                      </div>
+                      <p className="title">{t.title}</p>
+                      {t.description ? <p className="desc">{t.description}</p> : null}
+                      <span className={'badge ' + statusClass(t.status)}>{t.status}</span>
+                      {t.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
+                      <div className={'deadline ' + deadlineClass}>{deadlineLabel}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
+      </main>
+
+      <div className={'overlay' + (modalOpen ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
+        <div className="modal">
+          <h3>{form.id ? 'Edit Task' : 'Add Task'}</h3>
+          <div className="field">
+            <label>Title</label>
+            <input type="text" placeholder="e.g. Finalize architect RFP scope" value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div className="field">
+            <label>Description</label>
+            <textarea placeholder="Optional detail" value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+          <div className="row2">
+            <div className="field">
+              <label>Workstream</label>
+              <input type="text" list="workstreamList" placeholder="e.g. Architect Selection" value={form.workstream}
+                onChange={(e) => setForm({ ...form, workstream: e.target.value })} />
+              <datalist id="workstreamList">
+                {workstreams.map((w) => <option value={w} key={w} />)}
+              </datalist>
+            </div>
+            <div className="field">
+              <label>Deadline</label>
+              <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+            </div>
+          </div>
+          <div className="field">
+            <label>Status</label>
+            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Assigned to</label>
+            <div className="assignee-grid">
+              {members.map((m) => (
+                <label key={m.name}>
+                  <input type="checkbox" checked={form.assignees.includes(m.name)} onChange={() => toggleAssignee(m.name)} />
+                  {' ' + m.name}
+                  {!m.officer && <span style={{ color: '#8a97a4' }}> ({m.role})</span>}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="field">
+            <label>Notes</label>
+            <textarea placeholder="Optional" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </div>
+          <div className="modal-actions">
+            {form.id ? <button className="btn-danger" onClick={handleDelete}>Delete task</button> : <span />}
+            <div className="modal-right">
+              <button className="btn-secondary" onClick={closeModal}>Cancel</button>
+              <button className="btn-primary" onClick={handleSave}>Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {toast ? <div id="toast">{toast}</div> : null}
+    </>
+  );
+}
