@@ -35,6 +35,7 @@ export default function Home() {
   const [filterWorkstream, setFilterWorkstream] = useState('');
   const [filterAssignee, setFilterAssignee] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterOverdue, setFilterOverdue] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -97,4 +98,3 @@ export default function Home() {
     if (!name) return;
     setForm((f) => (f.assignees.includes(name) ? f : { ...f, assignees: [...f.assignees, name] }));
     setCustomAssigneeInput('');
-  }
