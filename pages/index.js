@@ -24,6 +24,12 @@ function statusClass(s) {
   return 'status-' + String(s || '').replace(/\s+/g, '-');
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${m}/${d}/${y}`;
+}
+
 export default function Home() {
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
@@ -297,12 +303,12 @@ export default function Home() {
                   if (t.deadline) {
                     if (t.status !== 'Done' && du < 0) {
                       deadlineClass = 'overdue';
-                      deadlineLabel = 'Overdue — was due ' + t.deadline;
+                      deadlineLabel = 'Overdue — was due ' + formatDate(t.deadline);
                     } else if (t.status !== 'Done' && du <= 7) {
                       deadlineClass = 'soon';
-                      deadlineLabel = 'Due ' + t.deadline + ' (' + du + 'd)';
+                      deadlineLabel = 'Due ' + formatDate(t.deadline) + ' (' + du + 'd)';
                     } else {
-                      deadlineLabel = 'Due ' + t.deadline;
+                      deadlineLabel = 'Due ' + formatDate(t.deadline);
                     }
                   }
                   return (
