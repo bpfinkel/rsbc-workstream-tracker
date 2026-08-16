@@ -243,7 +243,7 @@ export default function Home() {
       <header>
         <div>
           <h1>RSBC Workstream Tracker</h1>
-          <div className="sub">Riverside School Building Committee — Leadership task board</div>
+          <div className="sub">Leadership Task Board</div>
         </div>
         <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
       </header>
