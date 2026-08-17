@@ -1,11 +1,11 @@
-import { listTasks, addTask, STATUSES, MEMBERS } from '../../../lib/sheets';
+import { listTasks, addTask, STATUSES, listMembers } from '../../../lib/sheets';
 
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const tasks = await listTasks();
+      const [tasks, members] = await Promise.all([listTasks(), listMembers()]);
       const workstreams = Array.from(new Set(tasks.map((t) => t.workstream).filter(Boolean))).sort();
-      return res.status(200).json({ tasks, members: MEMBERS, statuses: STATUSES, workstreams });
+      return res.status(200).json({ tasks, members, statuses: STATUSES, workstreams });
     }
     if (req.method === 'POST') {
       const task = await addTask(req.body || {});

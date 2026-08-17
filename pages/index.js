@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 
 const EMPTY_FORM = {
   id: '',
@@ -265,6 +266,10 @@ export default function Home() {
         <div>
           <h1>RSBC Workstream Tracker</h1>
           <div className="sub">Leadership Task Board</div>
+          <nav className="page-nav">
+            <Link href="/" className="page-nav-link active">Tasks</Link>
+            <Link href="/roster" className="page-nav-link">Roster</Link>
+          </nav>
         </div>
         <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
       </header>
