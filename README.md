@@ -1,11 +1,9 @@
 # RSBC Workstream Tracker
 
 A shared task board for the Riverside School Building Committee (RSBC)
-leadership — Stephan Pezdek, Luigi Ghilardi, and Bryan Finkel — to track
-workstream progress: add tasks, assign them to committee members, set
-deadlines, and track status.
+leadership to track workstream progress: add tasks, assign them to
+committee members, set deadlines, and track status.
 
-**Live app:** https://rsbc-workstream-tracker-rsbc1.vercel.app
 No login required — anyone with the link can view and edit tasks directly.
 
 Replaces an earlier Google Apps Script version that had unfixable
