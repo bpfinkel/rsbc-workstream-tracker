@@ -271,7 +271,7 @@ export default function Home() {
         <button type="button" className={'stat' + (filterStatus === 'Blocked' ? ' active' : '')} onClick={() => selectStatusFilter('Blocked')}>
           <div className="n">{summary.blocked}</div><div className="l">Blocked</div>
         </button>
-        <button type="button" className={'stat' + (filterStatus === 'Done' ? ' active' : '')} onClick={() => selectStatusFilter('Done')}>
+        <button type="button" className={'stat done' + (filterStatus === 'Done' ? ' active' : '')} onClick={() => selectStatusFilter('Done')}>
           <div className="n">{summary.done}</div><div className="l">Done</div>
         </button>
       </div>
