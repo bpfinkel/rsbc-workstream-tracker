@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
 
@@ -49,6 +50,9 @@ export default function Login() {
           <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
+          <p style={{ fontSize: 12.5, marginTop: 16, textAlign: 'center' }}>
+            <Link href="/forgot-password" style={{ color: 'var(--navy-light)' }}>Forgot password?</Link>
+          </p>
         </form>
       </main>
     </>
