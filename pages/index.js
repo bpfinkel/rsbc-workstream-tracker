@@ -47,6 +47,17 @@ export default function Home() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [toast, setToast] = useState('');
   const [customAssigneeInput, setCustomAssigneeInput] = useState('');
+  const [viewMode, setViewMode] = useState('detailed');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('rsbc-view-mode');
+    if (saved === 'detailed' || saved === 'compact') setViewMode(saved);
+  }, []);
+
+  function setView(mode) {
+    setViewMode(mode);
+    localStorage.setItem('rsbc-view-mode', mode);
+  }
 
   function showToast(msg) {
     setToast(msg);
@@ -292,6 +303,11 @@ export default function Home() {
         </select>
       </div>
 
+      <div className="view-toggle">
+        <button type="button" className={'view-btn' + (viewMode === 'detailed' ? ' active' : '')} onClick={() => setView('detailed')}>Detailed</button>
+        <button type="button" className={'view-btn' + (viewMode === 'compact' ? ' active' : '')} onClick={() => setView('compact')}>Compact</button>
+      </div>
+
       <main>
         {!loaded ? null : groupNames.length === 0 ? (
           <div className="empty">No tasks match. Try clearing filters, or add a new task.</div>
@@ -299,36 +315,55 @@ export default function Home() {
           groupNames.map((w) => (
             <div className="workstream-group" key={w}>
               <h2>{w} ({groups[w].length})</h2>
-              <div className="cards">
-                {groups[w].map((t) => {
-                  const du = daysUntil(t.deadline);
-                  let deadlineClass = '';
-                  let deadlineLabel = 'No deadline set';
-                  if (t.deadline) {
-                    if (t.status !== 'Done' && du < 0) {
-                      deadlineClass = 'overdue';
-                      deadlineLabel = 'Overdue — was due ' + formatDate(t.deadline);
-                    } else if (t.status !== 'Done' && du <= 7) {
-                      deadlineClass = 'soon';
-                      deadlineLabel = 'Due ' + formatDate(t.deadline) + ' (' + du + 'd)';
-                    } else {
-                      deadlineLabel = 'Due ' + formatDate(t.deadline);
+              {viewMode === 'compact' ? (
+                <div className="compact-list">
+                  {groups[w].map((t) => {
+                    const du = daysUntil(t.deadline);
+                    let deadlineClass = '';
+                    if (t.deadline && t.status !== 'Done') {
+                      if (du < 0) deadlineClass = 'overdue';
+                      else if (du <= 7) deadlineClass = 'soon';
                     }
-                  }
-                  return (
-                    <div className={'card ' + statusClass(t.status)} key={t.id} onClick={() => openEditModal(t)}>
-                      <div className="card-actions">
-                        <button className="icon-btn" onClick={(e) => { e.stopPropagation(); quickStatus(t); }}>&#8635;</button>
+                    return (
+                      <div className="row-compact" key={t.id} onClick={() => openEditModal(t)}>
+                        <span className="row-title">{t.title}</span>
+                        <span className={'row-date ' + deadlineClass}>{t.deadline ? formatDate(t.deadline) : 'No deadline'}</span>
                       </div>
-                      <p className="title">{t.title}</p>
-                      {t.description ? <p className="desc">{t.description}</p> : null}
-                      <span className={'badge ' + statusClass(t.status)}>{t.status}</span>
-                      {t.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
-                      <div className={'deadline ' + deadlineClass}>{deadlineLabel}</div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="cards">
+                  {groups[w].map((t) => {
+                    const du = daysUntil(t.deadline);
+                    let deadlineClass = '';
+                    let deadlineLabel = 'No deadline set';
+                    if (t.deadline) {
+                      if (t.status !== 'Done' && du < 0) {
+                        deadlineClass = 'overdue';
+                        deadlineLabel = 'Overdue — was due ' + formatDate(t.deadline);
+                      } else if (t.status !== 'Done' && du <= 7) {
+                        deadlineClass = 'soon';
+                        deadlineLabel = 'Due ' + formatDate(t.deadline) + ' (' + du + 'd)';
+                      } else {
+                        deadlineLabel = 'Due ' + formatDate(t.deadline);
+                      }
+                    }
+                    return (
+                      <div className={'card ' + statusClass(t.status)} key={t.id} onClick={() => openEditModal(t)}>
+                        <div className="card-actions">
+                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); quickStatus(t); }}>&#8635;</button>
+                        </div>
+                        <p className="title">{t.title}</p>
+                        {t.description ? <p className="desc">{t.description}</p> : null}
+                        <span className={'badge ' + statusClass(t.status)}>{t.status}</span>
+                        {t.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
+                        <div className={'deadline ' + deadlineClass}>{deadlineLabel}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))
         )}
