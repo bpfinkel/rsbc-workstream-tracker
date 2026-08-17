@@ -32,7 +32,7 @@ header {
 }
 header h1 { font-size: clamp(14px, 4vw, 19px); margin: 0; font-weight: 600; letter-spacing: 0.3px; }
 header .sub { font-size: 11px; color: #b9c4cf; text-transform: uppercase; letter-spacing: 0.6px; }
-.page-nav { display: flex; gap: 16px; }
+.page-nav { display: flex; gap: 16px; align-items: center; }
 .page-nav-link {
   color: #b9c4cf;
   font-size: 12px;
@@ -215,7 +215,7 @@ main { padding: 4px 28px 60px 28px; }
 .modal h3 { margin: 0 0 16px 0; font-size: 16px; }
 .field { margin-bottom: 14px; }
 .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--slate); margin-bottom: 5px; }
-.field input[type=text], .field input[type=date], .field select, .field textarea {
+.field input[type=text], .field input[type=email], .field input[type=password], .field input[type=date], .field select, .field textarea {
   width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px;
   font-size: 13.5px; font-family: inherit; color: var(--navy);
 }
