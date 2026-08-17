@@ -25,10 +25,6 @@ function statusClass(s) {
   return 'status-' + String(s || '').replace(/\s+/g, '-');
 }
 
-function statusLabel(s) {
-  return s === 'Done' ? 'Completed' : s;
-}
-
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -198,12 +194,12 @@ export default function Home() {
       if (filterAssignee && !t.assignees.includes(filterAssignee)) return false;
       if (filterStatus) {
         if (t.status !== filterStatus) return false;
-      } else if (t.status === 'Done') {
+      } else if (t.status === 'Completed') {
         return false;
       }
       if (filterOverdue) {
         const du = daysUntil(t.deadline);
-        if (!(t.status !== 'Done' && du !== null && du < 0)) return false;
+        if (!(t.status !== 'Completed' && du !== null && du < 0)) return false;
       }
       if (q && !(t.title + ' ' + t.description).toLowerCase().includes(q)) return false;
       return true;
@@ -229,9 +225,9 @@ export default function Home() {
     let overdue = 0, inProgress = 0, done = 0, blocked = 0;
     tasks.forEach((t) => {
       const du = daysUntil(t.deadline);
-      if (t.status !== 'Done' && du !== null && du < 0) overdue++;
+      if (t.status !== 'Completed' && du !== null && du < 0) overdue++;
       if (t.status === 'In Progress') inProgress++;
-      if (t.status === 'Done') done++;
+      if (t.status === 'Completed') done++;
       if (t.status === 'Blocked') blocked++;
     });
     return { total: tasks.length - done, overdue, inProgress, done, blocked };
@@ -289,7 +285,7 @@ export default function Home() {
         <button type="button" className={'stat' + (filterStatus === 'Blocked' ? ' active' : '')} onClick={() => selectStatusFilter('Blocked')}>
           <div className="n">{summary.blocked}</div><div className="l">Blocked</div>
         </button>
-        <button type="button" className={'stat done' + (filterStatus === 'Done' ? ' active' : '')} onClick={() => selectStatusFilter('Done')}>
+        <button type="button" className={'stat done' + (filterStatus === 'Completed' ? ' active' : '')} onClick={() => selectStatusFilter('Completed')}>
           <div className="n">{summary.done}</div><div className="l">Completed</div>
         </button>
       </div>
@@ -306,7 +302,7 @@ export default function Home() {
         </select>
         <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setFilterOverdue(false); }}>
           <option value="">All statuses</option>
-          {statuses.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+          {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
@@ -327,7 +323,7 @@ export default function Home() {
                   {groups[w].map((t) => {
                     const du = daysUntil(t.deadline);
                     let deadlineClass = '';
-                    if (t.deadline && t.status !== 'Done') {
+                    if (t.deadline && t.status !== 'Completed') {
                       if (du < 0) deadlineClass = 'overdue';
                       else if (du <= 7) deadlineClass = 'soon';
                     }
@@ -346,10 +342,10 @@ export default function Home() {
                     let deadlineClass = '';
                     let deadlineLabel = 'No deadline set';
                     if (t.deadline) {
-                      if (t.status !== 'Done' && du < 0) {
+                      if (t.status !== 'Completed' && du < 0) {
                         deadlineClass = 'overdue';
                         deadlineLabel = 'Overdue — was due ' + formatDate(t.deadline);
-                      } else if (t.status !== 'Done' && du <= 7) {
+                      } else if (t.status !== 'Completed' && du <= 7) {
                         deadlineClass = 'soon';
                         deadlineLabel = 'Due ' + formatDate(t.deadline) + ' (' + du + 'd)';
                       } else {
@@ -363,7 +359,7 @@ export default function Home() {
                         </div>
                         <p className="title">{t.title}</p>
                         {t.description ? <p className="desc">{t.description}</p> : null}
-                        <span className={'badge ' + statusClass(t.status)}>{statusLabel(t.status)}</span>
+                        <span className={'badge ' + statusClass(t.status)}>{t.status}</span>
                         {t.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
                         <div className={'deadline ' + deadlineClass}>{deadlineLabel}</div>
                       </div>
@@ -406,7 +402,7 @@ export default function Home() {
           <div className="field">
             <label>Status</label>
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              {statuses.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+              {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div className="field">
