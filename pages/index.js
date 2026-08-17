@@ -25,6 +25,10 @@ function statusClass(s) {
   return 'status-' + String(s || '').replace(/\s+/g, '-');
 }
 
+function statusLabel(s) {
+  return s === 'Done' ? 'Completed' : s;
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -286,7 +290,7 @@ export default function Home() {
           <div className="n">{summary.blocked}</div><div className="l">Blocked</div>
         </button>
         <button type="button" className={'stat done' + (filterStatus === 'Done' ? ' active' : '')} onClick={() => selectStatusFilter('Done')}>
-          <div className="n">{summary.done}</div><div className="l">Done</div>
+          <div className="n">{summary.done}</div><div className="l">Completed</div>
         </button>
       </div>
 
@@ -302,7 +306,7 @@ export default function Home() {
         </select>
         <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setFilterOverdue(false); }}>
           <option value="">All statuses</option>
-          {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+          {statuses.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
         </select>
       </div>
 
@@ -359,7 +363,7 @@ export default function Home() {
                         </div>
                         <p className="title">{t.title}</p>
                         {t.description ? <p className="desc">{t.description}</p> : null}
-                        <span className={'badge ' + statusClass(t.status)}>{t.status}</span>
+                        <span className={'badge ' + statusClass(t.status)}>{statusLabel(t.status)}</span>
                         {t.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
                         <div className={'deadline ' + deadlineClass}>{deadlineLabel}</div>
                       </div>
@@ -402,7 +406,7 @@ export default function Home() {
           <div className="field">
             <label>Status</label>
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+              {statuses.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
             </select>
           </div>
           <div className="field">
