@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { createClient } from '../lib/supabase/client';
 
 const GROUP_ORDER = ['Officer', 'Voting Member', 'Ex-Officio Member', 'External'];
 const GROUP_LABEL = {
@@ -11,6 +13,7 @@ const GROUP_LABEL = {
 };
 
 export default function Roster() {
+  const router = useRouter();
   const [members, setMembers] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +28,12 @@ export default function Roster() {
       })
       .catch((e) => setError(e.message));
   }, []);
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  }
 
   const groups = GROUP_ORDER
     .map((status) => ({
@@ -46,6 +55,7 @@ export default function Roster() {
         <nav className="page-nav">
           <Link href="/" className="page-nav-link">Tasks</Link>
           <Link href="/roster" className="page-nav-link active">Roster</Link>
+          <button type="button" className="page-nav-link" onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign Out</button>
         </nav>
       </header>
 
