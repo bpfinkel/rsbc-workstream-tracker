@@ -28,8 +28,12 @@ multi-account sign-in problems.
   (`localStorage`), not shared across viewers.
 - **Add / Edit modal** — title, description, workstream (reuses existing
   ones via a datalist), deadline, status, assignees, and notes. Assignees
-  are picked from the fixed committee roster via checkboxes, or added
-  free-text for one-off names not on the roster (e.g. outside counsel).
+  are picked from the committee roster via checkboxes, or added free-text
+  for one-off names not on the roster (e.g. outside counsel).
+- **Roster page** — a read-only page (name + role, grouped as Officers /
+  Voting Members / Ex-Officio Members / External) pulled live from the same
+  roster sheet used for assignees. No email or phone is shown — that's
+  intentionally deferred until the app has a login.
 - **Quick status cycle** — a small ↻ button on each detailed card advances
   a task through the status list without opening the modal.
 - Dates are stored as `YYYY-MM-DD` (so they sort correctly as plain text)
@@ -43,6 +47,8 @@ multi-account sign-in problems.
 - Hosted on **Vercel**
 
 ## Data model
+
+### Tasks
 
 Data lives in a Google Sheet, tab `Tasks`, with all 10 columns always
 filled:
@@ -60,22 +66,30 @@ filled:
 | I | UpdatedAt | ISO timestamp, updated on every edit |
 | J | Notes | Optional |
 
-**Assignee roster** (`lib/sheets.js`, `MEMBERS`): officers (Chair, Vice-Chair,
-Secretary), voting members, ex-officio members, and one external entry
-(QA+M, the project architect). The UI also accepts free-text names not on
-this list for one-off assignments.
+### Roster
+
+The assignee list (`listMembers()` in `lib/sheets.js`) is read live from a
+**separate** Google Sheet — "RSBC Roster" (My Drive/RSBC/Admin), not this
+project's own Tasks sheet. Columns are Member, Position, Status, Email,
+Phone; only name/role/status are used (email and phone are read from the
+sheet's data but never returned to the app — see Known gotchas for why the
+column range is offset). A `FORMER MEMBERS -- EXCLUDE` marker row ends the
+active list; anything after it is ignored. One extra entry (`QA+M`, the
+project architect) is appended in code since it isn't a real roster row.
 
 ## Project structure
 
 ```
 pages/
   _app.js              global CSS import
-  index.js             the entire UI — dashboard, filters, view toggle, modal
+  index.js             the task board UI — dashboard, filters, view toggle, modal
+  roster.js            read-only roster page
   api/tasks/
     index.js           GET (list all tasks) / POST (create)
     [id].js             PUT (update) / DELETE (remove)
+  api/members.js        GET (list roster, for the Roster page)
 lib/
-  sheets.js             Google Sheets read/write logic, MEMBERS + STATUSES constants
+  sheets.js             Google Sheets read/write logic, listMembers(), STATUSES
 styles/
   globals.css           all styling (CSS variables for the navy/maroon palette)
 package.json
@@ -95,7 +109,10 @@ GOOGLE_SHEET_ID=1z5q6LZ8d-QiIZzayyoAUXtnLHAqJx6bQ7kslyydAPtU
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-The service account needs Editor access on the Sheet (already shared).
+The service account needs Editor access on the Tasks sheet (already
+shared). It reads the Roster sheet too, which is currently shared as
+"anyone with the link can edit" rather than shared directly with the
+service account.
 Then:
 
 ```bash
@@ -124,3 +141,11 @@ project (Production + Preview).
   committing — a cut-off file compiles fine right up until Vercel's
   git-triggered build hits it, and every subsequent push will fail until
   it's fixed.
+- **The Roster sheet has an extra blank row and column** the Tasks sheet
+  doesn't — its data actually starts at row 3, column B (not row 2, column
+  A), so `listMembers()` reads range `B3:F` rather than the `A2:...` pattern
+  used everywhere else. If the roster sheet is ever recreated or its layout
+  changes, check this offset first if members stop showing up (the sheet
+  will look fine visually in Google Sheets even if the range is wrong,
+  since a `values.get()` on the wrong range just silently returns fewer or
+  no rows rather than erroring).
