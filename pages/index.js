@@ -180,7 +180,11 @@ export default function Home() {
     return tasks.filter((t) => {
       if (filterWorkstream && t.workstream !== filterWorkstream) return false;
       if (filterAssignee && !t.assignees.includes(filterAssignee)) return false;
-      if (filterStatus && t.status !== filterStatus) return false;
+      if (filterStatus) {
+        if (t.status !== filterStatus) return false;
+      } else if (t.status === 'Done') {
+        return false;
+      }
       if (filterOverdue) {
         const du = daysUntil(t.deadline);
         if (!(t.status !== 'Done' && du !== null && du < 0)) return false;
@@ -214,7 +218,7 @@ export default function Home() {
       if (t.status === 'Done') done++;
       if (t.status === 'Blocked') blocked++;
     });
-    return { total: tasks.length, overdue, inProgress, done, blocked };
+    return { total: tasks.length - done, overdue, inProgress, done, blocked };
   }, [tasks]);
 
   const allAssigneeNames = useMemo(() => {
@@ -256,7 +260,7 @@ export default function Home() {
 
       <div className="summary">
         <button type="button" className={'stat' + (!filterStatus && !filterOverdue ? ' active' : '')} onClick={clearStatusFilters}>
-          <div className="n">{summary.total}</div><div className="l">Total tasks</div>
+          <div className="n">{summary.total}</div><div className="l">Active tasks</div>
         </button>
         <button type="button" className={'stat overdue' + (filterOverdue ? ' active' : '')} onClick={selectOverdueFilter}>
           <div className="n">{summary.overdue}</div><div className="l">Overdue</div>
