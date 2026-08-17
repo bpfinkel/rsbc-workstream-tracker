@@ -23,16 +23,16 @@ body {
 header {
   background: var(--navy);
   color: #fff;
-  padding: 18px 28px;
+  padding: 22px 28px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
+  text-align: center;
+  gap: 10px;
 }
 header h1 { font-size: 19px; margin: 0; font-weight: 600; letter-spacing: 0.3px; }
-header .sub { font-size: 11px; color: #b9c4cf; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.6px; }
-.page-nav { display: flex; gap: 16px; margin-top: 10px; }
+header .sub { font-size: 11px; color: #b9c4cf; text-transform: uppercase; letter-spacing: 0.6px; }
+.page-nav { display: flex; gap: 16px; }
 .page-nav-link {
   color: #b9c4cf;
   font-size: 12px;
