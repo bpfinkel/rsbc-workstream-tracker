@@ -1,0 +1,89 @@
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { createClient } from '../lib/supabase/client';
+
+export default function ResetPassword() {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({
+      password,
+      data: { must_change_password: false }
+    });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setDone(true);
+    setTimeout(() => router.push('/'), 1500);
+  }
+
+  return (
+    <>
+      <Head>
+        <title>RSBC Workstream Tracker — Reset Password</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+      <header>
+        <h1>Riverside School Building Committee</h1>
+        <div className="sub">The Committee Members' App</div>
+      </header>
+      <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
+        <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
+          <h3>Set a New Password</h3>
+          {!ready ? (
+            <p style={{ fontSize: 13.5, color: 'var(--slate)' }}>Verifying your reset link…</p>
+          ) : done ? (
+            <p style={{ fontSize: 13.5, color: 'var(--accent)' }}>Password updated. Redirecting…</p>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="field">
+                <label>New Password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
+              </div>
+              <div className="field">
+                <label>Confirm Password</label>
+                <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+              </div>
+              {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
+              <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
+                {loading ? 'Saving…' : 'Set Password'}
+              </button>
+            </form>
+          )}
+        </div>
+      </main>
+    </>
+  );
+}
