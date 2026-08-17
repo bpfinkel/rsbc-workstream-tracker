@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { createClient } from '../lib/supabase/client';
 
 const EMPTY_FORM = {
   id: '',
@@ -32,6 +34,7 @@ function formatDate(dateStr) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
   const [statuses, setStatuses] = useState([]);
@@ -63,6 +66,12 @@ export default function Home() {
   function showToast(msg) {
     setToast(msg);
     setTimeout(() => setToast(''), 2200);
+  }
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
   }
 
   async function loadData() {
@@ -268,6 +277,7 @@ export default function Home() {
         <nav className="page-nav">
           <Link href="/" className="page-nav-link active">Tasks</Link>
           <Link href="/roster" className="page-nav-link">Roster</Link>
+          <button type="button" className="page-nav-link" onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign Out</button>
         </nav>
         <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
       </header>
