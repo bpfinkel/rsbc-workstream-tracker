@@ -14,6 +14,7 @@ export default function Roster() {
   const [members, setMembers] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     fetch('/api/members')
@@ -57,7 +58,7 @@ export default function Roster() {
               <h2>{g.label} ({g.members.length})</h2>
               <div className="roster-list">
                 {g.members.map((m) => (
-                  <div className="roster-row" key={m.name}>
+                  <div className="roster-row" key={m.name} onClick={() => setSelected(m)}>
                     <span className="roster-name">{m.name}</span>
                     <span className="roster-role">{m.role}</span>
                   </div>
@@ -67,6 +68,36 @@ export default function Roster() {
           ))
         )}
       </main>
+
+      <div className={'overlay' + (selected ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
+        {selected && (
+          <div className="modal contact-card">
+            <h3>{selected.name}</h3>
+            <div className="contact-field">
+              <span className="contact-label">Title</span>
+              <span className="contact-value">{selected.role}</span>
+            </div>
+            <div className="contact-field">
+              <span className="contact-label">Email</span>
+              <span className="contact-value">
+                {selected.email ? <a href={'mailto:' + selected.email}>{selected.email}</a> : '—'}
+              </span>
+            </div>
+            <div className="contact-field">
+              <span className="contact-label">Mobile</span>
+              <span className="contact-value">
+                {selected.phone ? <a href={'tel:' + selected.phone}>{selected.phone}</a> : '—'}
+              </span>
+            </div>
+            <div className="modal-actions">
+              <span />
+              <div className="modal-right">
+                <button className="btn-secondary" onClick={() => setSelected(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 }
