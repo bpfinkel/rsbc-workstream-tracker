@@ -123,7 +123,7 @@ main { padding: 4px 28px 60px 28px; }
   transition: border-color .12s;
 }
 .card:hover { border-color: var(--navy-light); }
-.card.status-Done { opacity: 0.7; }
+.card.status-Completed { opacity: 0.7; }
 .card .title { font-size: 14.5px; font-weight: 600; margin: 0 0 4px 0; padding-right: 60px; }
 .card .desc { font-size: 12.5px; color: var(--slate); margin: 0 0 10px 0; white-space: pre-wrap; }
 .badge {
@@ -138,7 +138,7 @@ main { padding: 4px 28px 60px 28px; }
 .badge.status-Not-Started { background: #e6e9ec; color: var(--slate); }
 .badge.status-In-Progress { background: rgba(12,35,64,0.08); color: var(--navy); }
 .badge.status-Blocked { background: rgba(164,52,58,0.12); color: var(--red); }
-.badge.status-Done { background: #dcefe1; color: var(--accent); }
+.badge.status-Completed { background: #dcefe1; color: var(--accent); }
 .chip {
   display: inline-block;
   font-size: 11px;
