@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
 
 export default function ResetPassword() {
-  const router = useRouter();
   const [ready, setReady] = useState(false);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -40,13 +38,13 @@ export default function ResetPassword() {
       password,
       data: { must_change_password: false }
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
     setDone(true);
-    setTimeout(() => router.push('/'), 1500);
+    setTimeout(() => { window.location.href = '/'; }, 1500);
   }
 
   return (
