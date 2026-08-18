@@ -56,7 +56,29 @@ export default function Account() {
           <Link href="/" className="page-nav-link">Tasks</Link>
           <Link href="/roster" className="page-nav-link">Roster</Link>
           <Link href="/change-password" className="page-nav-link active">My Account</Link>
-          <button type="button" className="page-nav-link" onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Sign Out</button>
+          <button
+            type="button"
+            className="page-nav-link"
+            onClick={handleSignOut}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: '2px solid transparent',
+              padding: 0,
+              paddingBottom: 3,
+              margin: 0,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.4px',
+              lineHeight: 'inherit',
+              color: '#b9c4cf'
+            }}
+          >
+            Sign Out
+          </button>
         </nav>
       </header>
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
