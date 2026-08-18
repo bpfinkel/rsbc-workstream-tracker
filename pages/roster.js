@@ -55,6 +55,7 @@ export default function Roster() {
         <nav className="page-nav">
           <Link href="/" className="page-nav-link">Tasks</Link>
           <Link href="/roster" className="page-nav-link active">Roster</Link>
+          <Link href="/change-password" className="page-nav-link">My Account</Link>
           <button type="button" className="page-nav-link" onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Sign Out</button>
         </nav>
       </header>
