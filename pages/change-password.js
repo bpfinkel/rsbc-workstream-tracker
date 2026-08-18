@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
 
 export default function ChangePassword() {
-  const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -27,12 +25,12 @@ export default function ChangePassword() {
       password,
       data: { must_change_password: false }
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
-    router.push('/');
+    window.location.href = '/';
   }
 
   return (
