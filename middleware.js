@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password'];
+
 export async function middleware(request) {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
@@ -24,10 +26,14 @@ export async function middleware(request) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isLoginPage = pathname === '/login';
+  const isPublicPath = PUBLIC_PATHS.includes(pathname);
   const isApiRoute = pathname.startsWith('/api');
+  const isChangePasswordPage = pathname === '/change-password';
 
-  if (!user && !isLoginPage) {
+  if (!user) {
+    if (isPublicPath) {
+      return response;
+    }
     if (isApiRoute) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -36,7 +42,21 @@ export async function middleware(request) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isLoginPage) {
+  const mustChangePassword = user.user_metadata?.must_change_password === true;
+
+  if (mustChangePassword) {
+    if (isChangePasswordPage) {
+      return response;
+    }
+    if (isApiRoute) {
+      return NextResponse.json({ error: 'Password change required' }, { status: 403 });
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = '/change-password';
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname === '/login' || isChangePasswordPage) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
