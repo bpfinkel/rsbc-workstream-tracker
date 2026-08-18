@@ -4,6 +4,7 @@ import { createClient } from '../lib/supabase/client';
 
 export default function ResetPassword() {
   const [ready, setReady] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -12,13 +13,26 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true);
-    });
+    const code = new URLSearchParams(window.location.search).get('code');
+
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setVerifyError('This reset link is invalid or has expired. Please request a new one.');
+        } else {
+          setReady(true);
+        }
+      });
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true);
+      if (session) {
+        setReady(true);
+      } else {
+        setVerifyError('This reset link is invalid or has expired. Please request a new one.');
+      }
     });
-    return () => subscription.unsubscribe();
   }, []);
 
   async function handleSubmit(e) {
@@ -60,7 +74,9 @@ export default function ResetPassword() {
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
           <h3>Set a New Password</h3>
-          {!ready ? (
+          {verifyError ? (
+            <p style={{ fontSize: 13.5, color: 'var(--red)' }}>{verifyError}</p>
+          ) : !ready ? (
             <p style={{ fontSize: 13.5, color: 'var(--slate)' }}>Verifying your reset link…</p>
           ) : done ? (
             <p style={{ fontSize: 13.5, color: 'var(--accent)' }}>Password updated. Redirecting…</p>
