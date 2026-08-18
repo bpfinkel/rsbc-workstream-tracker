@@ -13,6 +13,7 @@ export default function Account() {
   const [loading, setLoading] = useState(false);
 
   async function handleSignOut() {
+    if (!window.confirm('Are you sure you want to sign out?')) return;
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/login');
