@@ -28,7 +28,6 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl;
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
   const isApiRoute = pathname.startsWith('/api');
-  const isChangePasswordPage = pathname === '/change-password';
 
   if (!user) {
     if (isPublicPath) {
@@ -42,21 +41,7 @@ export async function middleware(request) {
     return NextResponse.redirect(url);
   }
 
-  const mustChangePassword = user.user_metadata?.must_change_password === true;
-
-  if (mustChangePassword) {
-    if (isChangePasswordPage) {
-      return response;
-    }
-    if (isApiRoute) {
-      return NextResponse.json({ error: 'Password change required' }, { status: 403 });
-    }
-    const url = request.nextUrl.clone();
-    url.pathname = '/change-password';
-    return NextResponse.redirect(url);
-  }
-
-  if (pathname === '/login' || isChangePasswordPage) {
+  if (pathname === '/login') {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
