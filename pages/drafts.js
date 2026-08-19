@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
+import Header from '../components/Header';
 
 function formatShortDate(dateStr) {
   if (!dateStr) return '';
@@ -75,16 +75,7 @@ export default function Drafts() {
         <title>Riverside School Building Committee — Drafts</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <header>
-        <h1>Riverside School Building Committee</h1>
-        <div className="sub">The Committee Members' App</div>
-        <nav className="page-nav">
-          <Link href="/" className="page-nav-link">Tasks</Link>
-          <Link href="/roster" className="page-nav-link">Roster</Link>
-          <Link href="/meetings" className="page-nav-link">Meetings</Link>
-          <Link href="/change-password" className="page-nav-link">My Account</Link>
-        </nav>
-      </header>
+      <Header active="drafts" />
 
       <main>
         {error ? <div className="empty">{error}</div> : null}

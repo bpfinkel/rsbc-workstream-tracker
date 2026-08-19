@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
+import Header from '../components/Header';
 
 const ZOOM_LINK = 'https://greenwichct.zoom.us/j/84949247205?pwd=7V3GrwayaIY0i0aw1rAcg81RFRUKWc.1';
 const ZOOM_DIAL_IN = '(646) 518-9805';
@@ -45,16 +45,7 @@ export default function Meetings() {
         <title>Riverside School Building Committee — Meetings</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <header>
-        <h1>Riverside School Building Committee</h1>
-        <div className="sub">The Committee Members' App</div>
-        <nav className="page-nav">
-          <Link href="/" className="page-nav-link">Tasks</Link>
-          <Link href="/roster" className="page-nav-link">Roster</Link>
-          <Link href="/meetings" className="page-nav-link active">Meetings</Link>
-          <Link href="/change-password" className="page-nav-link">My Account</Link>
-        </nav>
-      </header>
+      <Header active="meetings" />
 
       <main>
         {!loaded ? null : (

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
+import Header from '../components/Header';
 
 export default function Account() {
   const router = useRouter();
@@ -50,16 +50,7 @@ export default function Account() {
         <title>Riverside School Building Committee — My Account</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <header>
-        <h1>Riverside School Building Committee</h1>
-        <div className="sub">The Committee Members' App</div>
-        <nav className="page-nav">
-          <Link href="/" className="page-nav-link">Tasks</Link>
-          <Link href="/roster" className="page-nav-link">Roster</Link>
-          <Link href="/meetings" className="page-nav-link">Meetings</Link>
-          <Link href="/change-password" className="page-nav-link active">My Account</Link>
-        </nav>
-      </header>
+      <Header active="account" />
       <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40, gap: 20 }}>
         <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleSubmit}>
           <h3>Change Password</h3>

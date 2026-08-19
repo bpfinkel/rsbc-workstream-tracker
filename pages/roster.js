@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
+import Header from '../components/Header';
 
 const GROUP_ORDER = ['Officer', 'Voting Member', 'Ex-Officio Member', 'External'];
 const GROUP_LABEL = {
@@ -40,16 +40,7 @@ export default function Roster() {
         <title>Riverside School Building Committee — Roster</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <header>
-        <h1>Riverside School Building Committee</h1>
-        <div className="sub">The Committee Members' App</div>
-        <nav className="page-nav">
-          <Link href="/" className="page-nav-link">Tasks</Link>
-          <Link href="/roster" className="page-nav-link active">Roster</Link>
-          <Link href="/meetings" className="page-nav-link">Meetings</Link>
-          <Link href="/change-password" className="page-nav-link">My Account</Link>
-        </nav>
-      </header>
+      <Header active="roster" />
 
       <main>
         {error ? (
