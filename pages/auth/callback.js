@@ -34,7 +34,7 @@ export default function AuthCallback() {
   return (
     <>
       <Head>
-        <title>RSBC Workstream Tracker — Signing In</title>
+        <title>Riverside School Building Committee — Signing In</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>

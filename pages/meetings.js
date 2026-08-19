@@ -42,7 +42,7 @@ export default function Meetings() {
   return (
     <>
       <Head>
-        <title>RSBC Meetings</title>
+        <title>Riverside School Building Committee — Meetings</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>

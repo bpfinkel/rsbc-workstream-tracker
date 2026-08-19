@@ -27,7 +27,7 @@ export default function ForgotPassword() {
   return (
     <>
       <Head>
-        <title>RSBC Workstream Tracker — Forgot Password</title>
+        <title>Riverside School Building Committee — Forgot Password</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>

@@ -41,7 +41,7 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>RSBC Workstream Tracker — Sign In</title>
+        <title>Riverside School Building Committee — Sign In</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>

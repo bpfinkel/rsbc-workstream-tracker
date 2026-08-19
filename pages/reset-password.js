@@ -64,7 +64,7 @@ export default function ResetPassword() {
   return (
     <>
       <Head>
-        <title>RSBC Workstream Tracker — Reset Password</title>
+        <title>Riverside School Building Committee — Reset Password</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>

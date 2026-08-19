@@ -37,7 +37,7 @@ export default function Roster() {
   return (
     <>
       <Head>
-        <title>RSBC Roster</title>
+        <title>Riverside School Building Committee — Roster</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>

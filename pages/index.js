@@ -259,7 +259,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>RSBC Workstream Tracker</title>
+        <title>Riverside School Building Committee</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>

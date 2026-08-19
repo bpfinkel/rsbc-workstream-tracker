@@ -47,7 +47,7 @@ export default function Account() {
   return (
     <>
       <Head>
-        <title>RSBC Workstream Tracker — My Account</title>
+        <title>Riverside School Building Committee — My Account</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <header>
