@@ -271,8 +271,11 @@ export default function Home() {
           <Link href="/meetings" className="page-nav-link">Meetings</Link>
           <Link href="/change-password" className="page-nav-link">My Account</Link>
         </nav>
-        <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
       </header>
+
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 28px 0 28px' }}>
+        <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
+      </div>
 
       <div className="summary">
         <button type="button" className={'stat' + (!filterStatus && !filterOverdue ? ' active' : '')} onClick={clearStatusFilters}>
