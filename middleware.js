@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth/callback'];
+const ADMIN_EMAIL = 'bfinkel.rsbc@gmail.com';
 
 export async function middleware(request) {
   let response = NextResponse.next({ request: { headers: request.headers } });
@@ -42,6 +43,16 @@ export async function middleware(request) {
   }
 
   if (pathname === '/login') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
+
+  const isAdminPath = pathname === '/drafts' || pathname.startsWith('/api/drafts');
+  if (isAdminPath && user.email !== ADMIN_EMAIL) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
