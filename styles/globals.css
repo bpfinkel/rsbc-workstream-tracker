@@ -32,7 +32,7 @@ header {
 }
 header h1 { font-size: clamp(14px, 4vw, 19px); margin: 0; font-weight: 600; letter-spacing: 0.3px; }
 header .sub { font-size: 11px; color: #b9c4cf; text-transform: uppercase; letter-spacing: 0.6px; }
-.page-nav { display: flex; gap: 16px; align-items: center; }
+.page-nav { display: flex; flex-wrap: wrap; gap: 16px; row-gap: 8px; align-items: center; justify-content: center; }
 .page-nav-link {
   color: #b9c4cf;
   font-size: 12px;
@@ -42,6 +42,7 @@ header .sub { font-size: 11px; color: #b9c4cf; text-transform: uppercase; letter
   text-decoration: none;
   padding-bottom: 3px;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
 }
 .page-nav-link:hover { color: #fff; }
 .page-nav-link.active { color: #fff; border-bottom-color: var(--red); }
