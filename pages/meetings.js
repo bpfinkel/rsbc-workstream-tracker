@@ -8,7 +8,6 @@ const ZOOM_LINK = 'https://greenwichct.zoom.us/j/84949247205?pwd=7V3GrwayaIY0i0a
 const ZOOM_DIAL_IN = '(646) 518-9805';
 const ZOOM_MEETING_ID = '849 4924 7205';
 const ZOOM_PASSCODE = '2155103';
-const HYBRID_CUTOFF = '2026-08-17';
 
 function formatFullDate(dateStr) {
   if (!dateStr) return '';
@@ -24,7 +23,7 @@ function formatShortDate(dateStr) {
 
 export default function Meetings() {
   const router = useRouter();
-  const [data, setData] = useState({ meetings: [], nextIndex: -1, todayET: '' });
+  const [data, setData] = useState({ meetings: [], nextIndex: -1, location: 'unknown' });
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,9 +45,8 @@ export default function Meetings() {
     router.push('/login');
   }
 
-  const { meetings, nextIndex, todayET } = data;
+  const { meetings, nextIndex, location } = data;
   const nextMeeting = nextIndex >= 0 ? meetings[nextIndex] : null;
-  const isHybrid = Boolean(todayET) && todayET > HYBRID_CUTOFF;
   const pastMeetings = meetings.filter((_, i) => i !== nextIndex).slice().reverse();
 
   return (
@@ -103,9 +101,13 @@ export default function Meetings() {
                   <p className="title">{formatFullDate(nextMeeting.date)}</p>
                   <p className="desc">{nextMeeting.time} ET</p>
                   <p className="desc">
-                    {isHybrid ? (
+                    {location === 'hybrid' ? (
                       <>Riverside School – Media Center | 90 Hendrie Ave, Riverside, CT 06878<br />Or via Zoom</>
-                    ) : 'Virtual Meeting via Zoom'}
+                    ) : location === 'virtual' ? (
+                      'Virtual Meeting via Zoom'
+                    ) : (
+                      'See the agenda below for meeting location'
+                    )}
                   </p>
                   <div className="zoom-block">
                     <div><a href={ZOOM_LINK} target="_blank" rel="noreferrer">{ZOOM_LINK}</a></div>

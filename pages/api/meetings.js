@@ -1,3 +1,5 @@
+import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+
 const SOURCE_URL = 'https://www.greenwichschools.org/departments/facilities-rentals/building-grounds-projects/riverside-building-committee';
 const BASE_URL = 'https://www.greenwichschools.org';
 
@@ -54,6 +56,26 @@ function parseMeetings(html) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+// The committee's own agenda-drafting workflow always writes one of two exact
+// location lines into the PDF ("Virtual Meeting via Zoom" or "...Media Center...").
+// Reading the actual posted agenda beats guessing from a fixed date cutoff, since
+// the virtual-vs-hybrid decision is made meeting-by-meeting, not on a set schedule.
+async function detectLocation(agendaUrl) {
+  if (!agendaUrl) return 'unknown';
+  try {
+    const pdfRes = await fetch(agendaUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (RSBC Workstream Tracker)' } });
+    if (!pdfRes.ok) return 'unknown';
+    const buf = Buffer.from(await pdfRes.arrayBuffer());
+    const { text } = await pdfParse(buf);
+    const t = text.toLowerCase();
+    if (t.includes('media center') || t.includes('90 hendrie')) return 'hybrid';
+    if (t.includes('virtual meeting via zoom')) return 'virtual';
+    return 'unknown';
+  } catch (err) {
+    return 'unknown';
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET']);
@@ -66,9 +88,10 @@ export default async function handler(req, res) {
     const html = await pageRes.text();
     const meetings = parseMeetings(html);
     const nextIndex = meetings.findIndex((m) => m.date >= todayET);
+    const location = nextIndex >= 0 ? await detectLocation(meetings[nextIndex].agendaUrl) : 'unknown';
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
-    return res.status(200).json({ meetings, nextIndex, todayET, sourceUrl: SOURCE_URL });
+    return res.status(200).json({ meetings, nextIndex, todayET, location, sourceUrl: SOURCE_URL });
   } catch (err) {
-    return res.status(200).json({ meetings: [], nextIndex: -1, todayET, error: err.message, sourceUrl: SOURCE_URL });
+    return res.status(200).json({ meetings: [], nextIndex: -1, todayET, location: 'unknown', error: err.message, sourceUrl: SOURCE_URL });
   }
 }
