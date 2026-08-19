@@ -58,32 +58,9 @@ export default function Account() {
           <Link href="/roster" className="page-nav-link">Roster</Link>
           <Link href="/meetings" className="page-nav-link">Meetings</Link>
           <Link href="/change-password" className="page-nav-link active">My Account</Link>
-          <button
-            type="button"
-            className="page-nav-link"
-            onClick={handleSignOut}
-            style={{
-              background: 'none',
-              border: 'none',
-              borderBottom: '2px solid transparent',
-              padding: 0,
-              paddingBottom: 3,
-              margin: 0,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 12,
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.4px',
-              lineHeight: 'inherit',
-              color: '#b9c4cf'
-            }}
-          >
-            Sign Out
-          </button>
         </nav>
       </header>
-      <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
+      <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40, gap: 20 }}>
         <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleSubmit}>
           <h3>Change Password</h3>
           <div className="field">
@@ -100,6 +77,9 @@ export default function Account() {
             {loading ? 'Saving…' : 'Save Password'}
           </button>
         </form>
+        <div className="modal" style={{ maxWidth: 360, width: '100%', textAlign: 'center' }}>
+          <button type="button" className="btn-secondary" onClick={handleSignOut} style={{ width: '100%' }}>Sign Out</button>
+        </div>
       </main>
     </>
   );

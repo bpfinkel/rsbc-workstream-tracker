@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { createClient } from '../lib/supabase/client';
 
 const ZOOM_LINK = 'https://greenwichct.zoom.us/j/84949247205?pwd=7V3GrwayaIY0i0aw1rAcg81RFRUKWc.1';
 const ZOOM_DIAL_IN = '(646) 518-9805';
@@ -22,7 +20,6 @@ function formatShortDate(dateStr) {
 }
 
 export default function Meetings() {
-  const router = useRouter();
   const [data, setData] = useState({ meetings: [], nextIndex: -1, location: 'unknown' });
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
@@ -37,13 +34,6 @@ export default function Meetings() {
       })
       .catch((e) => { setError(e.message); setLoaded(true); });
   }, []);
-
-  async function handleSignOut() {
-    if (!confirm('Are you sure you want to sign out?')) return;
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-  }
 
   const { meetings, nextIndex, location } = data;
   const nextMeeting = nextIndex >= 0 ? meetings[nextIndex] : null;
@@ -63,29 +53,6 @@ export default function Meetings() {
           <Link href="/roster" className="page-nav-link">Roster</Link>
           <Link href="/meetings" className="page-nav-link active">Meetings</Link>
           <Link href="/change-password" className="page-nav-link">My Account</Link>
-          <button
-            type="button"
-            className="page-nav-link"
-            onClick={handleSignOut}
-            style={{
-              background: 'none',
-              border: 'none',
-              borderBottom: '2px solid transparent',
-              padding: 0,
-              paddingBottom: 3,
-              margin: 0,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 12,
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.4px',
-              lineHeight: 'inherit',
-              color: '#b9c4cf'
-            }}
-          >
-            Sign Out
-          </button>
         </nav>
       </header>
 

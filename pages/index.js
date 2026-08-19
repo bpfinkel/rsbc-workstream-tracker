@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { createClient } from '../lib/supabase/client';
 
 const EMPTY_FORM = {
   id: '',
@@ -34,7 +32,6 @@ function formatDate(dateStr) {
 }
 
 export default function Home() {
-  const router = useRouter();
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
   const [statuses, setStatuses] = useState([]);
@@ -66,13 +63,6 @@ export default function Home() {
   function showToast(msg) {
     setToast(msg);
     setTimeout(() => setToast(''), 2200);
-  }
-
-  async function handleSignOut() {
-    if (!confirm('Are you sure you want to sign out?')) return;
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
   }
 
   async function loadData() {
@@ -280,29 +270,6 @@ export default function Home() {
           <Link href="/roster" className="page-nav-link">Roster</Link>
           <Link href="/meetings" className="page-nav-link">Meetings</Link>
           <Link href="/change-password" className="page-nav-link">My Account</Link>
-          <button
-            type="button"
-            className="page-nav-link"
-            onClick={handleSignOut}
-            style={{
-              background: 'none',
-              border: 'none',
-              borderBottom: '2px solid transparent',
-              padding: 0,
-              paddingBottom: 3,
-              margin: 0,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 12,
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.4px',
-              lineHeight: 'inherit',
-              color: '#b9c4cf'
-            }}
-          >
-            Sign Out
-          </button>
         </nav>
         <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
       </header>
