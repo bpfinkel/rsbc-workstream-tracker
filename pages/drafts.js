@@ -9,45 +9,20 @@ function formatShortDate(dateStr) {
 }
 
 export default function Drafts() {
-  const [meetings, setMeetings] = useState([]);
   const [drafts, setDrafts] = useState([]);
   const [loaded, setLoaded] = useState(false);
-  const [generatingDate, setGeneratingDate] = useState('');
   const [error, setError] = useState('');
 
-  async function loadAll() {
-    const [meetingsRes, draftsRes] = await Promise.all([
-      fetch('/api/meetings').then((r) => r.json()),
-      fetch('/api/drafts').then((r) => r.json())
-    ]);
-    setMeetings(meetingsRes.meetings || []);
-    setDrafts(draftsRes.drafts || []);
+  async function loadDrafts() {
+    const res = await fetch('/api/drafts');
+    const data = await res.json();
+    setDrafts(data.drafts || []);
     setLoaded(true);
   }
 
   useEffect(() => {
-    loadAll().catch((e) => setError(e.message));
+    loadDrafts().catch((e) => setError(e.message));
   }, []);
-
-  async function handleGenerate(meeting) {
-    setError('');
-    setGeneratingDate(meeting.date);
-    try {
-      const res = await fetch('/api/drafts/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: meeting.date, minutesUrl: meeting.minutesUrl })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Generation failed');
-      if (data.warning) setError(data.warning);
-      await loadAll();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setGeneratingDate('');
-    }
-  }
 
   async function handleAction(id, action) {
     setError('');
@@ -59,7 +34,7 @@ export default function Drafts() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Action failed');
-      await loadAll();
+      await loadDrafts();
     } catch (e) {
       setError(e.message);
     }
@@ -67,7 +42,6 @@ export default function Drafts() {
 
   const pending = drafts.filter((d) => d.status === 'Pending');
   const history = drafts.filter((d) => d.status !== 'Pending');
-  const draftedDates = new Set(drafts.map((d) => d.sourceMeetingDate));
 
   return (
     <>
@@ -81,36 +55,9 @@ export default function Drafts() {
         {error ? <div className="empty">{error}</div> : null}
 
         <div className="workstream-group">
-          <h2>Generate from a Meeting</h2>
-          {!loaded ? null : meetings.length === 0 ? (
-            <div className="empty">No meetings found.</div>
-          ) : (
-            <div className="roster-list">
-              {meetings.slice().reverse().map((m) => (
-                <div className="roster-row" key={m.date} style={{ cursor: 'default' }}>
-                  <span className="roster-name">{formatShortDate(m.date)}</span>
-                  <span className="roster-role">
-                    {draftedDates.has(m.date) ? <span className="chip">Already generated</span> : null}
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      disabled={!m.minutesUrl || generatingDate === m.date}
-                      onClick={() => handleGenerate(m)}
-                      style={{ marginLeft: 8 }}
-                    >
-                      {generatingDate === m.date ? 'Generating…' : m.minutesUrl ? 'Generate Draft Tasks' : 'Minutes not posted yet'}
-                    </button>
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="workstream-group">
           <h2>Pending Review ({pending.length})</h2>
-          {pending.length === 0 ? (
-            <div className="empty">No drafts awaiting review.</div>
+          {!loaded ? null : pending.length === 0 ? (
+            <div className="empty">No drafts awaiting review. New ones appear here automatically after each Wednesday meeting once minutes are drafted.</div>
           ) : (
             <div className="cards">
               {pending.map((d) => (
