@@ -3,8 +3,18 @@ import { createServerClient } from '@supabase/ssr';
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth/callback'];
 const ADMIN_EMAIL = 'bfinkel.rsbc@gmail.com';
+const SERVICE_PATHS = ['/api/drafts/import'];
 
 export async function middleware(request) {
+  const { pathname: earlyPathname } = request.nextUrl;
+
+  // Server-to-server routes (e.g. the recurring Cowork task importing draft
+  // tasks) authenticate with their own shared secret, not a browser session —
+  // skip the Supabase cookie check entirely rather than trying to fake a user.
+  if (SERVICE_PATHS.includes(earlyPathname)) {
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
