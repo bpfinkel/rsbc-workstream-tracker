@@ -56,8 +56,10 @@ export default function Drafts() {
     <>
       <Head>
         <title>Riverside School Building Committee — Drafts</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="drafts" />
+      <div className="admin-note">Admin Access Only</div>
 
       <main>
         {error ? <div className="empty">{error}</div> : null}
