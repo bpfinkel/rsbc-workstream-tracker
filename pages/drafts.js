@@ -56,7 +56,6 @@ export default function Drafts() {
     <>
       <Head>
         <title>Riverside School Building Committee — Drafts</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="drafts" />
 
