@@ -8,10 +8,18 @@ function formatShortDate(dateStr) {
   return `${m}/${d}/${y}`;
 }
 
+function formatDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 export default function Drafts() {
   const [drafts, setDrafts] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
+  const [selected, setSelected] = useState(null);
 
   async function loadDrafts() {
     const res = await fetch('/api/drafts');
@@ -34,6 +42,7 @@ export default function Drafts() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Action failed');
+      setSelected(null);
       await loadDrafts();
     } catch (e) {
       setError(e.message);
@@ -85,7 +94,7 @@ export default function Drafts() {
           ) : (
             <div className="compact-list">
               {history.map((d) => (
-                <div className="row-compact" key={d.id}>
+                <div className="row-compact" key={d.id} onClick={() => setSelected(d)}>
                   <span className="row-title">{d.title}</span>
                   <span className="row-date">{d.status}</span>
                 </div>
@@ -94,6 +103,58 @@ export default function Drafts() {
           )}
         </div>
       </main>
+
+      <div className={'overlay' + (selected ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
+        {selected && (
+          <div className="modal contact-card">
+            <h3>{selected.title}</h3>
+            {selected.description ? <p className="desc" style={{ marginTop: -8, marginBottom: 14 }}>{selected.description}</p> : null}
+
+            <div className="contact-field">
+              <span className="contact-label">Status</span>
+              <span className="contact-value">{selected.status}</span>
+            </div>
+            <div className="contact-field">
+              <span className="contact-label">Decided by</span>
+              <span className="contact-value">{selected.decidedBy || '—'}</span>
+            </div>
+            <div className="contact-field">
+              <span className="contact-label">Decided at</span>
+              <span className="contact-value">{formatDateTime(selected.decidedAt) || '—'}</span>
+            </div>
+
+            {selected.overrideAt ? (
+              <>
+                <div className="contact-field">
+                  <span className="contact-label">Later override</span>
+                  <span className="contact-value">{selected.overrideAction}</span>
+                </div>
+                <div className="contact-field">
+                  <span className="contact-label">Overridden by</span>
+                  <span className="contact-value">{selected.overrideBy || '—'}</span>
+                </div>
+                <div className="contact-field">
+                  <span className="contact-label">Overridden at</span>
+                  <span className="contact-value">{formatDateTime(selected.overrideAt)}</span>
+                </div>
+              </>
+            ) : null}
+
+            <div className="modal-actions">
+              <span />
+              <div className="modal-right">
+                {selected.status === 'Rejected' ? (
+                  <>
+                    <button className="btn-secondary" onClick={() => handleAction(selected.id, 'move-to-pending')}>Move to Pending</button>
+                    <button className="btn-primary" onClick={() => handleAction(selected.id, 'override-approve')}>Override — Approve</button>
+                  </>
+                ) : null}
+                <button className="btn-secondary" onClick={() => setSelected(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 }
