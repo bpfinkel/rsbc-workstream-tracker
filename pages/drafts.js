@@ -15,6 +15,36 @@ function formatDateTime(iso) {
   return d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+// Groups History by the calendar day a draft was created (ET, matching the
+// rest of the app), not by when it was decided. Older rows from before the
+// CreatedAt column reliably back-filled fall back to "yesterday" per Bryan's
+// call, since the drafts pipeline only went live 2026-08-19.
+function dateKeyET(date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+}
+
+function shiftDateKey(key, days) {
+  const [y, m, d] = key.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dateKeyET(dt);
+}
+
+function createdDateKey(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return dateKeyET(d);
+}
+
+function formatGroupLabel(key, todayKey, yesterdayKey) {
+  if (key === todayKey) return 'Today';
+  if (key === yesterdayKey) return 'Yesterday';
+  const [y, m, d] = key.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function Drafts() {
   const [drafts, setDrafts] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -52,11 +82,25 @@ export default function Drafts() {
   const pending = drafts.filter((d) => d.status === 'Pending');
   const history = drafts.filter((d) => d.status !== 'Pending');
 
+  const todayKey = dateKeyET(new Date());
+  const yesterdayKey = shiftDateKey(todayKey, -1);
+
+  const historyGroups = [];
+  const historyGroupIndex = new Map();
+  history.forEach((d) => {
+    const key = createdDateKey(d.createdAt) || yesterdayKey;
+    if (!historyGroupIndex.has(key)) {
+      historyGroupIndex.set(key, historyGroups.length);
+      historyGroups.push({ key, items: [] });
+    }
+    historyGroups[historyGroupIndex.get(key)].items.push(d);
+  });
+  historyGroups.sort((a, b) => (a.key < b.key ? 1 : a.key > b.key ? -1 : 0));
+
   return (
     <>
       <Head>
         <title>Riverside School Building Committee — Drafts</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="drafts" />
       <div className="admin-note">Admin Access Only</div>
@@ -93,14 +137,19 @@ export default function Drafts() {
           {history.length === 0 ? (
             <div className="empty">Nothing reviewed yet.</div>
           ) : (
-            <div className="compact-list">
-              {history.map((d) => (
-                <div className="row-compact" key={d.id} onClick={() => setSelected(d)}>
-                  <span className="row-title">{d.title}</span>
-                  <span className="row-date">{d.status}</span>
+            historyGroups.map((group) => (
+              <div key={group.key}>
+                <div className="date-group-label">{formatGroupLabel(group.key, todayKey, yesterdayKey)}</div>
+                <div className="compact-list">
+                  {group.items.map((d) => (
+                    <div className="row-compact" key={d.id} onClick={() => setSelected(d)}>
+                      <span className="row-title">{d.title}</span>
+                      <span className="row-date">{d.status}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
       </main>
