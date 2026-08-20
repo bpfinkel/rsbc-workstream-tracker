@@ -260,7 +260,6 @@ export default function Home() {
     <>
       <Head>
         <title>Riverside School Building Committee</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="tasks" />
 
