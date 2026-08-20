@@ -19,6 +19,10 @@ function formatShortDate(dateStr) {
   return `${m}/${d}/${y}`;
 }
 
+function embedUrl(pdfUrl) {
+  return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
+}
+
 export default function Meetings() {
   const [data, setData] = useState({ meetings: [], nextIndex: -1, location: 'unknown' });
   const [loaded, setLoaded] = useState(false);
@@ -127,7 +131,7 @@ export default function Meetings() {
                 <button className="btn-secondary" onClick={() => setPdfViewer(null)}>Close</button>
               </div>
             </div>
-            <iframe src={pdfViewer.url} title={pdfViewer.title} />
+            <iframe src={embedUrl(pdfViewer.url)} title={pdfViewer.title} />
           </div>
         )}
       </div>
