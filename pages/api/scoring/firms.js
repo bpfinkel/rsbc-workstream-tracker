@@ -1,5 +1,6 @@
-import { listFirms, setFirmInterviewUnlocked } from '../../../lib/sheets';
+import { listFirms, setFirmUnlocked, setAllFirmsUnlocked } from '../../../lib/sheets';
 import { getUserFromRequest } from '../../../lib/supabase/server';
+import { RFP_PHASES } from '../../../lib/rfpCriteria';
 
 const ADMIN_EMAIL = 'bfinkel.rsbc@gmail.com';
 
@@ -12,12 +13,16 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const user = await getUserFromRequest(req, res);
     if (user?.email !== ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Only the admin can change interview-scoring access' });
+      return res.status(403).json({ error: 'Only the admin can change scoring access' });
     }
-    const { firm, interviewUnlocked } = req.body || {};
-    if (!firm) return res.status(400).json({ error: 'firm is required' });
+    const { firm, phase, unlocked } = req.body || {};
+    if (!RFP_PHASES[phase]) return res.status(400).json({ error: 'Invalid phase' });
     try {
-      await setFirmInterviewUnlocked(firm, !!interviewUnlocked);
+      if (firm) {
+        await setFirmUnlocked(firm, phase, !!unlocked);
+      } else {
+        await setAllFirmsUnlocked(phase, !!unlocked);
+      }
       return res.status(200).json({ ok: true });
     } catch (err) {
       return res.status(500).json({ error: err.message });
