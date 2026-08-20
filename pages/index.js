@@ -222,15 +222,14 @@ export default function Home() {
   }
 
   const summary = useMemo(() => {
-    let overdue = 0, inProgress = 0, done = 0, blocked = 0;
+    let overdue = 0, inProgress = 0, done = 0;
     tasks.forEach((t) => {
       const du = daysUntil(t.deadline);
       if (t.status !== 'Completed' && du !== null && du < 0) overdue++;
       if (t.status === 'In Progress') inProgress++;
       if (t.status === 'Completed') done++;
-      if (t.status === 'Blocked') blocked++;
     });
-    return { total: tasks.length - done, overdue, inProgress, done, blocked };
+    return { total: tasks.length - done, overdue, inProgress, done };
   }, [tasks]);
 
   const allAssigneeNames = useMemo(() => {
@@ -276,9 +275,6 @@ export default function Home() {
         </button>
         <button type="button" className={'stat' + (filterStatus === 'In Progress' ? ' active' : '')} onClick={() => selectStatusFilter('In Progress')}>
           <div className="n">{summary.inProgress}</div><div className="l">In progress</div>
-        </button>
-        <button type="button" className={'stat' + (filterStatus === 'Blocked' ? ' active' : '')} onClick={() => selectStatusFilter('Blocked')}>
-          <div className="n">{summary.blocked}</div><div className="l">Blocked</div>
         </button>
         <button type="button" className={'stat done' + (filterStatus === 'Completed' ? ' active' : '')} onClick={() => selectStatusFilter('Completed')}>
           <div className="n">{summary.done}</div><div className="l">Completed</div>
