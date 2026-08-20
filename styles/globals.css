@@ -179,7 +179,6 @@ main { padding: 4px 28px 60px 28px; }
 }
 .badge.status-Not-Started { background: #e6e9ec; color: var(--slate); }
 .badge.status-In-Progress { background: rgba(12,35,64,0.08); color: var(--navy); }
-.badge.status-Blocked { background: rgba(164,52,58,0.12); color: var(--red); }
 .badge.status-Completed { background: #dcefe1; color: var(--accent); }
 .chip {
   display: inline-block;
