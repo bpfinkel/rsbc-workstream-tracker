@@ -321,3 +321,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .overlay:has(.pdf-viewer) { padding: 0; }
   .modal.pdf-viewer { max-width: 100%; height: 100vh; border-radius: 0; }
 }
+.lock-toggle {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid var(--border); border-radius: 20px;
+  padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+  color: var(--slate); transition: border-color .12s, background .12s, box-shadow .12s, transform .08s;
+}
+.lock-toggle:hover { box-shadow: var(--shadow-sm); }
+.lock-toggle:active { transform: scale(0.96); }
+.lock-toggle.unlocked { color: var(--accent); border-color: var(--accent); background: rgba(47,111,79,0.08); }
+.lock-toggle.locked { color: var(--red); border-color: var(--red); background: rgba(164,52,58,0.06); }
