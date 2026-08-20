@@ -224,12 +224,13 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit }) {
         <h3>{firm} — {RFP_PHASES[phase].label}</h3>
         {criteria.map((c, i) => (
           <div className="field" key={c.key}>
-            <label>{c.label} (0–{c.max})</label>
+            <label>{c.label} — {scores[i] === null || scores[i] === undefined ? 0 : scores[i]} / {c.max}</label>
             <input
-              type="number"
+              type="range"
               min="0"
               max={c.max}
-              value={scores[i] === null || scores[i] === undefined ? '' : scores[i]}
+              step="1"
+              value={scores[i] === null || scores[i] === undefined ? 0 : scores[i]}
               onChange={(e) => setScore(i, e.target.value)}
             />
           </div>

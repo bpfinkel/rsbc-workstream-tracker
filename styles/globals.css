@@ -224,6 +224,7 @@ main { padding: 4px 28px 60px 28px; }
   font-size: 13.5px; font-family: inherit; color: var(--navy);
 }
 .field textarea { resize: vertical; min-height: 60px; }
+.field input[type=range] { width: 100%; accent-color: var(--red); cursor: pointer; padding: 0; border: none; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .assignee-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px;
