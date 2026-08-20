@@ -48,7 +48,6 @@ export default function Account() {
     <>
       <Head>
         <title>Riverside School Building Committee — My Account</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="account" />
       <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40, gap: 20 }}>
