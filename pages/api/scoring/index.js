@@ -1,4 +1,4 @@
-import { listScores, submitScore } from '../../../lib/sheets';
+import { listScores, submitScore, deleteScore } from '../../../lib/sheets';
 import { getUserFromRequest } from '../../../lib/supabase/server';
 import { RFP_PHASES } from '../../../lib/rfpCriteria';
 
@@ -29,6 +29,18 @@ export default async function handler(req, res) {
     }
   }
 
-  res.setHeader('Allow', ['GET', 'POST']);
+  if (req.method === 'DELETE') {
+    const { phase, firm } = req.body || {};
+    if (!RFP_PHASES[phase]) return res.status(400).json({ error: 'Invalid phase' });
+    if (!firm) return res.status(400).json({ error: 'firm is required' });
+    try {
+      await deleteScore(phase, firm, email);
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
   return res.status(405).json({ error: 'Method not allowed' });
 }

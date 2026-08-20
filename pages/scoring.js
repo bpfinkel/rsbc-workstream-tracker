@@ -96,6 +96,25 @@ export default function Scoring() {
     }
   }
 
+  async function handleClear() {
+    if (!window.confirm('Clear your scores and notes for this firm? This cannot be undone.')) return;
+    setError('');
+    try {
+      const res = await fetch('/api/scoring', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase: editing.phase, firm: editing.firm })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to clear');
+      setEditing(null);
+      showToast('Cleared');
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   return (
     <>
       <Head>
@@ -185,6 +204,7 @@ export default function Scoring() {
           existing={myScoreFor(editing.firm, editing.phase)}
           onCancel={() => setEditing(null)}
           onSubmit={handleSubmit}
+          onClear={handleClear}
         />
       ) : null}
 
@@ -193,7 +213,7 @@ export default function Scoring() {
   );
 }
 
-function ScoreModal({ firm, phase, existing, onCancel, onSubmit }) {
+function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
   const criteria = RFP_PHASES[phase].criteria;
   const [scores, setScores] = useState(() => {
     const base = emptyScores();
@@ -241,7 +261,9 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit }) {
         </div>
         <div className="deadline">Total: {total} / {maxTotal}</div>
         <div className="modal-actions">
-          <span />
+          {existing ? (
+            <button className="btn-danger" onClick={onClear}>Clear</button>
+          ) : <span />}
           <div className="modal-right">
             <button className="btn-secondary" onClick={onCancel}>Cancel</button>
             <button className="btn-primary" disabled={saving} onClick={submit}>{saving ? 'Saving…' : 'Submit'}</button>
