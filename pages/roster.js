@@ -38,7 +38,6 @@ export default function Roster() {
     <>
       <Head>
         <title>Riverside School Building Committee — Roster</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="roster" />
 
