@@ -45,11 +45,25 @@ function formatGroupLabel(key, todayKey, yesterdayKey) {
   return dt.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function ChevronIcon({ open }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .15s', flexShrink: 0 }}>
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function Drafts() {
   const [drafts, setDrafts] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(null);
+  // null = default state (only the most recent date group open) until the
+  // admin explicitly expands/collapses one, since History can grow to
+  // hundreds of rows over a few weeks and most days are decided, done, and
+  // not worth scrolling past by default.
+  const [expandedKeys, setExpandedKeys] = useState(null);
 
   async function loadDrafts() {
     const res = await fetch('/api/drafts');
@@ -97,6 +111,20 @@ export default function Drafts() {
   });
   historyGroups.sort((a, b) => (a.key < b.key ? 1 : a.key > b.key ? -1 : 0));
 
+  function isGroupOpen(key, idx) {
+    if (expandedKeys === null) return idx === 0;
+    return expandedKeys.has(key);
+  }
+
+  function toggleGroup(key) {
+    setExpandedKeys((prev) => {
+      const base = prev === null ? new Set(historyGroups.length > 0 ? [historyGroups[0].key] : []) : prev;
+      const next = new Set(base);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+
   return (
     <>
       <Head>
@@ -137,19 +165,28 @@ export default function Drafts() {
           {history.length === 0 ? (
             <div className="empty">Nothing reviewed yet.</div>
           ) : (
-            historyGroups.map((group) => (
-              <div key={group.key}>
-                <div className="date-group-label">{formatGroupLabel(group.key, todayKey, yesterdayKey)}</div>
-                <div className="compact-list">
-                  {group.items.map((d) => (
-                    <div className="row-compact" key={d.id} onClick={() => setSelected(d)}>
-                      <span className="row-title">{d.title}</span>
-                      <span className="row-date">{d.status}</span>
+            historyGroups.map((group, idx) => {
+              const open = isGroupOpen(group.key, idx);
+              return (
+                <div key={group.key}>
+                  <button type="button" className="date-group-label" onClick={() => toggleGroup(group.key)}>
+                    <ChevronIcon open={open} />
+                    {formatGroupLabel(group.key, todayKey, yesterdayKey)}
+                    <span className="date-group-count">({group.items.length})</span>
+                  </button>
+                  {open ? (
+                    <div className="compact-list">
+                      {group.items.map((d) => (
+                        <div className="row-compact" key={d.id} onClick={() => setSelected(d)}>
+                          <span className="row-title">{d.title}</span>
+                          <span className="row-date">{d.status}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : null}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </main>
