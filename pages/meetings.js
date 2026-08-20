@@ -23,6 +23,7 @@ export default function Meetings() {
   const [data, setData] = useState({ meetings: [], nextIndex: -1, location: 'unknown' });
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
+  const [pdfViewer, setPdfViewer] = useState(null);
 
   useEffect(() => {
     fetch('/api/meetings')
@@ -38,6 +39,11 @@ export default function Meetings() {
   const { meetings, nextIndex, location } = data;
   const nextMeeting = nextIndex >= 0 ? meetings[nextIndex] : null;
   const pastMeetings = meetings.filter((_, i) => i !== nextIndex).slice().reverse();
+
+  function openPdf(e, label, url, dateStr) {
+    e.preventDefault();
+    setPdfViewer({ title: dateStr ? `${label} — ${formatShortDate(dateStr)}` : label, url });
+  }
 
   return (
     <>
@@ -75,12 +81,12 @@ export default function Meetings() {
                   </div>
                   <div style={{ marginTop: 12 }}>
                     {nextMeeting.agendaUrl ? (
-                      <a className="chip chip-link" href={nextMeeting.agendaUrl} target="_blank" rel="noreferrer">Agenda</a>
+                      <a className="chip chip-link" href={nextMeeting.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', nextMeeting.agendaUrl, nextMeeting.date)}>Agenda</a>
                     ) : (
                       <span className="chip">Agenda not posted yet</span>
                     )}
                     {nextMeeting.noticeUrl && nextMeeting.noticeUrl !== nextMeeting.agendaUrl ? (
-                      <a className="chip chip-link" href={nextMeeting.noticeUrl} target="_blank" rel="noreferrer">Notice</a>
+                      <a className="chip chip-link" href={nextMeeting.noticeUrl} onClick={(e) => openPdf(e, 'Notice', nextMeeting.noticeUrl, nextMeeting.date)}>Notice</a>
                     ) : null}
                   </div>
                 </div>
@@ -99,8 +105,8 @@ export default function Meetings() {
                     <div className="roster-row" key={m.date}>
                       <span className="roster-name">{formatShortDate(m.date)}</span>
                       <span className="roster-role">
-                        {m.agendaUrl ? <a href={m.agendaUrl} target="_blank" rel="noreferrer" style={{ marginRight: 10 }}>Agenda</a> : null}
-                        {m.minutesUrl ? <a href={m.minutesUrl} target="_blank" rel="noreferrer">Minutes</a> : <span style={{ color: 'var(--muted)' }}>Minutes pending</span>}
+                        {m.agendaUrl ? <a href={m.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', m.agendaUrl, m.date)} style={{ marginRight: 10 }}>Agenda</a> : null}
+                        {m.minutesUrl ? <a href={m.minutesUrl} onClick={(e) => openPdf(e, 'Minutes', m.minutesUrl, m.date)}>Minutes</a> : <span style={{ color: 'var(--muted)' }}>Minutes pending</span>}
                       </span>
                     </div>
                   ))}
@@ -110,6 +116,21 @@ export default function Meetings() {
           </>
         )}
       </main>
+
+      <div className={'overlay' + (pdfViewer ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) setPdfViewer(null); }}>
+        {pdfViewer && (
+          <div className="modal pdf-viewer">
+            <div className="pdf-viewer-header">
+              <h3>{pdfViewer.title}</h3>
+              <div className="pdf-viewer-header-actions">
+                <a href={pdfViewer.url} target="_blank" rel="noreferrer">Open in new tab ↗</a>
+                <button className="btn-secondary" onClick={() => setPdfViewer(null)}>Close</button>
+              </div>
+            </div>
+            <iframe src={pdfViewer.url} title={pdfViewer.title} />
+          </div>
+        )}
+      </div>
     </>
   );
 }
