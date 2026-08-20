@@ -13,6 +13,34 @@ function totalFor(scores, criteria) {
   return criteria.reduce((sum, c, i) => sum + (Number(scores[i]) || 0), 0);
 }
 
+function LockIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function UnlockIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="2" />
+      <path d="M8 11V7a4 4 0 0 1 7.4-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function LockToggle({ unlocked, label, onClick }) {
+  return (
+    <button type="button" className={'lock-toggle ' + (unlocked ? 'unlocked' : 'locked')} onClick={onClick}
+      title={unlocked ? `${label} scoring open — click to lock` : `${label} scoring locked — click to unlock`}>
+      {unlocked ? <UnlockIcon /> : <LockIcon />}
+      {label}
+    </button>
+  );
+}
+
 export default function Scoring() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [firms, setFirms] = useState([]);
@@ -61,16 +89,33 @@ export default function Scoring() {
     return allScores.filter((s) => s.firm === firm && s.phase === phase);
   }
 
-  async function toggleInterview(firm, unlocked) {
+  async function toggleFirmLock(firm, phase, unlocked) {
     setError('');
     try {
       const res = await fetch('/api/scoring/firms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firm, interviewUnlocked: unlocked })
+        body: JSON.stringify({ firm, phase, unlocked })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update');
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function toggleAllLock(phase, unlocked) {
+    setError('');
+    try {
+      const res = await fetch('/api/scoring/firms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase, unlocked })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update');
+      showToast(`${phase} scoring ${unlocked ? 'unlocked' : 'locked'} for all firms`);
       await load();
     } catch (e) {
       setError(e.message);
@@ -114,11 +159,13 @@ export default function Scoring() {
     }
   }
 
+  const allWrittenUnlocked = firms.length > 0 && firms.every((f) => f.writtenUnlocked);
+  const allInterviewUnlocked = firms.length > 0 && firms.every((f) => f.interviewUnlocked);
+
   return (
     <>
       <Head>
         <title>Riverside School Building Committee — RFP Scoring</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="scoring" />
 
@@ -136,10 +183,16 @@ export default function Scoring() {
                   <div className="card" key={f.firm} style={{ cursor: 'default' }}>
                     <p className="title">{f.firm}</p>
                     <div className="modal-actions" style={{ marginTop: 10 }}>
-                      <span className="chip">{written ? 'Written: submitted' : 'Written: not started'}</span>
-                      <button type="button" className="btn-secondary" onClick={() => setEditing({ firm: f.firm, phase: 'Written' })}>
-                        {written ? 'Edit' : 'Score'}
-                      </button>
+                      {f.writtenUnlocked ? (
+                        <>
+                          <span className="chip">{written ? 'Written: submitted' : 'Written: not started'}</span>
+                          <button type="button" className="btn-secondary" onClick={() => setEditing({ firm: f.firm, phase: 'Written' })}>
+                            {written ? 'Edit' : 'Score'}
+                          </button>
+                        </>
+                      ) : (
+                        <span className="deadline">Written scoring not yet open</span>
+                      )}
                     </div>
                     <div className="modal-actions" style={{ marginTop: 8 }}>
                       {f.interviewUnlocked ? (
@@ -169,16 +222,12 @@ export default function Scoring() {
                 const iv = scorersFor(f.firm, 'Interview');
                 return (
                   <div className="row-compact" key={f.firm} style={{ cursor: 'default', flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                       <span className="row-title">{f.firm}</span>
-                      <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <input
-                          type="checkbox"
-                          checked={f.interviewUnlocked}
-                          onChange={(e) => toggleInterview(f.firm, e.target.checked)}
-                        />
-                        Interview open
-                      </label>
+                      <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+                        <LockToggle unlocked={f.writtenUnlocked} label="Written" onClick={() => toggleFirmLock(f.firm, 'Written', !f.writtenUnlocked)} />
+                        <LockToggle unlocked={f.interviewUnlocked} label="Interview" onClick={() => toggleFirmLock(f.firm, 'Interview', !f.interviewUnlocked)} />
+                      </div>
                     </div>
                     <span className="row-date">
                       Written: {w.length} submitted{w.length ? ` (${w.map((s) => s.scorerEmail).join(', ')})` : ''}
@@ -191,6 +240,18 @@ export default function Scoring() {
                   </div>
                 );
               })}
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+              <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
+                onClick={() => toggleAllLock('Written', !allWrittenUnlocked)}>
+                {allWrittenUnlocked ? <LockIcon /> : <UnlockIcon />}
+                {allWrittenUnlocked ? 'Lock All — Written' : 'Unlock All — Written'}
+              </button>
+              <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
+                onClick={() => toggleAllLock('Interview', !allInterviewUnlocked)}>
+                {allInterviewUnlocked ? <LockIcon /> : <UnlockIcon />}
+                {allInterviewUnlocked ? 'Lock All — Interview' : 'Unlock All — Interview'}
+              </button>
             </div>
           </div>
         ) : null}
