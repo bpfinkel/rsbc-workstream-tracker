@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { isAdmin } from './lib/admin';
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth/callback'];
-const ADMIN_EMAIL = 'bfinkel.rsbc@gmail.com';
 const SERVICE_PATHS = ['/api/drafts/import'];
 
 export async function middleware(request) {
@@ -59,7 +59,7 @@ export async function middleware(request) {
   }
 
   const isAdminPath = pathname === '/drafts' || pathname.startsWith('/api/drafts');
-  if (isAdminPath && user.email !== ADMIN_EMAIL) {
+  if (isAdminPath && !isAdmin(user.email)) {
     if (isApiRoute) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

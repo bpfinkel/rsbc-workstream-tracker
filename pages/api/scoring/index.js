@@ -1,8 +1,7 @@
 import { listScores, submitScore, deleteScore } from '../../../lib/sheets';
 import { getUserFromRequest } from '../../../lib/supabase/server';
 import { RFP_PHASES } from '../../../lib/rfpCriteria';
-
-const ADMIN_EMAIL = 'bfinkel.rsbc@gmail.com';
+import { isAdmin } from '../../../lib/admin';
 
 export default async function handler(req, res) {
   const user = await getUserFromRequest(req, res);
@@ -10,7 +9,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     const wantAll = req.query.all === '1';
-    if (wantAll && email !== ADMIN_EMAIL) {
+    if (wantAll && !isAdmin(email)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     const scores = await listScores(wantAll ? undefined : email);

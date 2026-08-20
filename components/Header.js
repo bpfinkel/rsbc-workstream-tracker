@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
-
-const ADMIN_EMAIL = 'bfinkel.rsbc@gmail.com';
+import { isAdmin } from '../lib/admin';
 
 export default function Header({ active }) {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [admin, setAdmin] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.email === ADMIN_EMAIL) setIsAdmin(true);
+      if (isAdmin(data?.user?.email)) setAdmin(true);
     });
   }, []);
 
@@ -24,7 +23,7 @@ export default function Header({ active }) {
         <Link href="/meetings" className={'page-nav-link' + (active === 'meetings' ? ' active' : '')}>Meetings</Link>
         <Link href="/scoring" className={'page-nav-link' + (active === 'scoring' ? ' active' : '')}>RFP Scoring</Link>
         <Link href="/change-password" className={'page-nav-link' + (active === 'account' ? ' active' : '')}>My Account</Link>
-        {isAdmin ? (
+        {admin ? (
           <Link href="/drafts" className={'page-nav-link' + (active === 'drafts' ? ' active' : '')}>Drafts</Link>
         ) : null}
       </nav>
