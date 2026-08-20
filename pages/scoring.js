@@ -35,7 +35,7 @@ export default function Scoring() {
       fetch('/api/scoring/firms').then((r) => r.json()),
       fetch('/api/scoring').then((r) => r.json())
     ]);
-    setFirms(firmsRes.firms || []);
+    setFirms((firmsRes.firms || []).slice().sort((a, b) => a.firm.localeCompare(b.firm)));
     setMyScores(myRes.scores || []);
 
     if (admin) {
