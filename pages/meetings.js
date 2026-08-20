@@ -7,6 +7,9 @@ const ZOOM_DIAL_IN = '(646) 518-9805';
 const ZOOM_MEETING_ID = '849 4924 7205';
 const ZOOM_PASSCODE = '2155103';
 
+const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+const VIEWPORT_UNLOCKED = 'width=device-width, initial-scale=1';
+
 function formatFullDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr + 'T00:00:00');
@@ -40,6 +43,13 @@ export default function Meetings() {
       .catch((e) => { setError(e.message); setLoaded(true); });
   }, []);
 
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    meta.setAttribute('content', pdfViewer ? VIEWPORT_UNLOCKED : VIEWPORT_LOCKED);
+    return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
+  }, [pdfViewer]);
+
   const { meetings, nextIndex, location } = data;
   const nextMeeting = nextIndex >= 0 ? meetings[nextIndex] : null;
   const pastMeetings = meetings.filter((_, i) => i !== nextIndex).slice().reverse();
@@ -53,7 +63,6 @@ export default function Meetings() {
     <>
       <Head>
         <title>Riverside School Building Committee — Meetings</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Header active="meetings" />
 
