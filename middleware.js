@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { isAdmin } from './lib/admin';
 
-const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth/callback'];
+const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth/callback', '/rsbc-logo.jpg'];
 const SERVICE_PATHS = ['/api/drafts/import'];
 
 export async function middleware(request) {
