@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
 import { isAdmin } from '../lib/admin';
+import { RSBC_LOGO } from '../lib/rsbcLogo';
 
 export default function Header({ active }) {
   const [admin, setAdmin] = useState(false);
@@ -16,7 +17,7 @@ export default function Header({ active }) {
   return (
     <header>
       <img
-        src="/rsbc-logo.jpg"
+        src={RSBC_LOGO}
         alt="Riverside School Building Committee"
         className="header-logo"
       />
