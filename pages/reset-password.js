@@ -67,8 +67,7 @@ export default function ResetPassword() {
         <title>Riverside School Building Committee — Reset Password</title>
       </Head>
       <header>
-        <h1>Riverside School Building Committee</h1>
-        <div className="sub">The Committee Members' App</div>
+        <img src="/rsbc-logo.jpg" alt="Riverside School Building Committee" className="header-logo" />
       </header>
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
