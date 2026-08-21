@@ -5,6 +5,13 @@ import { createClient } from '../lib/supabase/client';
 import { RFP_PHASES } from '../lib/rfpCriteria';
 import { isAdmin as checkIsAdmin } from '../lib/admin';
 
+const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+const VIEWPORT_UNLOCKED = 'width=device-width, initial-scale=1';
+
+function embedUrl(pdfUrl) {
+  return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
+}
+
 function emptyScores() {
   return [null, null, null, null, null, null];
 }
@@ -50,6 +57,7 @@ export default function Scoring() {
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [editing, setEditing] = useState(null);
+  const [pdfViewer, setPdfViewer] = useState(null);
 
   async function load() {
     const supabase = createClient();
@@ -76,6 +84,13 @@ export default function Scoring() {
     load().catch((e) => setError(e.message));
   }, []);
 
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    meta.setAttribute('content', pdfViewer ? VIEWPORT_UNLOCKED : VIEWPORT_LOCKED);
+    return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
+  }, [pdfViewer]);
+
   function showToast(msg) {
     setToast(msg);
     setTimeout(() => setToast(''), 2500);
@@ -87,6 +102,11 @@ export default function Scoring() {
 
   function scorersFor(firm, phase) {
     return allScores.filter((s) => s.firm === firm && s.phase === phase);
+  }
+
+  function openPdf(e, firm, url) {
+    e.preventDefault();
+    setPdfViewer({ title: `${firm} — Proposal`, url });
   }
 
   async function toggleFirmLock(firm, phase, unlocked) {
@@ -183,6 +203,13 @@ export default function Scoring() {
                   <div className="card" key={f.firm} style={{ cursor: 'default' }}>
                     <p className="title">{f.firm}</p>
                     <div className="modal-actions" style={{ marginTop: 10 }}>
+                      {f.proposalPdfUrl ? (
+                        <a className="chip chip-link" href={f.proposalPdfUrl} onClick={(e) => openPdf(e, f.firm, f.proposalPdfUrl)}>Proposal PDF</a>
+                      ) : (
+                        <span className="chip">Proposal PDF not yet posted</span>
+                      )}
+                    </div>
+                    <div className="modal-actions" style={{ marginTop: 10 }}>
                       {f.writtenUnlocked ? (
                         <>
                           <span className="chip">{written ? 'Written: submitted' : 'Written: not started'}</span>
@@ -267,6 +294,21 @@ export default function Scoring() {
           onClear={handleClear}
         />
       ) : null}
+
+      <div className={'overlay' + (pdfViewer ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) setPdfViewer(null); }}>
+        {pdfViewer && (
+          <div className="modal pdf-viewer">
+            <div className="pdf-viewer-header">
+              <h3>{pdfViewer.title}</h3>
+              <div className="pdf-viewer-header-actions">
+                <a href={pdfViewer.url} target="_blank" rel="noreferrer">Open in new tab ↗</a>
+                <button className="btn-secondary" onClick={() => setPdfViewer(null)}>Close</button>
+              </div>
+            </div>
+            <iframe src={embedUrl(pdfViewer.url)} title={pdfViewer.title} />
+          </div>
+        )}
+      </div>
 
       <div id="toast" style={{ display: toast ? 'block' : 'none' }}>{toast}</div>
     </>
