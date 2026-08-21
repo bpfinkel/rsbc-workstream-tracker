@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
+import { RSBC_LOGO } from '../lib/rsbcLogo';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -44,7 +45,7 @@ export default function Login() {
         <title>Riverside School Building Committee — Sign In</title>
       </Head>
       <header>
-        <img src="/rsbc-logo.jpg" alt="Riverside School Building Committee" className="header-logo" />
+        <img src={RSBC_LOGO} alt="Riverside School Building Committee" className="header-logo" />
       </header>
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleSubmit}>
