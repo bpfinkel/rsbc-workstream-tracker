@@ -15,8 +15,11 @@ export default function Header({ active }) {
 
   return (
     <header>
-      <h1>Riverside School Building Committee</h1>
-      <div className="sub">The Committee Members' App</div>
+      <img
+        src="/rsbc-logo.jpg"
+        alt="Riverside School Building Committee"
+        className="header-logo"
+      />
       <nav className="page-nav">
         <Link href="/" className={'page-nav-link' + (active === 'tasks' ? ' active' : '')}>Tasks</Link>
         <Link href="/roster" className={'page-nav-link' + (active === 'roster' ? ' active' : '')}>Roster</Link>
