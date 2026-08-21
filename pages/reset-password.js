@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { createClient } from '../lib/supabase/client';
+import { RSBC_LOGO } from '../lib/rsbcLogo';
 
 export default function ResetPassword() {
   const [ready, setReady] = useState(false);
@@ -67,7 +68,7 @@ export default function ResetPassword() {
         <title>Riverside School Building Committee — Reset Password</title>
       </Head>
       <header>
-        <img src="/rsbc-logo.jpg" alt="Riverside School Building Committee" className="header-logo" />
+        <img src={RSBC_LOGO} alt="Riverside School Building Committee" className="header-logo" />
       </header>
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
