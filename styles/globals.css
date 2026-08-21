@@ -36,8 +36,8 @@ header {
   position: relative;
   z-index: 10;
 }
-header h1 { font-size: clamp(14px, 4vw, 19px); margin: 0; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
-header .sub { font-size: 15px; color: #b9c4cf; text-transform: uppercase; letter-spacing: 0.6px; font-style: italic; }
+header h1 { font-size: clamp(14px, 4vw, 19px); margin: 0; font-weight: 600; letter-spacing: 0.3px; }
+header .sub { font-size: 15px; color: #b9c4cf; letter-spacing: 0.6px; font-style: italic; }
 .page-nav { display: flex; flex-wrap: wrap; gap: 16px; row-gap: 8px; align-items: center; justify-content: center; margin-top: 6px; }
 .page-nav-link {
   color: #b9c4cf;
