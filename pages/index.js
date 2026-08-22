@@ -467,6 +467,9 @@ export default function Home() {
 
       <div className={'overlay' + (modalOpen ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
         <div className="modal">
+          <button type="button" className="close-btn" onClick={closeModal} aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
           <h3>{form.id ? 'Edit Task' : 'Add Task'}</h3>
           <div className="field">
             <label>Title</label>
@@ -501,13 +504,19 @@ export default function Home() {
           <div className="field">
             <label>Assigned to</label>
             <div className="assignee-grid">
-              {members.map((m) => (
-                <label key={m.name}>
-                  <input type="checkbox" checked={form.assignees.includes(m.name)} onChange={() => toggleAssignee(m.name)} />
-                  {' ' + m.name}
-                  {!m.officer && <span style={{ color: '#8a97a4' }}> ({m.role})</span>}
-                </label>
-              ))}
+              {members.map((m) => {
+                const checked = form.assignees.includes(m.name);
+                return (
+                  <label key={m.name} className={checked ? 'selected' : ''}>
+                    <input type="checkbox" className="assignee-checkbox" checked={checked} onChange={() => toggleAssignee(m.name)} />
+                    <span className="avatar">{initials(m.name)}</span>
+                    {m.name}
+                    {checked && (
+                      <svg className="check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
+                    )}
+                  </label>
+                );
+              })}
             </div>
             {form.assignees.filter((a) => !members.some((m) => m.name === a)).length > 0 && (
               <div style={{ marginTop: 8 }}>
