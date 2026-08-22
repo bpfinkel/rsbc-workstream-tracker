@@ -150,8 +150,8 @@ export default function Drafts() {
                   {d.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
                   {d.deadline ? <div className="deadline">Due {formatShortDate(d.deadline)}</div> : null}
                   <div className="deadline">From meeting {formatShortDate(d.sourceMeetingDate)}</div>
-                  <div className="modal-actions" style={{ marginTop: 12 }}>
-                    <button type="button" className="btn-danger" onClick={() => handleAction(d.id, 'reject')}>Veto</button>
+                  <div className="draft-actions">
+                    <button type="button" className="btn-veto" onClick={() => handleAction(d.id, 'reject')}>Veto</button>
                     <button type="button" className="btn-primary" onClick={() => handleAction(d.id, 'approve')}>OK — Add to Tasks</button>
                   </div>
                 </div>
