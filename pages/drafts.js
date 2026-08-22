@@ -143,7 +143,7 @@ export default function Drafts() {
           ) : (
             <div className="cards">
               {pending.map((d) => (
-                <div className="card" key={d.id}>
+                <div className="card draft-pending" key={d.id}>
                   <p className="title">{d.title}</p>
                   {d.description ? <p className="desc">{d.description}</p> : null}
                   <span className="chip">{d.workstream}</span>
@@ -179,7 +179,7 @@ export default function Drafts() {
                       {group.items.map((d) => (
                         <div className="row-compact" key={d.id} onClick={() => setSelected(d)}>
                           <span className="row-title">{d.title}</span>
-                          <span className="row-date">{d.status}</span>
+                          <span className={'row-status ' + String(d.status || '').toLowerCase()}>{d.status}</span>
                         </div>
                       ))}
                     </div>
