@@ -326,7 +326,11 @@ export default function Home() {
       <Head>
         <title>Riverside School Building Committee</title>
       </Head>
-      <Header active="tasks" actions={<button className="btn-primary" onClick={openAddModal}>+ Add Task</button>} />
+      <Header active="tasks" />
+
+      <div className="page-toolbar">
+        <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
+      </div>
 
       <div className="summary">
         <button type="button" className={'stat' + (!filterStatus && !filterOverdue ? ' active' : '')} onClick={clearStatusFilters}>
