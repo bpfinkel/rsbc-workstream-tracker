@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
 import Header from '../components/Header';
+
+const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
 
 export default function Account() {
   const router = useRouter();
@@ -11,6 +13,12 @@ export default function Account() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    meta.setAttribute('content', VIEWPORT_LOCKED);
+  }, []);
 
   async function handleSignOut() {
     if (!window.confirm('Are you sure you want to sign out?')) return;
