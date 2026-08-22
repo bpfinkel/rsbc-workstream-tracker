@@ -18,7 +18,6 @@ export default function Account() {
   const [members, setMembers] = useState([]);
   const [membersLoaded, setMembersLoaded] = useState(false);
   const [contactInitialized, setContactInitialized] = useState(false);
-  const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [contactError, setContactError] = useState('');
   const [contactSuccess, setContactSuccess] = useState(false);
@@ -51,7 +50,6 @@ export default function Account() {
 
   useEffect(() => {
     if (myMember && !contactInitialized) {
-      setContactEmail(myMember.email || '');
       setContactPhone(myMember.phone || '');
       setContactInitialized(true);
     }
@@ -98,7 +96,7 @@ export default function Account() {
       const res = await fetch('/api/members', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: myMember.name, email: contactEmail.trim(), phone: contactPhone.trim() })
+        body: JSON.stringify({ name: myMember.name, phone: contactPhone.trim() })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save');
@@ -148,7 +146,7 @@ export default function Account() {
             </div>
             <div className="field">
               <label>Email</label>
-              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required />
+              <div className="contact-value">{myMember.email}</div>
             </div>
             <div className="field">
               <label>Mobile</label>
