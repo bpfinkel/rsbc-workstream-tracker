@@ -275,11 +275,16 @@ main { padding: 4px 28px 60px 28px; }
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
-.roster-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; transition: background .12s; }
+.roster-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; transition: background .12s; }
 .roster-row + .roster-row { border-top: 1px solid var(--border); }
 .roster-row:hover { background: var(--bg); }
-.roster-name { font-size: 14px; font-weight: 500; color: var(--navy); }
-.roster-role { font-size: 12px; color: var(--slate); text-align: right; }
+.roster-avatar {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: #fff;
+  font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none;
+}
+.roster-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--navy); }
+.roster-role { font-size: 12px; color: var(--slate); text-align: right; flex: none; }
+.roster-chevron { color: var(--muted); flex: none; }
 .modal.contact-card { max-width: 360px; }
 .contact-field { margin-bottom: 14px; }
 .contact-label { display: block; font-size: 13px; font-weight: 600; color: var(--slate); margin-bottom: 3px; }
