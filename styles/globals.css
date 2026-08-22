@@ -467,6 +467,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .filter-select { width: 100%; }
   .filter-select select { width: 100%; }
   .filter-div { width: auto; height: 1px; align-self: auto; margin: 2px 4px; }
+  .header-actions { width: 100%; }
+  .header-actions .btn-primary { width: 100%; }
+  .view-toggle .view-btn { flex: 1; }
 }
 @media (max-width: 480px) {
   .summary, .filters, main, .admin-note, .view-toggle { padding-left: 16px; padding-right: 16px; }
