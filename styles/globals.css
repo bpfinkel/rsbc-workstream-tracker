@@ -36,7 +36,18 @@ header {
   position: relative;
   z-index: 10;
 }
-.header-logo { display: block; height: clamp(32px, 9vw, 46px); width: auto; max-width: 100%; }
+.header-left { display: flex; align-items: center; gap: clamp(8px, 2.5vw, 14px); min-width: 0; }
+.header-mark { width: clamp(32px, 9vw, 42px); height: clamp(32px, 9vw, 42px); border-radius: 10px; display: block; flex: none; }
+.header-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.header-titles h1 {
+  margin: 0; color: #fff; font-weight: 700; letter-spacing: 0.1px;
+  font-size: clamp(13px, calc(9px + 1.5vw), 19px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header-sub {
+  font-size: clamp(8px, 2.4vw, 10.5px); font-weight: 600; letter-spacing: 0.6px; color: #b9c4cf; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .header-accent { height: 3px; background: linear-gradient(90deg, var(--accent) 0%, #4a9873 40%, var(--navy-light) 100%); }
 .nav-bar {
   background: var(--navy-light);
