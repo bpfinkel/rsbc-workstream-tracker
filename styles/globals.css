@@ -429,11 +429,41 @@ main { padding: 4px 28px 60px 28px; }
   animation: toastIn .2s ease-out;
 }
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
-.next-meeting-card { cursor: default; }
-.next-meeting-card:hover { border-color: var(--border); box-shadow: var(--shadow-sm); transform: none; }
-.zoom-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--slate); }
-.zoom-block div { margin-bottom: 3px; }
-.zoom-block a { color: var(--navy-light); word-break: break-all; }
+.next-meeting-card { cursor: default; border-left-width: 5px; border-left-color: var(--accent); padding: 22px 26px; }
+.next-meeting-card:hover { border-color: var(--border); border-left-color: var(--accent); box-shadow: var(--shadow-sm); transform: none; }
+.nm-date { font-size: 19px; font-weight: 700; color: var(--navy); margin: 0 0 4px 0; }
+.nm-time { font-size: 13.5px; color: var(--slate); font-weight: 600; margin: 0 0 12px 0; }
+.nm-location { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--navy); line-height: 1.5; margin-bottom: 4px; }
+.nm-location svg { flex: none; margin-top: 2px; color: var(--accent); }
+.zoom-callout {
+  margin-top: 16px; padding: 14px 16px; background: var(--bg); border-radius: 9px;
+  border: 1px solid var(--border); font-size: 12.5px; color: var(--slate);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.zoom-callout a { color: var(--navy-light); word-break: break-all; }
+.zoom-callout .zb-label { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.4px; margin-bottom: 2px; }
+.nm-links { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.meeting-doc-link {
+  display: inline-flex; align-items: center; gap: 6px; background: #dcefe1; color: var(--accent-dark);
+  font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 20px; text-decoration: none;
+  transition: background .12s;
+}
+.meeting-doc-link:hover { background: #cbe6d3; }
+.meeting-doc-pending {
+  display: inline-flex; align-items: center; background: #eceef2; color: var(--muted);
+  font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 20px;
+}
+.archive-list {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.archive-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px; }
+.archive-row + .archive-row { border-top: 1px solid var(--border); }
+.archive-date { font-size: 13.5px; font-weight: 600; color: var(--navy); }
+.archive-links { display: flex; gap: 16px; font-size: 12.5px; }
+.archive-links a { color: var(--navy-light); font-weight: 600; text-decoration: none; }
+.archive-links a:hover { text-decoration: underline; }
+.archive-links .pending { color: var(--muted); font-weight: 500; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
   outline: 2px solid var(--red);
   outline-offset: 2px;
@@ -471,6 +501,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .filter-select select { width: 100%; }
   .filter-div { width: auto; height: 1px; align-self: auto; margin: 2px 4px; }
   .view-toggle .view-btn { flex: 1; }
+  .next-meeting-card { padding: 16px 18px; }
 }
 @media (max-width: 480px) {
   .summary, .filters, main, .admin-note, .view-toggle { padding-left: 16px; padding-right: 16px; }
