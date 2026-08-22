@@ -463,8 +463,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .modal.pdf-viewer { max-width: 100%; height: 100vh; border-radius: 0; }
   .summary { grid-template-columns: repeat(2, 1fr); }
   .filter-bar { flex-direction: column; padding: 8px; }
-  .filter-div { display: none; }
-  .filter-search, .filter-select, .filter-select select { width: 100%; }
+  .filter-search { flex: none; width: 100%; }
+  .filter-select { width: 100%; }
+  .filter-select select { width: 100%; }
+  .filter-div { width: auto; height: 1px; align-self: auto; margin: 2px 4px; }
 }
 @media (max-width: 480px) {
   .summary, .filters, main, .admin-note, .view-toggle { padding-left: 16px; padding-right: 16px; }
