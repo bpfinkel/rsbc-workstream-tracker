@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
 
@@ -32,6 +32,12 @@ function CalendarIcon() {
   );
 }
 
+function HistoryIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3.2 2" /></svg>
+  );
+}
+
 function FolderIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.2h8a1 1 0 0 1 1 1v9.3a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5z" /></svg>
@@ -50,11 +56,74 @@ function DocIcon() {
   );
 }
 
+function ChevronIcon({ open }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .15s', flexShrink: 0 }}>
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function locationText(location) {
+  if (location === 'hybrid') {
+    return <>Riverside School – Media Center | 90 Hendrie Ave, Riverside, CT 06878<br />Or via Zoom</>;
+  }
+  if (location === 'virtual') return 'Virtual Meeting via Zoom';
+  return 'See the agenda below for meeting location';
+}
+
+function MeetingHighlightCard({ meeting, location, openPdf }) {
+  return (
+    <div className="card next-meeting-card">
+      <p className="nm-date">{formatFullDate(meeting.date)}</p>
+      <p className="nm-time">{meeting.time} ET</p>
+      <div className="nm-location">
+        <LocationIcon />
+        <span>{locationText(location)}</span>
+      </div>
+      <div className="zoom-callout">
+        <div className="zb-label">Zoom Details</div>
+        <div><a href={ZOOM_LINK} target="_blank" rel="noreferrer">{ZOOM_LINK}</a></div>
+        <div>Telephone Dial-In: {ZOOM_DIAL_IN}</div>
+        <div>Meeting ID: {ZOOM_MEETING_ID}</div>
+        <div>Passcode: {ZOOM_PASSCODE}</div>
+      </div>
+      <div className="nm-links">
+        {meeting.agendaUrl ? (
+          <a className="meeting-doc-link" href={meeting.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', meeting.agendaUrl, meeting.date)}>
+            <DocIcon />
+            Agenda
+          </a>
+        ) : (
+          <span className="meeting-doc-pending">Agenda not posted yet</span>
+        )}
+        {meeting.noticeUrl && meeting.noticeUrl !== meeting.agendaUrl ? (
+          <a className="meeting-doc-link" href={meeting.noticeUrl} onClick={(e) => openPdf(e, 'Notice', meeting.noticeUrl, meeting.date)}>
+            <DocIcon />
+            Notice
+          </a>
+        ) : null}
+        {meeting.minutesUrl ? (
+          <a className="meeting-doc-link" href={meeting.minutesUrl} onClick={(e) => openPdf(e, 'Minutes', meeting.minutesUrl, meeting.date)}>
+            <DocIcon />
+            Minutes
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function Meetings() {
-  const [data, setData] = useState({ meetings: [], nextIndex: -1, location: 'unknown' });
+  const [data, setData] = useState({ meetings: [], nextIndex: -1, lastIndex: -1, location: 'unknown', lastLocation: 'unknown' });
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [pdfViewer, setPdfViewer] = useState(null);
+  const [nextOpen, setNextOpen] = useState(true);
+  const [lastOpen, setLastOpen] = useState(true);
+  const [archiveOpen, setArchiveOpen] = useState(true);
+  const [collapsedYears, setCollapsedYears] = useState(() => new Set());
 
   useEffect(() => {
     fetch('/api/meetings')
@@ -74,9 +143,32 @@ export default function Meetings() {
     return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
   }, [pdfViewer]);
 
-  const { meetings, nextIndex, location } = data;
+  const { meetings, nextIndex, lastIndex, location, lastLocation } = data;
   const nextMeeting = nextIndex >= 0 ? meetings[nextIndex] : null;
+  const lastMeeting = lastIndex >= 0 ? meetings[lastIndex] : null;
   const pastMeetings = meetings.filter((_, i) => i !== nextIndex).slice().reverse();
+
+  const yearGroups = useMemo(() => {
+    const groups = [];
+    const index = new Map();
+    pastMeetings.forEach((m) => {
+      const key = m.schoolYear || 'Other';
+      if (!index.has(key)) {
+        index.set(key, groups.length);
+        groups.push({ year: key, items: [] });
+      }
+      groups[index.get(key)].items.push(m);
+    });
+    return groups;
+  }, [pastMeetings]);
+
+  function toggleYear(year) {
+    setCollapsedYears((prev) => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year); else next.add(year);
+      return next;
+    });
+  }
 
   function openPdf(e, label, url, dateStr) {
     e.preventDefault();
@@ -96,76 +188,73 @@ export default function Meetings() {
             {error ? <div className="empty">{error}</div> : null}
 
             <div className="workstream-group">
-              <div className="ws-header">
+              <button type="button" className="ws-header ws-header-btn" onClick={() => setNextOpen((o) => !o)}>
                 <CalendarIcon />
                 <h2>Next Meeting</h2>
-              </div>
-              {nextMeeting ? (
-                <div className="card next-meeting-card">
-                  <p className="nm-date">{formatFullDate(nextMeeting.date)}</p>
-                  <p className="nm-time">{nextMeeting.time} ET</p>
-                  <div className="nm-location">
-                    <LocationIcon />
-                    <span>
-                      {location === 'hybrid' ? (
-                        <>Riverside School – Media Center | 90 Hendrie Ave, Riverside, CT 06878<br />Or via Zoom</>
-                      ) : location === 'virtual' ? (
-                        'Virtual Meeting via Zoom'
-                      ) : (
-                        'See the agenda below for meeting location'
-                      )}
-                    </span>
-                  </div>
-                  <div className="zoom-callout">
-                    <div className="zb-label">Zoom Details</div>
-                    <div><a href={ZOOM_LINK} target="_blank" rel="noreferrer">{ZOOM_LINK}</a></div>
-                    <div>Telephone Dial-In: {ZOOM_DIAL_IN}</div>
-                    <div>Meeting ID: {ZOOM_MEETING_ID}</div>
-                    <div>Passcode: {ZOOM_PASSCODE}</div>
-                  </div>
-                  <div className="nm-links">
-                    {nextMeeting.agendaUrl ? (
-                      <a className="meeting-doc-link" href={nextMeeting.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', nextMeeting.agendaUrl, nextMeeting.date)}>
-                        <DocIcon />
-                        Agenda
-                      </a>
-                    ) : (
-                      <span className="meeting-doc-pending">Agenda not posted yet</span>
-                    )}
-                    {nextMeeting.noticeUrl && nextMeeting.noticeUrl !== nextMeeting.agendaUrl ? (
-                      <a className="meeting-doc-link" href={nextMeeting.noticeUrl} onClick={(e) => openPdf(e, 'Notice', nextMeeting.noticeUrl, nextMeeting.date)}>
-                        <DocIcon />
-                        Notice
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-                <div className="empty">No upcoming meeting found on the committee's public schedule.</div>
-              )}
+                <ChevronIcon open={nextOpen} className="ws-header-chevron" />
+              </button>
+              {nextOpen ? (
+                nextMeeting ? (
+                  <MeetingHighlightCard meeting={nextMeeting} location={location} openPdf={openPdf} />
+                ) : (
+                  <div className="empty">No upcoming meeting found on the committee's public schedule.</div>
+                )
+              ) : null}
             </div>
 
             <div className="workstream-group">
-              <div className="ws-header">
+              <button type="button" className="ws-header ws-header-btn" onClick={() => setLastOpen((o) => !o)}>
+                <HistoryIcon />
+                <h2>Last Meeting</h2>
+                <ChevronIcon open={lastOpen} className="ws-header-chevron" />
+              </button>
+              {lastOpen ? (
+                lastMeeting ? (
+                  <MeetingHighlightCard meeting={lastMeeting} location={lastLocation} openPdf={openPdf} />
+                ) : (
+                  <div className="empty">No prior meeting found on the committee's public schedule.</div>
+                )
+              ) : null}
+            </div>
+
+            <div className="workstream-group">
+              <button type="button" className="ws-header ws-header-btn" onClick={() => setArchiveOpen((o) => !o)}>
                 <FolderIcon />
                 <h2>Meeting Archive</h2>
                 <span className="ws-count">{pastMeetings.length}</span>
-              </div>
-              {pastMeetings.length === 0 ? (
-                <div className="empty">No past meetings listed yet.</div>
-              ) : (
-                <div className="archive-list">
-                  {pastMeetings.map((m) => (
-                    <div className="archive-row" key={m.date}>
-                      <span className="archive-date">{formatShortDate(m.date)}</span>
-                      <span className="archive-links">
-                        {m.agendaUrl ? <a href={m.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', m.agendaUrl, m.date)}>Agenda</a> : null}
-                        {m.minutesUrl ? <a href={m.minutesUrl} onClick={(e) => openPdf(e, 'Minutes', m.minutesUrl, m.date)}>Minutes</a> : <span className="pending">Minutes pending</span>}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                <ChevronIcon open={archiveOpen} className="ws-header-chevron" />
+              </button>
+              {archiveOpen ? (
+                pastMeetings.length === 0 ? (
+                  <div className="empty">No past meetings listed yet.</div>
+                ) : (
+                  yearGroups.map((group) => {
+                    const open = !collapsedYears.has(group.year);
+                    return (
+                      <div key={group.year}>
+                        <button type="button" className="date-group-label" onClick={() => toggleYear(group.year)}>
+                          <ChevronIcon open={open} />
+                          {group.year}
+                          <span className="date-group-count">({group.items.length})</span>
+                        </button>
+                        {open ? (
+                          <div className="archive-list">
+                            {group.items.map((m) => (
+                              <div className="archive-row" key={m.date}>
+                                <span className="archive-date">{formatShortDate(m.date)}</span>
+                                <span className="archive-links">
+                                  {m.agendaUrl ? <a href={m.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', m.agendaUrl, m.date)}>Agenda</a> : null}
+                                  {m.minutesUrl ? <a href={m.minutesUrl} onClick={(e) => openPdf(e, 'Minutes', m.minutesUrl, m.date)}>Minutes</a> : <span className="pending">Minutes pending</span>}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })
+                )
+              ) : null}
             </div>
           </>
         )}
