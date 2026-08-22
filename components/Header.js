@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
 import { isAdmin } from '../lib/admin';
-import { RSBC_MARK } from '../lib/rsbcMark';
 
 export default function Header({ active, actions }) {
   const [admin, setAdmin] = useState(false);
@@ -18,7 +17,7 @@ export default function Header({ active, actions }) {
     <>
       <header>
         <div className="header-left">
-          <img src={RSBC_MARK} alt="RSBC" className="header-mark" />
+          <img src="/api/apple-touch-icon" alt="RSBC" className="header-mark" />
           <div className="header-titles">
             <h1>Riverside School Building Committee</h1>
             <div className="header-sub">Committee Member Portal</div>
