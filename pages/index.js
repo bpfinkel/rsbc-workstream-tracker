@@ -31,6 +31,22 @@ function formatDate(dateStr) {
   return `${m}/${d}/${y}`;
 }
 
+function StatusIcon({ status }) {
+  if (status === 'In Progress') {
+    return (
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5-7 4 14L16 10h5" /></svg>
+    );
+  }
+  if (status === 'Completed') {
+    return (
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M8.2 12.3l2.6 2.6 5-5.4" /></svg>
+    );
+  }
+  return (
+    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" /></svg>
+  );
+}
+
 export default function Home() {
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
@@ -264,16 +280,28 @@ export default function Home() {
 
       <div className="summary">
         <button type="button" className={'stat' + (!filterStatus && !filterOverdue ? ' active' : '')} onClick={clearStatusFilters}>
-          <div className="n">{summary.total}</div><div className="l">Active tasks</div>
+          <div className="stat-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z" /><path d="M3 13l9 5 9-5" /></svg>
+          </div>
+          <div className="stat-body"><div className="n">{summary.total}</div><div className="l">Active tasks</div></div>
         </button>
         <button type="button" className={'stat overdue' + (filterOverdue ? ' active' : '')} onClick={selectOverdueFilter}>
-          <div className="n">{summary.overdue}</div><div className="l">Overdue</div>
+          <div className="stat-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5 21.5 20h-19L12 3.5z" /><path d="M12 9.5v5" /><circle cx="12" cy="17.1" r="0.6" fill="currentColor" stroke="none" /></svg>
+          </div>
+          <div className="stat-body"><div className="n">{summary.overdue}</div><div className="l">Overdue</div></div>
         </button>
-        <button type="button" className={'stat' + (filterStatus === 'In Progress' ? ' active' : '')} onClick={() => selectStatusFilter('In Progress')}>
-          <div className="n">{summary.inProgress}</div><div className="l">In progress</div>
+        <button type="button" className={'stat inprogress' + (filterStatus === 'In Progress' ? ' active' : '')} onClick={() => selectStatusFilter('In Progress')}>
+          <div className="stat-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5-7 4 14L16 10h5" /></svg>
+          </div>
+          <div className="stat-body"><div className="n">{summary.inProgress}</div><div className="l">In progress</div></div>
         </button>
         <button type="button" className={'stat done' + (filterStatus === 'Completed' ? ' active' : '')} onClick={() => selectStatusFilter('Completed')}>
-          <div className="n">{summary.done}</div><div className="l">Completed</div>
+          <div className="stat-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M8.2 12.3l2.6 2.6 5-5.4" /></svg>
+          </div>
+          <div className="stat-body"><div className="n">{summary.done}</div><div className="l">Completed</div></div>
         </button>
       </div>
 
@@ -346,7 +374,7 @@ export default function Home() {
                         </div>
                         <p className="title">{t.title}</p>
                         {t.description ? <p className="desc">{t.description}</p> : null}
-                        <span className={'badge ' + statusClass(t.status)}>{t.status}</span>
+                        <span className={'badge ' + statusClass(t.status)}><StatusIcon status={t.status} />{t.status}</span>
                         {t.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
                         <div className={'deadline ' + deadlineClass}>{deadlineLabel}</div>
                       </div>
