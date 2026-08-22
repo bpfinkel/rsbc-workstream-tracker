@@ -204,6 +204,7 @@ main { padding: 4px 28px 60px 28px; }
 .card.status-Not-Started { border-left-color: var(--muted); }
 .card.status-In-Progress { border-left-color: var(--blue); }
 .card.status-Completed { opacity: 0.7; border-left-color: var(--accent); }
+.card.draft-pending { border-left-color: var(--amber); }
 .card .title { font-size: 15px; font-weight: 600; margin: 0 0 4px 0; padding-right: 60px; }
 .card .desc { font-size: 13px; color: var(--slate); margin: 0 0 10px 0; white-space: pre-wrap; }
 .badge {
@@ -279,6 +280,12 @@ main { padding: 4px 28px 60px 28px; }
 .row-date { font-size: 12px; color: var(--slate); white-space: nowrap; flex-shrink: 0; }
 .row-date.overdue { color: var(--red); font-weight: 700; }
 .row-date.soon { color: var(--amber); font-weight: 700; }
+.row-status {
+  font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  white-space: nowrap; flex-shrink: 0; background: #e6e9ec; color: var(--slate);
+}
+.row-status.approved { background: #dcefe1; color: var(--accent); }
+.row-status.rejected { background: rgba(164,52,58,0.1); color: var(--red); }
 .roster-list {
   background: var(--card);
   border: 1px solid var(--border);
