@@ -31,6 +31,16 @@ function formatDate(dateStr) {
   return `${m}/${d}/${y}`;
 }
 
+function initials(name) {
+  return String(name || '')
+    .split(' ')
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function StatusIcon({ status }) {
   if (status === 'In Progress') {
     return (
@@ -44,6 +54,46 @@ function StatusIcon({ status }) {
   }
   return (
     <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" /></svg>
+  );
+}
+
+function CycleIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 11a8 8 0 0 0-14.9-3.4M4 4v4.6h4.6" /><path d="M4 13a8 8 0 0 0 14.9 3.4M20 20v-4.6h-4.6" /></svg>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.2h8a1 1 0 0 1 1 1v9.3a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5z" /></svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+  );
+}
+
+function DeadlineIcon({ variant }) {
+  if (variant === 'overdue') {
+    return (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 8v5" /><circle cx="12" cy="16" r="0.6" fill="currentColor" stroke="none" /></svg>
+    );
+  }
+  if (variant === 'soon') {
+    return (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3.2 2" /></svg>
+    );
+  }
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M8 3v4M16 3v4M3.5 10h17" /></svg>
   );
 }
 
@@ -305,20 +355,35 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="filters">
-        <input type="text" placeholder="Search tasks..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select value={filterWorkstream} onChange={(e) => setFilterWorkstream(e.target.value)}>
-          <option value="">All workstreams</option>
-          {workstreams.map((w) => <option key={w} value={w}>{w}</option>)}
-        </select>
-        <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
-          <option value="">All assignees</option>
-          {allAssigneeNames.map((name) => <option key={name} value={name}>{name}</option>)}
-        </select>
-        <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setFilterOverdue(false); }}>
-          <option value="">All statuses</option>
-          {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+      <div className="filter-bar">
+        <div className="filter-search">
+          <SearchIcon />
+          <input type="text" placeholder="Search tasks..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <div className="filter-div" />
+        <div className="filter-select">
+          <select value={filterWorkstream} onChange={(e) => setFilterWorkstream(e.target.value)}>
+            <option value="">All workstreams</option>
+            {workstreams.map((w) => <option key={w} value={w}>{w}</option>)}
+          </select>
+          <ChevronDownIcon />
+        </div>
+        <div className="filter-div" />
+        <div className="filter-select">
+          <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
+            <option value="">All assignees</option>
+            {allAssigneeNames.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+          <ChevronDownIcon />
+        </div>
+        <div className="filter-div" />
+        <div className="filter-select">
+          <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setFilterOverdue(false); }}>
+            <option value="">All statuses</option>
+            {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <ChevronDownIcon />
+        </div>
       </div>
 
       <div className="view-toggle">
@@ -332,7 +397,11 @@ export default function Home() {
         ) : (
           groupNames.map((w) => (
             <div className="workstream-group" key={w}>
-              <h2>{w} ({groups[w].length})</h2>
+              <div className="ws-header">
+                <FolderIcon />
+                <h2>{w}</h2>
+                <span className="ws-count">{groups[w].length}</span>
+              </div>
               {viewMode === 'compact' ? (
                 <div className="compact-list">
                   {groups[w].map((t) => {
@@ -354,7 +423,7 @@ export default function Home() {
                 <div className="cards">
                   {groups[w].map((t) => {
                     const du = daysUntil(t.deadline);
-                    let deadlineClass = '';
+                    let deadlineClass = 'none';
                     let deadlineLabel = 'No deadline set';
                     if (t.deadline) {
                       if (t.status !== 'Completed' && du < 0) {
@@ -364,19 +433,24 @@ export default function Home() {
                         deadlineClass = 'soon';
                         deadlineLabel = 'Due ' + formatDate(t.deadline) + ' (' + du + 'd)';
                       } else {
+                        deadlineClass = '';
                         deadlineLabel = 'Due ' + formatDate(t.deadline);
                       }
                     }
                     return (
                       <div className={'card ' + statusClass(t.status)} key={t.id} onClick={() => openEditModal(t)}>
-                        <div className="card-actions">
-                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); quickStatus(t); }}>&#8635;</button>
+                        <div className="card-top">
+                          <span className={'badge ' + statusClass(t.status)}><StatusIcon status={t.status} />{t.status}</span>
+                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); quickStatus(t); }} title="Cycle status">
+                            <CycleIcon />
+                          </button>
                         </div>
                         <p className="title">{t.title}</p>
                         {t.description ? <p className="desc">{t.description}</p> : null}
-                        <span className={'badge ' + statusClass(t.status)}><StatusIcon status={t.status} />{t.status}</span>
-                        {t.assignees.map((a) => <span className="chip" key={a}>{a}</span>)}
-                        <div className={'deadline ' + deadlineClass}>{deadlineLabel}</div>
+                        <div className="card-assignees">
+                          {t.assignees.map((a) => <span className="chip-avatar" key={a}><span className="avatar">{initials(a)}</span>{a}</span>)}
+                        </div>
+                        <div className={'deadline ' + deadlineClass}><DeadlineIcon variant={deadlineClass} />{deadlineLabel}</div>
                       </div>
                     );
                   })}
