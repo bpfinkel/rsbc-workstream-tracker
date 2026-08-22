@@ -33,7 +33,7 @@ export default function Header({ active }) {
           <Link href="/scoring" className={'page-nav-link' + (active === 'scoring' ? ' active' : '')}>RFP Scoring</Link>
           <Link href="/change-password" className={'page-nav-link' + (active === 'account' ? ' active' : '')}>My Account</Link>
           {admin ? (
-            <Link href="/drafts" className={'page-nav-link admin-link' + (active === 'drafts' ? ' active' : '')}>Drafts</Link>
+            <Link href="/drafts" className={'page-nav-link admin-link' + (active === 'drafts' ? ' active' : '')}>Draft Tasks (Admin)</Link>
           ) : null}
         </nav>
       </div>
