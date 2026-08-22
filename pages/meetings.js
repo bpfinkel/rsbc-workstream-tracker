@@ -123,7 +123,9 @@ export default function Meetings() {
   const [nextOpen, setNextOpen] = useState(true);
   const [lastOpen, setLastOpen] = useState(true);
   const [archiveOpen, setArchiveOpen] = useState(true);
-  const [collapsedYears, setCollapsedYears] = useState(() => new Set());
+  // null = default state (only the most recent school year open) until the
+  // user explicitly expands/collapses one, matching the Drafts History pattern.
+  const [expandedYears, setExpandedYears] = useState(null);
 
   useEffect(() => {
     fetch('/api/meetings')
@@ -162,9 +164,15 @@ export default function Meetings() {
     return groups;
   }, [pastMeetings]);
 
+  function isYearOpen(year, idx) {
+    if (expandedYears === null) return idx === 0;
+    return expandedYears.has(year);
+  }
+
   function toggleYear(year) {
-    setCollapsedYears((prev) => {
-      const next = new Set(prev);
+    setExpandedYears((prev) => {
+      const base = prev === null ? new Set(yearGroups.length > 0 ? [yearGroups[0].year] : []) : prev;
+      const next = new Set(base);
       if (next.has(year)) next.delete(year); else next.add(year);
       return next;
     });
@@ -228,8 +236,8 @@ export default function Meetings() {
                 pastMeetings.length === 0 ? (
                   <div className="empty">No past meetings listed yet.</div>
                 ) : (
-                  yearGroups.map((group) => {
-                    const open = !collapsedYears.has(group.year);
+                  yearGroups.map((group, idx) => {
+                    const open = isYearOpen(group.year, idx);
                     return (
                       <div key={group.year}>
                         <button type="button" className="date-group-label" onClick={() => toggleYear(group.year)}>
