@@ -6,6 +6,14 @@ import Header from '../components/Header';
 
 const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
 
+function formatPhoneInput(raw) {
+  const digits = raw.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export default function Account() {
   const router = useRouter();
   const [password, setPassword] = useState('');
@@ -50,7 +58,7 @@ export default function Account() {
 
   useEffect(() => {
     if (myMember && !contactInitialized) {
-      setContactPhone(myMember.phone || '');
+      setContactPhone(formatPhoneInput(myMember.phone || ''));
       setContactInitialized(true);
     }
   }, [myMember, contactInitialized]);
@@ -150,7 +158,7 @@ export default function Account() {
             </div>
             <div className="field">
               <label>Mobile</label>
-              <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+              <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(formatPhoneInput(e.target.value))} />
             </div>
             {contactError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{contactError}</div> : null}
             {contactSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Contact card updated.</div> : null}
