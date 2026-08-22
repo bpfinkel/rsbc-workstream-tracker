@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
 
+const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+
 function formatShortDate(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -74,6 +76,12 @@ export default function Drafts() {
 
   useEffect(() => {
     loadDrafts().catch((e) => setError(e.message));
+  }, []);
+
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    meta.setAttribute('content', VIEWPORT_LOCKED);
   }, []);
 
   async function handleAction(id, action) {
