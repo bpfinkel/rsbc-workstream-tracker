@@ -13,11 +13,19 @@ export default function Account() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="viewport"]');
     if (!meta) return;
     meta.setAttribute('content', VIEWPORT_LOCKED);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.email) setEmail(data.user.email);
+    });
   }, []);
 
   async function handleSignOut() {
@@ -78,6 +86,7 @@ export default function Account() {
         <div className="modal" style={{ maxWidth: 360, width: '100%', textAlign: 'center' }}>
           <button type="button" className="btn-secondary" onClick={handleSignOut} style={{ width: '100%' }}>Sign Out</button>
         </div>
+        {email ? <div className="account-note">Signed in as {email}</div> : null}
       </main>
     </>
   );
