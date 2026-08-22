@@ -33,6 +33,7 @@ export default function ForgotPassword() {
       <header>
         <img src={RSBC_LOGO} alt="Riverside School Building Committee" className="header-logo" />
       </header>
+      <div className="header-accent" />
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
           <h3>Reset Password</h3>
