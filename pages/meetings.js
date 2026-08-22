@@ -26,6 +26,30 @@ function embedUrl(pdfUrl) {
   return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
 }
 
+function CalendarIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M8 3v4M16 3v4M3.5 10h17" /></svg>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.2h8a1 1 0 0 1 1 1v9.3a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5z" /></svg>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.3" /></svg>
+  );
+}
+
+function DocIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v5h5M6 3h8l5 5v13H6z" /></svg>
+  );
+}
+
 export default function Meetings() {
   const [data, setData] = useState({ meetings: [], nextIndex: -1, location: 'unknown' });
   const [loaded, setLoaded] = useState(false);
@@ -72,34 +96,47 @@ export default function Meetings() {
             {error ? <div className="empty">{error}</div> : null}
 
             <div className="workstream-group">
-              <h2>Next Meeting</h2>
+              <div className="ws-header">
+                <CalendarIcon />
+                <h2>Next Meeting</h2>
+              </div>
               {nextMeeting ? (
                 <div className="card next-meeting-card">
-                  <p className="title">{formatFullDate(nextMeeting.date)}</p>
-                  <p className="desc">{nextMeeting.time} ET</p>
-                  <p className="desc">
-                    {location === 'hybrid' ? (
-                      <>Riverside School – Media Center | 90 Hendrie Ave, Riverside, CT 06878<br />Or via Zoom</>
-                    ) : location === 'virtual' ? (
-                      'Virtual Meeting via Zoom'
-                    ) : (
-                      'See the agenda below for meeting location'
-                    )}
-                  </p>
-                  <div className="zoom-block">
+                  <p className="nm-date">{formatFullDate(nextMeeting.date)}</p>
+                  <p className="nm-time">{nextMeeting.time} ET</p>
+                  <div className="nm-location">
+                    <LocationIcon />
+                    <span>
+                      {location === 'hybrid' ? (
+                        <>Riverside School – Media Center | 90 Hendrie Ave, Riverside, CT 06878<br />Or via Zoom</>
+                      ) : location === 'virtual' ? (
+                        'Virtual Meeting via Zoom'
+                      ) : (
+                        'See the agenda below for meeting location'
+                      )}
+                    </span>
+                  </div>
+                  <div className="zoom-callout">
+                    <div className="zb-label">Zoom Details</div>
                     <div><a href={ZOOM_LINK} target="_blank" rel="noreferrer">{ZOOM_LINK}</a></div>
                     <div>Telephone Dial-In: {ZOOM_DIAL_IN}</div>
                     <div>Meeting ID: {ZOOM_MEETING_ID}</div>
                     <div>Passcode: {ZOOM_PASSCODE}</div>
                   </div>
-                  <div style={{ marginTop: 12 }}>
+                  <div className="nm-links">
                     {nextMeeting.agendaUrl ? (
-                      <a className="chip chip-link" href={nextMeeting.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', nextMeeting.agendaUrl, nextMeeting.date)}>Agenda</a>
+                      <a className="meeting-doc-link" href={nextMeeting.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', nextMeeting.agendaUrl, nextMeeting.date)}>
+                        <DocIcon />
+                        Agenda
+                      </a>
                     ) : (
-                      <span className="chip">Agenda not posted yet</span>
+                      <span className="meeting-doc-pending">Agenda not posted yet</span>
                     )}
                     {nextMeeting.noticeUrl && nextMeeting.noticeUrl !== nextMeeting.agendaUrl ? (
-                      <a className="chip chip-link" href={nextMeeting.noticeUrl} onClick={(e) => openPdf(e, 'Notice', nextMeeting.noticeUrl, nextMeeting.date)}>Notice</a>
+                      <a className="meeting-doc-link" href={nextMeeting.noticeUrl} onClick={(e) => openPdf(e, 'Notice', nextMeeting.noticeUrl, nextMeeting.date)}>
+                        <DocIcon />
+                        Notice
+                      </a>
                     ) : null}
                   </div>
                 </div>
@@ -109,17 +146,21 @@ export default function Meetings() {
             </div>
 
             <div className="workstream-group">
-              <h2>Meeting Archive ({pastMeetings.length})</h2>
+              <div className="ws-header">
+                <FolderIcon />
+                <h2>Meeting Archive</h2>
+                <span className="ws-count">{pastMeetings.length}</span>
+              </div>
               {pastMeetings.length === 0 ? (
                 <div className="empty">No past meetings listed yet.</div>
               ) : (
-                <div className="roster-list">
+                <div className="archive-list">
                   {pastMeetings.map((m) => (
-                    <div className="roster-row" key={m.date}>
-                      <span className="roster-name">{formatShortDate(m.date)}</span>
-                      <span className="roster-role">
-                        {m.agendaUrl ? <a href={m.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', m.agendaUrl, m.date)} style={{ marginRight: 10 }}>Agenda</a> : null}
-                        {m.minutesUrl ? <a href={m.minutesUrl} onClick={(e) => openPdf(e, 'Minutes', m.minutesUrl, m.date)}>Minutes</a> : <span style={{ color: 'var(--muted)' }}>Minutes pending</span>}
+                    <div className="archive-row" key={m.date}>
+                      <span className="archive-date">{formatShortDate(m.date)}</span>
+                      <span className="archive-links">
+                        {m.agendaUrl ? <a href={m.agendaUrl} onClick={(e) => openPdf(e, 'Agenda', m.agendaUrl, m.date)}>Agenda</a> : null}
+                        {m.minutesUrl ? <a href={m.minutesUrl} onClick={(e) => openPdf(e, 'Minutes', m.minutesUrl, m.date)}>Minutes</a> : <span className="pending">Minutes pending</span>}
                       </span>
                     </div>
                   ))}
