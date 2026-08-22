@@ -52,19 +52,37 @@ function parseMeetingRows(tableHtml) {
 }
 
 // The committee's website posts one <table> per school year (e.g. "2026-2027
-// Meetings", "2025-2026 Meeting", "2024-2025 Meetings"), each immediately
-// preceded by an "fsElementTitle" <h2> heading with that exact label. Matching
-// heading+table pairs picks up every school year present on the page, not
-// just whichever one happens to be first, without hardcoding which years exist.
+// Meetings", "2025-2026 Meeting", "2024-2025 Meetings"), but the page also has
+// other "fsElementTitle" headings with no table of their own (the tab-container
+// title, "Committee Members", etc). Matching "heading followed eventually by
+// any table" would let those unrelated headings steal a school year's table
+// out from under it. Instead, find every table and every heading independently,
+// then pair each table with whichever heading immediately precedes it — the
+// one relationship that's actually true for these pages — and skip any pairing
+// whose heading doesn't say "Meeting(s)" so a future unrelated table can't be
+// misread as a schedule.
 function parseAllMeetings(html) {
-  const sectionRegex = /<h2 class="fsElementTitle"[^>]*>\s*<a[^>]*>([^<]+)<\/a>\s*<\/h2>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/g;
+  const headingRegex = /<h2 class="fsElementTitle"[^>]*>\s*<a[^>]*>([^<]+)<\/a>\s*<\/h2>/g;
+  const headings = [];
+  let headingMatch;
+  while ((headingMatch = headingRegex.exec(html))) {
+    headings.push({ text: headingMatch[1], index: headingMatch.index });
+  }
+
+  const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/g;
   const all = [];
-  let sectionMatch;
-  while ((sectionMatch = sectionRegex.exec(html))) {
-    const headingText = sectionMatch[1];
+  let tableMatch;
+  while ((tableMatch = tableRegex.exec(html))) {
+    const tableIndex = tableMatch.index;
+    let heading = null;
+    for (const h of headings) {
+      if (h.index < tableIndex && (!heading || h.index > heading.index)) heading = h;
+    }
+    const headingText = heading ? heading.text : '';
+    if (!/\bMeetings?\b/i.test(headingText)) continue;
     const yearMatch = headingText.match(/(\d{4}-\d{4})/);
     const schoolYear = yearMatch ? yearMatch[1] : headingText.trim();
-    const rows = parseMeetingRows(sectionMatch[2]).map((m) => ({ ...m, schoolYear }));
+    const rows = parseMeetingRows(tableMatch[1]).map((m) => ({ ...m, schoolYear }));
     all.push(...rows);
   }
   return all.sort((a, b) => a.date.localeCompare(b.date));
