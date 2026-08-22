@@ -47,6 +47,7 @@ export default function Login() {
       <header>
         <img src={RSBC_LOGO} alt="Riverside School Building Committee" className="header-logo" />
       </header>
+      <div className="header-accent" />
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleSubmit}>
           <h3>Sign In</h3>
