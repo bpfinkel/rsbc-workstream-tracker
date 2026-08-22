@@ -14,6 +14,18 @@ function formatPhoneInput(raw) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="modal-header-chevron"
+      style={{ transform: open ? 'rotate(180deg)' : 'none' }}
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
 export default function Account() {
   const router = useRouter();
   const [password, setPassword] = useState('');
@@ -22,6 +34,7 @@ export default function Account() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const [members, setMembers] = useState([]);
   const [membersLoaded, setMembersLoaded] = useState(false);
@@ -30,6 +43,7 @@ export default function Account() {
   const [contactError, setContactError] = useState('');
   const [contactSuccess, setContactSuccess] = useState(false);
   const [contactLoading, setContactLoading] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="viewport"]');
@@ -124,48 +138,72 @@ export default function Account() {
       </Head>
       <Header active="account" />
       <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40, gap: 20 }}>
-        <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleSubmit}>
-          <h3>Change Password</h3>
-          <div className="field">
-            <label>New Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
-          </div>
-          <div className="field">
-            <label>Confirm Password</label>
-            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-          </div>
-          {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
-          {success ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Password updated.</div> : null}
-          <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Saving…' : 'Save Password'}
+        <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
+          <button
+            type="button"
+            className="modal-header-btn"
+            style={{ marginBottom: passwordOpen ? 16 : 0 }}
+            onClick={() => setPasswordOpen((o) => !o)}
+          >
+            <h3>Change Password</h3>
+            <ChevronIcon open={passwordOpen} />
           </button>
-        </form>
+          {passwordOpen ? (
+            <form onSubmit={handleSubmit}>
+              <div className="field">
+                <label>New Password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
+              </div>
+              <div className="field">
+                <label>Confirm Password</label>
+                <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+              </div>
+              {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
+              {success ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Password updated.</div> : null}
+              <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
+                {loading ? 'Saving…' : 'Save Password'}
+              </button>
+            </form>
+          ) : null}
+        </div>
 
         {membersLoaded && myMember ? (
-          <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleContactSave}>
-            <h3>My Contact Card</h3>
-            <div className="field">
-              <label>Name</label>
-              <div className="contact-value">{myMember.name}</div>
-            </div>
-            <div className="field">
-              <label>Title</label>
-              <div className="contact-value">{myMember.role}</div>
-            </div>
-            <div className="field">
-              <label>Email</label>
-              <div className="contact-value">{myMember.email}</div>
-            </div>
-            <div className="field">
-              <label>Mobile</label>
-              <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(formatPhoneInput(e.target.value))} />
-            </div>
-            {contactError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{contactError}</div> : null}
-            {contactSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Contact card updated.</div> : null}
-            <button className="btn-primary" type="submit" disabled={contactLoading} style={{ width: '100%' }}>
-              {contactLoading ? 'Saving…' : 'Save Contact Card'}
+          <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
+            <button
+              type="button"
+              className="modal-header-btn"
+              style={{ marginBottom: contactOpen ? 16 : 0 }}
+              onClick={() => setContactOpen((o) => !o)}
+            >
+              <h3>My Contact Card</h3>
+              <ChevronIcon open={contactOpen} />
             </button>
-          </form>
+            {contactOpen ? (
+              <form onSubmit={handleContactSave}>
+                <div className="field">
+                  <label>Name</label>
+                  <div className="contact-value">{myMember.name}</div>
+                </div>
+                <div className="field">
+                  <label>Title</label>
+                  <div className="contact-value">{myMember.role}</div>
+                </div>
+                <div className="field">
+                  <label>Email</label>
+                  <div className="contact-value">{myMember.email}</div>
+                </div>
+                <div className="field">
+                  <label>Mobile</label>
+                  <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(formatPhoneInput(e.target.value))} />
+                </div>
+                {contactError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{contactError}</div> : null}
+                {contactSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Contact card updated.</div> : null}
+                <button className="btn-primary" type="submit" disabled={contactLoading} style={{ width: '100%' }}>
+                  {contactLoading ? 'Saving…' : 'Save Contact Card'}
+                </button>
+              </form>
+            ) : null}
+          </div>
         ) : membersLoaded && !myMember ? (
           <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
             <h3>My Contact Card</h3>
