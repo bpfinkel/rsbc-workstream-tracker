@@ -204,7 +204,8 @@ main { padding: 4px 28px 60px 28px; }
 .card.status-Not-Started { border-left-color: var(--muted); }
 .card.status-In-Progress { border-left-color: var(--blue); }
 .card.status-Completed { opacity: 0.7; border-left-color: var(--accent); }
-.card.draft-pending { border-left-color: var(--amber); }
+.card.draft-pending { border-left-color: var(--amber); cursor: default; }
+.card.draft-pending:hover { border-color: var(--border); box-shadow: var(--shadow-sm); transform: none; }
 .card .title { font-size: 15px; font-weight: 600; margin: 0 0 4px 0; padding-right: 60px; }
 .card .desc { font-size: 13px; color: var(--slate); margin: 0 0 10px 0; white-space: pre-wrap; }
 .badge {
@@ -367,6 +368,7 @@ main { padding: 4px 28px 60px 28px; }
   padding: 2px 0;
 }
 .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+.draft-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; }
 .btn-secondary {
   background: #fff; border: 1px solid var(--border); color: var(--navy);
   padding: 9px 16px; border-radius: 8px; font-size: 14px; cursor: pointer;
@@ -376,6 +378,13 @@ main { padding: 4px 28px 60px 28px; }
 .btn-secondary:active { transform: scale(0.97); }
 .btn-danger { background: none; border: none; color: var(--red); font-size: 13px; cursor: pointer; transition: opacity .12s; }
 .btn-danger:hover { opacity: 0.75; }
+.btn-veto {
+  background: none; border: 1px solid var(--border); color: var(--red);
+  padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: border-color .12s, background .12s;
+}
+.btn-veto:hover { border-color: var(--red); background: rgba(164,52,58,0.06); }
+.btn-veto:active { transform: scale(0.97); }
 .modal-right { display: flex; gap: 8px; }
 #toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
