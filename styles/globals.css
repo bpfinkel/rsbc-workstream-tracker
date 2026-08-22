@@ -103,12 +103,24 @@ header {
   text-align: left;
   font: inherit;
   color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   box-shadow: var(--shadow-sm);
   transition: border-color .12s, box-shadow .15s, transform .15s;
 }
 .stat:hover { border-color: var(--navy-light); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .stat.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(47,111,79,0.15); transform: none; }
 .stat.overdue.active { border-color: var(--red); box-shadow: 0 0 0 2px rgba(164,52,58,0.15); transform: none; }
+.stat-icon {
+  width: 30px; height: 30px; border-radius: 8px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(12,35,64,0.06); color: var(--navy);
+}
+.stat.overdue .stat-icon { background: rgba(164,52,58,0.08); color: var(--red); }
+.stat.inprogress .stat-icon { background: var(--blue-soft); color: var(--blue); }
+.stat.done .stat-icon { background: #dcefe1; color: var(--accent); }
+.stat-body { display: flex; flex-direction: column; }
 .stat .n { font-size: 22px; font-weight: 700; }
 .stat .l { font-size: 12px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.4px; }
 .stat.overdue .n { color: var(--red); }
@@ -195,7 +207,9 @@ main { padding: 4px 28px 60px 28px; }
 .card .title { font-size: 15px; font-weight: 600; margin: 0 0 4px 0; padding-right: 60px; }
 .card .desc { font-size: 13px; color: var(--slate); margin: 0 0 10px 0; white-space: pre-wrap; }
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;
