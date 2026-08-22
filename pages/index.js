@@ -260,11 +260,7 @@ export default function Home() {
       <Head>
         <title>Riverside School Building Committee</title>
       </Head>
-      <Header active="tasks" />
-
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 28px 0 28px' }}>
-        <button className="btn-primary" onClick={openAddModal}>+ Add Task</button>
-      </div>
+      <Header active="tasks" actions={<button className="btn-primary" onClick={openAddModal}>+ Add Task</button>} />
 
       <div className="summary">
         <button type="button" className={'stat' + (!filterStatus && !filterOverdue ? ' active' : '')} onClick={clearStatusFilters}>
