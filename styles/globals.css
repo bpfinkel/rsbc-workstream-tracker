@@ -26,6 +26,7 @@ body {
   background: var(--bg);
   color: var(--navy);
 }
+.site-header { position: sticky; top: 0; z-index: 20; }
 header {
   background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
   color: #fff;
