@@ -504,6 +504,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .filter-div { width: auto; height: 1px; align-self: auto; margin: 2px 4px; }
   .view-toggle .view-btn { flex: 1; }
   .next-meeting-card { padding: 16px 18px; }
+  .admin-row-top { flex-direction: column; align-items: flex-start; }
+  .admin-toggles { width: 100%; }
 }
 @media (max-width: 480px) {
   .summary, .filters, main, .admin-note, .view-toggle { padding-left: 16px; padding-right: 16px; }
