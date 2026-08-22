@@ -200,37 +200,40 @@ export default function Scoring() {
                 const written = myScoreFor(f.firm, 'Written');
                 const interview = myScoreFor(f.firm, 'Interview');
                 return (
-                  <div className="card" key={f.firm} style={{ cursor: 'default' }}>
-                    <p className="title">{f.firm}</p>
-                    <div className="modal-actions" style={{ marginTop: 10 }}>
+                  <div className="firm-card" key={f.firm}>
+                    <p className="firm-name">{f.firm}</p>
+                    <div className="firm-row">
+                      <span className="firm-row-label">Proposal</span>
                       {f.proposalPdfUrl ? (
                         <a className="chip chip-link" href={f.proposalPdfUrl} onClick={(e) => openPdf(e, f.firm, f.proposalPdfUrl)}>Proposal PDF</a>
                       ) : (
-                        <span className="chip">Proposal PDF not yet posted</span>
+                        <span className="locked-note">Not yet posted</span>
                       )}
                     </div>
-                    <div className="modal-actions" style={{ marginTop: 10 }}>
+                    <div className="firm-row">
+                      <span className="firm-row-label">Written</span>
                       {f.writtenUnlocked ? (
-                        <>
-                          <span className="chip">{written ? 'Written: submitted' : 'Written: not started'}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span className={'status-chip' + (written ? ' done' : '')}>{written ? 'Submitted' : 'Not started'}</span>
                           <button type="button" className="btn-secondary" onClick={() => setEditing({ firm: f.firm, phase: 'Written' })}>
                             {written ? 'Edit' : 'Score'}
                           </button>
-                        </>
+                        </div>
                       ) : (
-                        <span className="deadline">Written scoring not yet open</span>
+                        <span className="locked-note">Not yet open</span>
                       )}
                     </div>
-                    <div className="modal-actions" style={{ marginTop: 8 }}>
+                    <div className="firm-row">
+                      <span className="firm-row-label">Interview</span>
                       {f.interviewUnlocked ? (
-                        <>
-                          <span className="chip">{interview ? 'Interview: submitted' : 'Interview: not started'}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span className={'status-chip' + (interview ? ' done' : '')}>{interview ? 'Submitted' : 'Not started'}</span>
                           <button type="button" className="btn-secondary" onClick={() => setEditing({ firm: f.firm, phase: 'Interview' })}>
                             {interview ? 'Edit' : 'Score'}
                           </button>
-                        </>
+                        </div>
                       ) : (
-                        <span className="deadline">Interview scoring not yet open</span>
+                        <span className="locked-note">Not yet open</span>
                       )}
                     </div>
                   </div>
@@ -243,24 +246,24 @@ export default function Scoring() {
         {isAdmin ? (
           <div className="workstream-group">
             <h2>Admin — Submission Status</h2>
-            <div className="compact-list">
+            <div className="admin-list">
               {firms.map((f) => {
                 const w = scorersFor(f.firm, 'Written');
                 const iv = scorersFor(f.firm, 'Interview');
                 return (
-                  <div className="row-compact" key={f.firm} style={{ cursor: 'default', flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                      <span className="row-title">{f.firm}</span>
-                      <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+                  <div className="admin-row" key={f.firm}>
+                    <div className="admin-row-top">
+                      <span className="admin-firm-name">{f.firm}</span>
+                      <div className="admin-toggles">
                         <LockToggle unlocked={f.writtenUnlocked} label="Written" onClick={() => toggleFirmLock(f.firm, 'Written', !f.writtenUnlocked)} />
                         <LockToggle unlocked={f.interviewUnlocked} label="Interview" onClick={() => toggleFirmLock(f.firm, 'Interview', !f.interviewUnlocked)} />
                       </div>
                     </div>
-                    <span className="row-date">
+                    <span className="admin-detail">
                       Written: {w.length} submitted{w.length ? ` (${w.map((s) => s.scorerEmail).join(', ')})` : ''}
                     </span>
                     {f.interviewUnlocked ? (
-                      <span className="row-date">
+                      <span className="admin-detail">
                         Interview: {iv.length} submitted{iv.length ? ` (${iv.map((s) => s.scorerEmail).join(', ')})` : ''}
                       </span>
                     ) : null}
@@ -268,7 +271,7 @@ export default function Scoring() {
                 );
               })}
             </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+            <div className="admin-actions">
               <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
                 onClick={() => toggleAllLock('Written', !allWrittenUnlocked)}>
                 {allWrittenUnlocked ? <LockIcon /> : <UnlockIcon />}
@@ -345,8 +348,11 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
       <div className="modal">
         <h3>{firm} — {RFP_PHASES[phase].label}</h3>
         {criteria.map((c, i) => (
-          <div className="field" key={c.key}>
-            <label>{c.label} — {scores[i] === null || scores[i] === undefined ? 0 : scores[i]} / {c.max}</label>
+          <div className="criterion" key={c.key}>
+            <div className="criterion-top">
+              <span className="criterion-label">{c.label}</span>
+              <span className="criterion-score">{scores[i] === null || scores[i] === undefined ? 0 : scores[i]} / {c.max}</span>
+            </div>
             <input
               type="range"
               min="0"
@@ -361,7 +367,10 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
           <label>Notes</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
-        <div className="deadline">Total: {total} / {maxTotal}</div>
+        <div className="total-row">
+          <span>Total</span>
+          <span className="value">{total} / {maxTotal}</span>
+        </div>
         <div className="modal-actions">
           {existing ? (
             <button className="btn-danger" onClick={onClear}>Clear</button>
