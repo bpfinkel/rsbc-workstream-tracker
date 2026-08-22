@@ -187,6 +187,11 @@ main { padding: 4px 28px 60px 28px; }
 .ws-header svg { color: var(--accent); flex: none; }
 .ws-header h2 { margin: 0; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--navy-light); }
 .ws-count { background: #eceef2; color: var(--slate); font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+.ws-header-btn {
+  background: none; border: none; border-bottom: 1.5px solid var(--border);
+  font: inherit; text-align: left; width: 100%; cursor: pointer; padding: 0 0 8px 0;
+}
+.ws-header-chevron { margin-left: auto; color: var(--muted); flex: none; }
 .date-group-label {
   display: flex;
   align-items: center;
