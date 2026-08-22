@@ -75,7 +75,7 @@ header {
 .page-nav-link:hover { color: #fff; }
 .page-nav-link.active { color: #fff; border-bottom-color: var(--accent); }
 .page-nav-link.admin-link { font-style: italic; }
-.header-actions { display: flex; align-items: center; flex: none; }
+.page-toolbar { display: flex; justify-content: flex-end; padding: 16px 28px 0 28px; }
 .admin-note { text-align: center; font-style: italic; font-size: 12.5px; color: var(--slate); padding: 10px 28px 0 28px; }
 .btn-primary {
   background: var(--accent);
@@ -461,14 +461,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (max-width: 640px) {
   .overlay:has(.pdf-viewer) { padding: 0; }
   .modal.pdf-viewer { max-width: 100%; height: 100vh; border-radius: 0; }
+  .page-nav { justify-content: center; }
+  .page-toolbar { padding-left: 16px; padding-right: 16px; }
+  .page-toolbar .btn-primary { width: 100%; }
   .summary { grid-template-columns: repeat(2, 1fr); }
   .filter-bar { flex-direction: column; padding: 8px; }
   .filter-search { flex: none; width: 100%; }
   .filter-select { width: 100%; }
   .filter-select select { width: 100%; }
   .filter-div { width: auto; height: 1px; align-self: auto; margin: 2px 4px; }
-  .header-actions { width: 100%; }
-  .header-actions .btn-primary { width: 100%; }
   .view-toggle .view-btn { flex: 1; }
 }
 @media (max-width: 480px) {
