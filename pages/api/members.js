@@ -19,12 +19,17 @@ export default async function handler(req, res) {
       const target = members.find((m) => m.name === name);
       if (!target) return res.status(404).json({ error: 'Member not found' });
 
+      const admin = isAdmin(user.email);
       const isSelf = target.email && target.email.toLowerCase() === user.email.toLowerCase();
-      if (!isSelf && !isAdmin(user.email)) {
+      if (!isSelf && !admin) {
         return res.status(403).json({ error: 'You can only edit your own contact card' });
       }
 
-      const member = await updateMember(name, { email, phone });
+      // Email is what matches a signed-in user to their roster row, so only an
+      // admin may change it — letting someone edit their own would risk them
+      // locking themselves out of self-service editing on the next visit.
+      const fields = admin ? { email, phone } : { phone };
+      const member = await updateMember(name, fields);
       return res.status(200).json({ member });
     }
     res.setHeader('Allow', ['GET', 'PUT']);
