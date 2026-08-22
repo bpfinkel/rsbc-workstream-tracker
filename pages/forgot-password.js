@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
-import { RSBC_LOGO } from '../lib/rsbcLogo';
+import { RSBC_MARK } from '../lib/rsbcMark';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -31,7 +31,13 @@ export default function ForgotPassword() {
         <title>Riverside School Building Committee — Forgot Password</title>
       </Head>
       <header>
-        <img src={RSBC_LOGO} alt="Riverside School Building Committee" className="header-logo" />
+        <div className="header-left">
+          <img src={RSBC_MARK} alt="RSBC" className="header-mark" />
+          <div className="header-titles">
+            <h1>Riverside School Building Committee</h1>
+            <div className="header-sub">Committee Member Portal</div>
+          </div>
+        </div>
       </header>
       <div className="header-accent" />
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
