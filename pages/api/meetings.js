@@ -26,11 +26,7 @@ function parseDateStr(raw) {
   return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
 }
 
-function parseMeetings(html) {
-  const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
-  if (!tableMatch) return [];
-  const tableHtml = tableMatch[1];
-
+function parseMeetingRows(tableHtml) {
   const rows = [];
   const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
   let rowMatch;
@@ -52,8 +48,26 @@ function parseMeetings(html) {
       agendaUrl: extractLink(cells[3] || ''),
       minutesUrl: extractLink(cells[4] || '')
     }))
-    .filter((m) => m.date)
-    .sort((a, b) => a.date.localeCompare(b.date));
+    .filter((m) => m.date);
+}
+
+// The committee's website posts one <table> per school year (e.g. "2026-2027
+// Meetings", "2025-2026 Meeting", "2024-2025 Meetings"), each immediately
+// preceded by an "fsElementTitle" <h2> heading with that exact label. Matching
+// heading+table pairs picks up every school year present on the page, not
+// just whichever one happens to be first, without hardcoding which years exist.
+function parseAllMeetings(html) {
+  const sectionRegex = /<h2 class="fsElementTitle"[^>]*>\s*<a[^>]*>([^<]+)<\/a>\s*<\/h2>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/g;
+  const all = [];
+  let sectionMatch;
+  while ((sectionMatch = sectionRegex.exec(html))) {
+    const headingText = sectionMatch[1];
+    const yearMatch = headingText.match(/(\d{4}-\d{4})/);
+    const schoolYear = yearMatch ? yearMatch[1] : headingText.trim();
+    const rows = parseMeetingRows(sectionMatch[2]).map((m) => ({ ...m, schoolYear }));
+    all.push(...rows);
+  }
+  return all.sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // The committee's own agenda-drafting workflow always writes one of two exact
@@ -86,12 +100,16 @@ export default async function handler(req, res) {
     const pageRes = await fetch(SOURCE_URL, { headers: { 'User-Agent': 'Mozilla/5.0 (RSBC Workstream Tracker)' } });
     if (!pageRes.ok) throw new Error('Committee website returned ' + pageRes.status);
     const html = await pageRes.text();
-    const meetings = parseMeetings(html);
+    const meetings = parseAllMeetings(html);
     const nextIndex = meetings.findIndex((m) => m.date >= todayET);
-    const location = nextIndex >= 0 ? await detectLocation(meetings[nextIndex].agendaUrl) : 'unknown';
+    const lastIndex = nextIndex === -1 ? meetings.length - 1 : nextIndex - 1;
+    const [location, lastLocation] = await Promise.all([
+      nextIndex >= 0 ? detectLocation(meetings[nextIndex].agendaUrl) : Promise.resolve('unknown'),
+      lastIndex >= 0 ? detectLocation(meetings[lastIndex].agendaUrl) : Promise.resolve('unknown')
+    ]);
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
-    return res.status(200).json({ meetings, nextIndex, todayET, location, sourceUrl: SOURCE_URL });
+    return res.status(200).json({ meetings, nextIndex, lastIndex, todayET, location, lastLocation, sourceUrl: SOURCE_URL });
   } catch (err) {
-    return res.status(200).json({ meetings: [], nextIndex: -1, todayET, location: 'unknown', error: err.message, sourceUrl: SOURCE_URL });
+    return res.status(200).json({ meetings: [], nextIndex: -1, lastIndex: -1, todayET, location: 'unknown', lastLocation: 'unknown', error: err.message, sourceUrl: SOURCE_URL });
   }
 }
