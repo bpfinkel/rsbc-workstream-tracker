@@ -4,7 +4,7 @@ import { createClient } from '../lib/supabase/client';
 import { isAdmin } from '../lib/admin';
 import { RSBC_LOGO } from '../lib/rsbcLogo';
 
-export default function Header({ active }) {
+export default function Header({ active, actions }) {
   const [admin, setAdmin] = useState(false);
 
   useEffect(() => {
@@ -15,22 +15,28 @@ export default function Header({ active }) {
   }, []);
 
   return (
-    <header>
-      <img
-        src={RSBC_LOGO}
-        alt="Riverside School Building Committee"
-        className="header-logo"
-      />
-      <nav className="page-nav">
-        <Link href="/" className={'page-nav-link' + (active === 'tasks' ? ' active' : '')}>Tasks</Link>
-        <Link href="/roster" className={'page-nav-link' + (active === 'roster' ? ' active' : '')}>Roster</Link>
-        <Link href="/meetings" className={'page-nav-link' + (active === 'meetings' ? ' active' : '')}>Meetings</Link>
-        <Link href="/scoring" className={'page-nav-link' + (active === 'scoring' ? ' active' : '')}>RFP Scoring</Link>
-        <Link href="/change-password" className={'page-nav-link' + (active === 'account' ? ' active' : '')}>My Account</Link>
-        {admin ? (
-          <Link href="/drafts" className={'page-nav-link admin-link' + (active === 'drafts' ? ' active' : '')}>Drafts</Link>
-        ) : null}
-      </nav>
-    </header>
+    <>
+      <header>
+        <img
+          src={RSBC_LOGO}
+          alt="Riverside School Building Committee"
+          className="header-logo"
+        />
+      </header>
+      <div className="header-accent" />
+      <div className="nav-bar">
+        <nav className="page-nav">
+          <Link href="/" className={'page-nav-link' + (active === 'tasks' ? ' active' : '')}>Tasks</Link>
+          <Link href="/roster" className={'page-nav-link' + (active === 'roster' ? ' active' : '')}>Roster</Link>
+          <Link href="/meetings" className={'page-nav-link' + (active === 'meetings' ? ' active' : '')}>Meetings</Link>
+          <Link href="/scoring" className={'page-nav-link' + (active === 'scoring' ? ' active' : '')}>RFP Scoring</Link>
+          <Link href="/change-password" className={'page-nav-link' + (active === 'account' ? ' active' : '')}>My Account</Link>
+          {admin ? (
+            <Link href="/drafts" className={'page-nav-link admin-link' + (active === 'drafts' ? ' active' : '')}>Drafts</Link>
+          ) : null}
+        </nav>
+        {actions ? <div className="header-actions">{actions}</div> : null}
+      </div>
+    </>
   );
 }
