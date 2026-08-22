@@ -14,7 +14,7 @@ export default function Header({ active }) {
   }, []);
 
   return (
-    <>
+    <div className="site-header">
       <header>
         <div className="header-left">
           <img src="/api/apple-touch-icon" alt="RSBC" className="header-mark" />
@@ -37,6 +37,6 @@ export default function Header({ active }) {
           ) : null}
         </nav>
       </div>
-    </>
+    </div>
   );
 }
