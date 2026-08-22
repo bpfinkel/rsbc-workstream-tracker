@@ -10,6 +10,16 @@ const GROUP_LABEL = {
   'External': 'External'
 };
 
+function initials(name) {
+  return String(name || '')
+    .split(' ')
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function Roster() {
   const [members, setMembers] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -51,8 +61,10 @@ export default function Roster() {
               <div className="roster-list">
                 {g.members.map((m) => (
                   <div className="roster-row" key={m.name} onClick={() => setSelected(m)}>
+                    <span className="roster-avatar">{initials(m.name)}</span>
                     <span className="roster-name">{m.name}</span>
                     <span className="roster-role">{m.role}</span>
+                    <svg className="roster-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                   </div>
                 ))}
               </div>
