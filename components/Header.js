@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
 import { isAdmin } from '../lib/admin';
 
-export default function Header({ active, actions }) {
+export default function Header({ active }) {
   const [admin, setAdmin] = useState(false);
 
   useEffect(() => {
@@ -36,7 +36,6 @@ export default function Header({ active, actions }) {
             <Link href="/drafts" className={'page-nav-link admin-link' + (active === 'drafts' ? ' active' : '')}>Drafts</Link>
           ) : null}
         </nav>
-        {actions ? <div className="header-actions">{actions}</div> : null}
       </div>
     </>
   );
