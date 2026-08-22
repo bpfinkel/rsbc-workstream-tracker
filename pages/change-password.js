@@ -15,6 +15,15 @@ export default function Account() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
 
+  const [members, setMembers] = useState([]);
+  const [membersLoaded, setMembersLoaded] = useState(false);
+  const [contactInitialized, setContactInitialized] = useState(false);
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactError, setContactError] = useState('');
+  const [contactSuccess, setContactSuccess] = useState(false);
+  const [contactLoading, setContactLoading] = useState(false);
+
   useEffect(() => {
     const meta = document.querySelector('meta[name="viewport"]');
     if (!meta) return;
@@ -27,6 +36,26 @@ export default function Account() {
       if (data?.user?.email) setEmail(data.user.email);
     });
   }, []);
+
+  useEffect(() => {
+    fetch('/api/members')
+      .then((res) => res.json())
+      .then((data) => {
+        setMembers(data.members || []);
+        setMembersLoaded(true);
+      })
+      .catch(() => setMembersLoaded(true));
+  }, []);
+
+  const myMember = members.find((m) => m.email && email && m.email.toLowerCase() === email.toLowerCase());
+
+  useEffect(() => {
+    if (myMember && !contactInitialized) {
+      setContactEmail(myMember.email || '');
+      setContactPhone(myMember.phone || '');
+      setContactInitialized(true);
+    }
+  }, [myMember, contactInitialized]);
 
   async function handleSignOut() {
     if (!window.confirm('Are you sure you want to sign out?')) return;
@@ -60,6 +89,28 @@ export default function Account() {
     setSuccess(true);
   }
 
+  async function handleContactSave(e) {
+    e.preventDefault();
+    setContactError('');
+    setContactSuccess(false);
+    setContactLoading(true);
+    try {
+      const res = await fetch('/api/members', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: myMember.name, email: contactEmail.trim(), phone: contactPhone.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      setMembers((prev) => prev.map((m) => (m.name === myMember.name ? data.member : m)));
+      setContactSuccess(true);
+    } catch (err) {
+      setContactError(err.message);
+    } finally {
+      setContactLoading(false);
+    }
+  }
+
   return (
     <>
       <Head>
@@ -83,6 +134,41 @@ export default function Account() {
             {loading ? 'Saving…' : 'Save Password'}
           </button>
         </form>
+
+        {membersLoaded && myMember ? (
+          <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleContactSave}>
+            <h3>My Contact Card</h3>
+            <div className="field">
+              <label>Name</label>
+              <div className="contact-value">{myMember.name}</div>
+            </div>
+            <div className="field">
+              <label>Title</label>
+              <div className="contact-value">{myMember.role}</div>
+            </div>
+            <div className="field">
+              <label>Email</label>
+              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label>Mobile</label>
+              <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            </div>
+            {contactError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{contactError}</div> : null}
+            {contactSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Contact card updated.</div> : null}
+            <button className="btn-primary" type="submit" disabled={contactLoading} style={{ width: '100%' }}>
+              {contactLoading ? 'Saving…' : 'Save Contact Card'}
+            </button>
+          </form>
+        ) : membersLoaded && !myMember ? (
+          <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
+            <h3>My Contact Card</h3>
+            <p style={{ fontSize: 13, color: 'var(--slate)', margin: 0 }}>
+              We couldn't match your sign-in email to a roster entry. Contact the secretary to link your account.
+            </p>
+          </div>
+        ) : null}
+
         <div className="modal" style={{ maxWidth: 360, width: '100%', textAlign: 'center' }}>
           <button type="button" className="btn-secondary" onClick={handleSignOut} style={{ width: '100%' }}>Sign Out</button>
         </div>
