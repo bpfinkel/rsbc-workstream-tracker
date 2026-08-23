@@ -121,6 +121,11 @@ header {
   font-size: 9.5px; font-weight: 700; letter-spacing: 0.3px;
   padding: 2px 7px; border-radius: 20px; text-transform: uppercase;
 }
+.hub-admin-header { grid-column: 1 / -1; }
+.hub-admin-header h2 {
+  margin: 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--navy-light); border-bottom: 2px solid var(--border); padding-bottom: 6px;
+}
 .page-toolbar { display: flex; justify-content: flex-end; padding: 16px 28px 0 28px; }
 .admin-note { text-align: center; font-style: italic; font-size: 12.5px; color: var(--slate); padding: 10px 28px 0 28px; }
 .account-note { text-align: center; font-size: 11.5px; color: var(--muted); }
