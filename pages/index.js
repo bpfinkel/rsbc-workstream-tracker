@@ -93,18 +93,23 @@ export default function HomePage() {
           ))}
 
           {admin ? (
-            <Link href="/drafts" className="hub-card">
-              <div className="hub-card-head">
-                <div className="hub-icon hub-icon-red">
-                  <DraftIcon />
-                </div>
-                <div className="hub-title-row">
-                  <h3>Draft Tasks</h3>
-                  <span className="hub-badge">Admin</span>
-                </div>
+            <>
+              <div className="hub-admin-header">
+                <h2>Admin</h2>
               </div>
-              <p>Preview tasks auto-imported from meeting notes.</p>
-            </Link>
+              <Link href="/drafts" className="hub-card">
+                <div className="hub-card-head">
+                  <div className="hub-icon hub-icon-red">
+                    <DraftIcon />
+                  </div>
+                  <div className="hub-title-row">
+                    <h3>Draft Tasks</h3>
+                    <span className="hub-badge">Admin</span>
+                  </div>
+                </div>
+                <p>Preview tasks auto-imported from meeting notes.</p>
+              </Link>
+            </>
           ) : null}
         </div>
       </main>
