@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { createClient } from '../lib/supabase/client';
+import Header from '../components/Header';
 
 export default function ResetPassword() {
   const [ready, setReady] = useState(false);
@@ -66,16 +67,7 @@ export default function ResetPassword() {
       <Head>
         <title>Riverside School Building Committee — Reset Password</title>
       </Head>
-      <header>
-        <div className="header-left">
-          <img src="/api/apple-touch-icon" alt="RSBC" className="header-mark" />
-          <div className="header-titles">
-            <h1>Riverside School Building Committee</h1>
-            <div className="header-sub">Committee Member Portal</div>
-          </div>
-        </div>
-      </header>
-      <div className="header-accent" />
+      <Header />
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
           <h3>Set a New Password</h3>
