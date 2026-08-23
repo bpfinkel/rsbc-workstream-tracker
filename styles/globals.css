@@ -34,6 +34,8 @@ header {
   padding: clamp(12px, 3.5vw, 18px) clamp(16px, 5vw, 32px);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   box-shadow: 0 2px 10px rgba(12,35,64,0.18);
   position: relative;
   z-index: 10;
@@ -43,7 +45,7 @@ header {
 .header-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .header-titles h1 {
   margin: 0; color: #fff; font-weight: 700; letter-spacing: 0.1px;
-  font-size: clamp(13px, calc(9px + 1.5vw), 19px);
+  font-size: clamp(11px, calc(6px + 1.3vw), 19px);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .header-sub {
@@ -51,32 +53,73 @@ header {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .header-accent { height: 3px; background: linear-gradient(90deg, var(--accent) 0%, #4a9873 40%, var(--navy-light) 100%); }
-.nav-bar {
-  background: var(--navy-light);
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding: 10px clamp(16px, 5vw, 32px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+.nav-menu-wrap { position: relative; flex: none; }
+.hamburger-btn {
+  width: 40px; height: 40px; border-radius: 9px; flex: none;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+  color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: background .12s;
 }
-.page-nav { display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; }
-.page-nav-link {
-  color: #b9c4cf;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  text-decoration: none;
-  padding-bottom: 3px;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-  transition: color .12s, border-color .12s;
+.hamburger-btn:hover { background: rgba(255,255,255,0.16); }
+.nav-menu {
+  position: absolute; top: calc(100% + 10px); right: 0; width: 240px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow-lg); overflow: hidden; z-index: 30;
 }
-.page-nav-link:hover { color: #fff; }
-.page-nav-link.active { color: #fff; border-bottom-color: var(--accent); }
-.page-nav-link.admin-link { font-style: italic; }
+.nav-menu-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px 16px; }
+.nav-menu-head span { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+.nav-menu-close {
+  width: 24px; height: 24px; border-radius: 6px; border: none; background: transparent;
+  color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.nav-menu-close:hover { background: #eef1f4; color: var(--navy); }
+.nav-menu-list { padding: 4px 8px 8px 8px; }
+.nav-menu-link {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 10px; border-radius: 8px;
+  font-size: 13.5px; font-weight: 600; color: var(--navy); text-decoration: none;
+  transition: background .12s;
+}
+.nav-menu-link svg { color: var(--slate); flex: none; }
+.nav-menu-link:hover { background: #eef1f4; }
+.nav-menu-link.active { background: var(--accent-soft); color: #1d4e35; }
+.nav-menu-link.active svg { color: var(--accent); }
+.nav-menu-divider { height: 1px; background: var(--border); margin: 6px 10px; }
+.nav-menu-link.admin-link { font-style: italic; }
+.admin-tag {
+  margin-left: auto; background: #faf0dc; color: var(--amber);
+  font-size: 9.5px; font-weight: 700; font-style: normal; letter-spacing: 0.3px;
+  padding: 2px 7px; border-radius: 20px; text-transform: uppercase;
+}
+.hub { padding: 30px 28px 60px 28px; }
+.hub-intro h2 { margin: 0 0 6px 0; font-size: 21px; font-weight: 700; color: var(--navy); }
+.hub-intro p { margin: 0; font-size: 13.5px; color: var(--slate); }
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 24px; }
+.hub-card {
+  position: relative; background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px 22px 20px 22px;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: var(--shadow-sm); text-decoration: none; color: inherit;
+  transition: border-color .12s, box-shadow .15s, transform .15s;
+}
+.hub-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.hub-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.hub-icon-blue { background: var(--blue-soft); color: var(--blue); }
+.hub-icon-accent { background: var(--accent-soft); color: var(--accent); }
+.hub-icon-navy { background: #e5e9f0; color: var(--navy-light); }
+.hub-icon-amber { background: #faf0dc; color: var(--amber); }
+.hub-icon-slate { background: #eceef2; color: var(--slate); }
+.hub-icon-red { background: rgba(164,52,58,0.1); color: var(--red); }
+.hub-card h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--navy); }
+.hub-card p { margin: 0; font-size: 12.5px; color: var(--slate); line-height: 1.5; }
+.hub-arrow { position: absolute; top: 22px; right: 20px; color: var(--muted); }
+.hub-title-row { display: flex; align-items: center; gap: 8px; }
+.hub-badge {
+  background: #faf0dc; color: var(--amber);
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.3px;
+  padding: 2px 7px; border-radius: 20px; text-transform: uppercase;
+}
 .page-toolbar { display: flex; justify-content: flex-end; padding: 16px 28px 0 28px; }
 .admin-note { text-align: center; font-style: italic; font-size: 12.5px; color: var(--slate); padding: 10px 28px 0 28px; }
 .account-note { text-align: center; font-size: 11.5px; color: var(--muted); }
@@ -523,7 +566,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (max-width: 640px) {
   .overlay:has(.pdf-viewer) { padding: 0; }
   .modal.pdf-viewer { max-width: 100%; height: 100vh; border-radius: 0; }
-  .page-nav { justify-content: center; }
   .page-toolbar { padding-left: 16px; padding-right: 16px; }
   .page-toolbar .btn-primary { width: 100%; }
   .summary { grid-template-columns: repeat(2, 1fr); }
@@ -536,6 +578,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .next-meeting-card { padding: 16px 18px; }
   .admin-row-top { flex-direction: column; align-items: flex-start; }
   .admin-toggles { width: 100%; }
+  .hub { padding: 24px 16px 40px 16px; }
 }
 @media (max-width: 480px) {
   .summary, .filters, main, .admin-note, .view-toggle { padding-left: 16px; padding-right: 16px; }
