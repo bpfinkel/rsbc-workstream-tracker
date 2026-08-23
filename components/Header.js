@@ -1,10 +1,63 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
 import { isAdmin } from '../lib/admin';
 
+function HomeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z" /><path d="M3 13l9 5 9-5" /></svg>
+  );
+}
+
+function TasksIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.2h8a1 1 0 0 1 1 1v9.3a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5z" /></svg>
+  );
+}
+
+function RosterIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="3.6" /><path d="M22.5 20v-2a4 4 0 0 0-3-3.87" /><path d="M16 4.13a4 4 0 0 1 0 7.75" /></svg>
+  );
+}
+
+function MeetingsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M8 3v4M16 3v4M3.5 10h17" /></svg>
+  );
+}
+
+function ScoringIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
+  );
+}
+
+function AccountIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8.4" r="3.4" /><path d="M5 20a7 7 0 0 1 14 0" /></svg>
+  );
+}
+
+function DraftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 17.2V20h2.8L17.8 9 15 6.2 4 17.2z" /><path d="M14 5.2l3 3" /></svg>
+  );
+}
+
+const NAV_ITEMS = [
+  { key: 'home', href: '/', label: 'Home', Icon: HomeIcon },
+  { key: 'tasks', href: '/tasks', label: 'Tasks', Icon: TasksIcon },
+  { key: 'roster', href: '/roster', label: 'Roster', Icon: RosterIcon },
+  { key: 'meetings', href: '/meetings', label: 'Meetings', Icon: MeetingsIcon },
+  { key: 'scoring', href: '/scoring', label: 'RFP Scoring', Icon: ScoringIcon },
+  { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
+];
+
 export default function Header({ active }) {
   const [admin, setAdmin] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -12,6 +65,22 @@ export default function Header({ active }) {
       if (isAdmin(data?.user?.email)) setAdmin(true);
     });
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDocClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    }
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
 
   return (
     <div className="site-header">
@@ -23,20 +92,56 @@ export default function Header({ active }) {
             <div className="header-sub">Committee Member Portal</div>
           </div>
         </div>
+        <div className="nav-menu-wrap" ref={menuRef}>
+          <button
+            type="button"
+            className="hamburger-btn"
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          {menuOpen ? (
+            <div className="nav-menu">
+              <div className="nav-menu-head">
+                <span>Go to</span>
+                <button type="button" className="nav-menu-close" aria-label="Close" onClick={() => setMenuOpen(false)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+              </div>
+              <div className="nav-menu-list">
+                {NAV_ITEMS.map(({ key, href, label, Icon }) => (
+                  <Link
+                    key={key}
+                    href={href}
+                    className={'nav-menu-link' + (active === key ? ' active' : '')}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Icon />
+                    {label}
+                  </Link>
+                ))}
+                {admin ? (
+                  <>
+                    <div className="nav-menu-divider" />
+                    <Link
+                      href="/drafts"
+                      className={'nav-menu-link admin-link' + (active === 'drafts' ? ' active' : '')}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <DraftIcon />
+                      Draft Tasks
+                      <span className="admin-tag">Admin</span>
+                    </Link>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
       </header>
       <div className="header-accent" />
-      <div className="nav-bar">
-        <nav className="page-nav">
-          <Link href="/" className={'page-nav-link' + (active === 'tasks' ? ' active' : '')}>Tasks</Link>
-          <Link href="/roster" className={'page-nav-link' + (active === 'roster' ? ' active' : '')}>Roster</Link>
-          <Link href="/meetings" className={'page-nav-link' + (active === 'meetings' ? ' active' : '')}>Meetings</Link>
-          <Link href="/scoring" className={'page-nav-link' + (active === 'scoring' ? ' active' : '')}>RFP Scoring</Link>
-          <Link href="/my-account" className={'page-nav-link' + (active === 'account' ? ' active' : '')}>My Account</Link>
-          {admin ? (
-            <Link href="/drafts" className={'page-nav-link admin-link' + (active === 'drafts' ? ' active' : '')}>Draft Tasks (Admin)</Link>
-          ) : null}
-        </nav>
-      </div>
     </div>
   );
 }
