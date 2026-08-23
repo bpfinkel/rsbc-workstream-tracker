@@ -73,11 +73,6 @@ export default function HomePage() {
       <Header active="home" />
 
       <main className="hub">
-        <div className="hub-intro">
-          <h2>Where would you like to go?</h2>
-          <p>Everything the committee tracks, in one place.</p>
-        </div>
-
         <div className="hub-grid">
           {HUB_ITEMS.map(({ href, title, desc, tone, Icon }) => (
             <Link href={href} className="hub-card" key={href}>
