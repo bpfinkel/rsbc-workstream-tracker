@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { createClient } from '../../lib/supabase/client';
+import Header from '../../components/Header';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -37,10 +38,7 @@ export default function AuthCallback() {
         <title>Riverside School Building Committee — Signing In</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <header>
-        <h1>Riverside School Building Committee</h1>
-        <div className="sub">The Committee Members' App</div>
-      </header>
+      <Header />
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <div className="modal" style={{ maxWidth: 360, width: '100%', textAlign: 'center' }}>
           {error ? (
