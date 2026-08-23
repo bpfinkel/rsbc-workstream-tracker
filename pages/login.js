@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
+import Header from '../components/Header';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -43,16 +44,7 @@ export default function Login() {
       <Head>
         <title>Riverside School Building Committee — Sign In</title>
       </Head>
-      <header>
-        <div className="header-left">
-          <img src="/api/apple-touch-icon" alt="RSBC" className="header-mark" />
-          <div className="header-titles">
-            <h1>Riverside School Building Committee</h1>
-            <div className="header-sub">Committee Member Portal</div>
-          </div>
-        </div>
-      </header>
-      <div className="header-accent" />
+      <Header />
       <main style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
         <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleSubmit}>
           <h3>Sign In</h3>
