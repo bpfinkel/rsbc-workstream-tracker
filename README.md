@@ -1,57 +1,72 @@
-# RSBC Workstream Tracker
+# RSBC Committee Member Portal
 
-A shared task board for the Riverside School Building Committee (RSBC)
-leadership to track workstream progress: add tasks, assign them to
-committee members, set deadlines, and track status.
+A login-gated web app for the Riverside School Building Committee (RSBC):
+task tracking, member roster, meeting info, and RFP scoring — backed by
+Google Sheets, no traditional database.
 
-No login required — anyone with the link can view and edit tasks directly.
+(Formerly "RSBC Workstream Tracker" — the package/repo name is unchanged,
+but the app is now referred to as the Committee Member Portal, per the
+header subtitle.)
 
-Replaces an earlier Google Apps Script version that had unfixable
-multi-account sign-in problems.
+## Access
 
-## Features
+**Login is required for the whole app** (Supabase Auth — email/password or
+Google Sign-In). Access is closed: new sign-ups are disabled in Supabase, so
+only pre-existing accounts (created directly in Supabase) can sign in. This
+replaced an earlier zero-login version.
 
-- **Dashboard summary** — five clickable stat boxes (Active tasks, Overdue,
-  In Progress, Blocked, Done) that double as one-click filters. Clicking a
-  box toggles filtering the list to that status; clicking it again clears
-  the filter.
-- **Done tasks are archived** — completed tasks are hidden from the default
-  view and excluded from the "Active tasks" count, but stay one click away
-  via the "Done" box (styled in muted gray to read as archived).
-- **Filters** — free-text search, plus dropdowns for workstream, assignee,
-  and status. These combine with the summary-box filters rather than
-  replacing them.
-- **Detailed / Compact view toggle** — Detailed shows the full card (title,
-  description, status badge, assignees, deadline). Compact collapses each
-  workstream to a dense one-line-per-task list (title + due date only), for
-  faster scanning on a phone. The choice is saved per-browser
-  (`localStorage`), not shared across viewers.
-- **Add / Edit modal** — title, description, workstream (reuses existing
-  ones via a datalist), deadline, status, assignees, and notes. Assignees
-  are picked from the committee roster via checkboxes, or added free-text
-  for one-off names not on the roster (e.g. outside counsel).
-- **Roster page** — a read-only page (name + role, grouped as Officers /
-  Voting Members / Ex-Officio Members / External) pulled live from the same
-  roster sheet used for assignees. No email or phone is shown — that's
-  intentionally deferred until the app has a login.
-- **Quick status cycle** — a small ↻ button on each detailed card advances
-  a task through the status list without opening the modal.
-- Dates are stored as `YYYY-MM-DD` (so they sort correctly as plain text)
-  but always *displayed* as `mm/dd/yyyy`.
+## Pages
+
+- **Home** (`/`) — card-grid hub linking to the sections below.
+- **Tasks** (`/tasks`) — the task board: dashboard summary, filters,
+  Detailed/Compact view toggle, add/edit modal. See "Tasks data model"
+  below.
+- **Roster** (`/roster`) — committee member directory grouped by role
+  (Officers / Voting Members / Ex-Officio / External), with a
+  click-to-reveal contact card (email, phone).
+- **Meetings** (`/meetings`) — next meeting (date/time/location/Zoom info,
+  pulled live from the committee's public schedule page and the posted
+  agenda PDF) plus an archive of past meetings.
+- **RFP Scoring** (`/scoring`) — score architect/contractor RFP submissions
+  against a committee-approved rubric (see below). Includes an admin panel
+  (submission status, interview-unlock toggle) visible only to admins.
+- **My Account** (`/my-account`) — change password, edit your own contact
+  card.
+- **Draft Tasks** (`/drafts`, admin-only) — review queue for tasks
+  auto-extracted from meeting minutes; approve promotes a draft into the
+  real Tasks sheet, veto discards it. See "Draft tasks pipeline" below.
+- `/login`, `/forgot-password`, `/reset-password`, `/change-password`,
+  `/auth/callback` — auth flow pages (the last is the OAuth redirect
+  target, must stay publicly reachable pre-login).
+
+Navigation is a single shared `components/Header.js` (hamburger menu) used
+across every page.
 
 ## Tech stack
 
 - **Next.js 14** (Pages Router) + **React 18**
-- **Google Sheets** as the datastore, via the `googleapis` package and a
-  service account (no per-user Google sign-in required)
-- Hosted on **Vercel**
+- **Supabase Auth** (`@supabase/supabase-js`, `@supabase/ssr`) — session
+  cookie checked in `middleware.js`, which gates every route except the
+  auth-flow pages above
+- **Google Sheets** as the datastore (three tabs — Tasks, Roster, and
+  DraftTasks — across two spreadsheets), via the `googleapis` package and a
+  service account
+- **`pdf-parse`** — used server-side to detect whether the next meeting is
+  virtual or hybrid, by reading the posted agenda PDF's text
+- Hosted on **Vercel**, git-connected to this repo for auto-deploy on push
+  to `main`
 
-## Data model
+## Admin access
 
-### Tasks
+`lib/admin.js` exports a single `ADMIN_EMAILS` list and an `isAdmin()`
+helper. It gates both the Drafts review queue (`/drafts`, enforced in
+`middleware.js`) and the RFP Scoring admin panel (enforced client-side in
+`pages/scoring.js`). Add or remove an email from that one file to change
+access everywhere.
 
-Data lives in a Google Sheet, tab `Tasks`, with all 10 columns always
-filled:
+## Tasks data model
+
+Google Sheet "RSBC Workstream Tracker - Data", tab `Tasks`, columns A–J:
 
 | Column | Field | Notes |
 |---|---|---|
@@ -66,32 +81,85 @@ filled:
 | I | UpdatedAt | ISO timestamp, updated on every edit |
 | J | Notes | Optional |
 
+Dates are stored `YYYY-MM-DD` (sorts correctly as text) but always
+*displayed* `mm/dd/yyyy`. Done tasks are archived — hidden from the default
+view and excluded from the "Active tasks" count, one click away via the
+gray "Done" filter box.
+
 ### Roster
 
-The assignee list (`listMembers()` in `lib/sheets.js`) is read live from a
-**separate** Google Sheet — "RSBC Roster" (My Drive/RSBC/Admin), not this
-project's own Tasks sheet. Columns are Member, Position, Status, Email,
-Phone; only name/role/status are used (email and phone are read from the
-sheet's data but never returned to the app — see Known gotchas for why the
-column range is offset). A `FORMER MEMBERS -- EXCLUDE` marker row ends the
-active list; anything after it is ignored. One extra entry (`QA+M`, the
-project architect) is appended in code since it isn't a real roster row.
+`listMembers()` in `lib/sheets.js` reads live from a **separate** Google
+Sheet, "RSBC Roster" (My Drive/RSBC/Admin) — not the Tasks spreadsheet.
+This also feeds the Tasks page's assignee picker. Grouped as Officers /
+Voting Members / Ex-Officio Members / External (`QA+M`, the project
+architect, is appended in code, not a real roster row).
+
+## Draft tasks pipeline
+
+A recurring Cowork ("Carly") task drafts the committee's official meeting
+minutes each week and, as its final step, also extracts action items and
+writes them directly into the `DraftTasks` tab via a Composio Google
+Sheets connection (`GOOGLESHEETS_UPSERT_ROWS`, keyed on a deterministic
+`<SourceMeetingDate>::<slug(Title)>` ID for idempotent re-runs) — it does
+not call into this app or drive a browser. `/drafts` (admin-only) then
+shows a review queue: Approve calls the same `addTask()` the manual
+"+Add Task" button uses, so there's one code path for anything landing on
+the real board regardless of source; Veto discards it. A history list
+records who approved/rejected each draft and when, with override actions
+(move back to Pending, override-approve a rejected item) also audited.
+
+A manual-fallback ingestion route also exists, `POST /api/drafts/import`,
+authenticated by a shared secret (`X-Import-Secret` header checked against
+`DRAFTS_IMPORT_SECRET`) rather than a Supabase session — `middleware.js`
+skips the cookie check for this path since it's meant to be called
+server-to-server, not from a browser.
+
+## RFP Scoring
+
+`pages/scoring.js` scores architect/Owner's Rep RFP submissions against a
+rubric hardcoded in `lib/rfpCriteria.js` (the committee's finalized
+scoring sheet), split into two phases:
+
+- **Written Proposal** (50 pts): Relevant CT School Experience & Team
+  Strength (15), State Reimbursement/DAS/OGA & Project Controls Expertise
+  (15), Budget/Schedule/Risk Management approach (10), Staffing
+  Plan/Availability & Proactiveness (10), Political & Community Navigation
+  (5), Clarity/Responsiveness/Quality (5).
+- **Interview** (40 pts): Communication (10), Problem-Solving & Practical
+  Judgment (10), Proactiveness/Ownership/Follow-Through (10), Responsiveness
+  to Community & Stakeholders (10).
 
 ## Project structure
 
 ```
+middleware.js            Supabase session check + admin gating for every route
+components/
+  Header.js               shared nav (hamburger menu, NAV_ITEMS)
 pages/
-  _app.js              global CSS import
-  index.js             the task board UI — dashboard, filters, view toggle, modal
-  roster.js            read-only roster page
-  api/tasks/
-    index.js           GET (list all tasks) / POST (create)
-    [id].js             PUT (update) / DELETE (remove)
-  api/members.js        GET (list roster, for the Roster page)
+  index.js                 hub/landing page (card grid)
+  tasks.js                  task board
+  roster.js                 member directory
+  meetings.js                next meeting + archive
+  scoring.js                  RFP scoring
+  my-account.js                change password / edit own contact card
+  drafts.js                     admin-only draft-task review queue
+  login.js / forgot-password.js / reset-password.js / change-password.js
+  auth/callback.js               OAuth redirect target
+  api/
+    tasks/                        GET/POST, PUT/DELETE by id
+    members.js                     roster read
+    meetings.js                     public schedule + agenda-PDF fetch/parse
+    drafts/                          draft CRUD + import.js (service-to-service)
+    scoring/                          RFP scoring read/write
 lib/
-  sheets.js             Google Sheets read/write logic, listMembers(), STATUSES
-styles/
-  globals.css           all styling (CSS variables for the navy/maroon palette)
+  sheets.js                 Google Sheets read/write logic for all three tabs
+  admin.js                   ADMIN_EMAILS + isAdmin()
+  rfpCriteria.js               RFP scoring rubric
+  rsbcIcons.js                  shared icon components
+  rsbcLogo.js                    header logo, embedded as a data: URI
+  supabase/
+    client.js                     browser Supabase client
+    server.js                      reads the session user from req.cookies
 package.json
 ```
 
@@ -107,12 +175,14 @@ Create `.env.local` with:
 GOOGLE_SERVICE_ACCOUNT_EMAIL=tracker-backend@rsbc-workstream-tracker.iam.gserviceaccount.com
 GOOGLE_SHEET_ID=1z5q6LZ8d-QiIZzayyoAUXtnLHAqJx6bQ7kslyydAPtU
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+DRAFTS_IMPORT_SECRET=...
 ```
 
-The service account needs Editor access on the Tasks sheet (already
-shared). It reads the Roster sheet too, which is currently shared as
-"anyone with the link can edit" rather than shared directly with the
-service account.
+The service account needs Editor access on the Tasks/DraftTasks
+spreadsheet (already shared). It reads the separate Roster sheet via that
+sheet's "anyone with the link can edit" share rather than a direct grant.
 Then:
 
 ```bash
@@ -121,31 +191,35 @@ npm run dev
 
 ## Deployment
 
-Connected to Vercel (team **RSBC**, project `rsbc-workstream-tracker`) via
-GitHub — pushing to `main` triggers an automatic production deploy.
-Deployment Protection is disabled so the live link works without a Vercel
-login. The same three environment variables above are set in the Vercel
-project (Production + Preview).
+Connected to Vercel, git-connected to this repo — pushing to `main`
+triggers an automatic production deploy. Live at the custom domain
+`www.greenwichrsbc.com` (also reachable at the underlying
+`*.vercel.app` URL). Deployment Protection is disabled. The environment
+variables above are set in the Vercel project (Production + Preview).
+
+If Google Sign-In redirects land back on the wrong domain, check
+Supabase's **Authentication → URL Configuration** (Site URL / Redirect
+URLs) before assuming it's an app bug — that allowlist lives entirely in
+Supabase's dashboard, not in this repo.
 
 ## Known gotchas
 
-- **Editing the Sheet by hand:** always put each field in its own cell.
+- **Editing either Sheet by hand:** always put each field in its own cell.
   Pasting a whole row as one tab-separated string into a single cell can
-  *look* correct in the Sheets UI (the text visually overflows across the
-  empty neighboring cells) but actually lands entirely in column A, and the
-  app will fail to read the row. Fix: select the range and
+  *look* correct in the Sheets UI (the text visually overflows across
+  empty neighboring cells) but actually lands entirely in column A, and
+  the app will fail to read the row. Fix: select the range and
   **Data → Split text to columns**.
-- **A truncated file paste will silently break every future build.** If
-  you ever edit a file through GitHub's web editor instead of pushing from
-  a full local copy, double-check the paste wasn't cut off before
-  committing — a cut-off file compiles fine right up until Vercel's
-  git-triggered build hits it, and every subsequent push will fail until
-  it's fixed.
 - **The Roster sheet has an extra blank row and column** the Tasks sheet
   doesn't — its data actually starts at row 3, column B (not row 2, column
-  A), so `listMembers()` reads range `B3:F` rather than the `A2:...` pattern
-  used everywhere else. If the roster sheet is ever recreated or its layout
-  changes, check this offset first if members stop showing up (the sheet
-  will look fine visually in Google Sheets even if the range is wrong,
-  since a `values.get()` on the wrong range just silently returns fewer or
-  no rows rather than erroring).
+  A), so `listMembers()` reads range `B3:F` rather than the `A2:...`
+  pattern used elsewhere. If the roster sheet is ever recreated or its
+  layout changes, check this offset first if members stop showing up — a
+  `values.get()` on the wrong range silently returns fewer or no rows
+  rather than erroring, and the sheet looks fine visually in Google
+  Sheets even when the range is wrong.
+- **A truncated file paste will silently break every future build.** If
+  you ever edit a file through GitHub's web editor instead of pushing a
+  full copy, double-check the paste wasn't cut off before committing — a
+  cut-off file compiles fine right up until Vercel's git-triggered build
+  hits it, and every subsequent push fails until it's fixed.
