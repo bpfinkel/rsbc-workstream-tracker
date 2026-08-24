@@ -27,6 +27,12 @@ function MeetingsIcon() {
   );
 }
 
+function DocumentsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" /><path d="M14 3.5V8h4" /><path d="M8.5 12.5h7M8.5 16h7" /></svg>
+  );
+}
+
 function ScoringIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
@@ -39,7 +45,7 @@ function AccountIcon() {
   );
 }
 
-function DraftIcon() {
+function AdminIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 17.2V20h2.8L17.8 9 15 6.2 4 17.2z" /><path d="M14 5.2l3 3" /></svg>
   );
@@ -50,6 +56,7 @@ const NAV_ITEMS = [
   { key: 'tasks', href: '/tasks', label: 'Tasks', Icon: TasksIcon },
   { key: 'roster', href: '/roster', label: 'Roster', Icon: RosterIcon },
   { key: 'meetings', href: '/meetings', label: 'Meetings', Icon: MeetingsIcon },
+  { key: 'documents', href: '/key-documents', label: 'Key Documents', Icon: DocumentsIcon },
   { key: 'scoring', href: '/scoring', label: 'RFP Scoring', Icon: ScoringIcon },
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
 ];
@@ -126,12 +133,12 @@ export default function Header({ active }) {
                   <>
                     <div className="nav-menu-divider" />
                     <Link
-                      href="/drafts"
-                      className={'nav-menu-link admin-link' + (active === 'drafts' ? ' active' : '')}
+                      href="/admin"
+                      className={'nav-menu-link admin-link' + (active === 'admin' ? ' active' : '')}
                       onClick={() => setMenuOpen(false)}
                     >
-                      <DraftIcon />
-                      Draft Tasks
+                      <AdminIcon />
+                      Admin
                       <span className="admin-tag">Admin</span>
                     </Link>
                   </>

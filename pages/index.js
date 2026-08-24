@@ -29,6 +29,12 @@ function MeetingsIcon() {
   );
 }
 
+function DocumentsIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" /><path d="M14 3.5V8h4" /><path d="M8.5 12.5h7M8.5 16h7" /></svg>
+  );
+}
+
 function ScoringIcon() {
   return (
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
@@ -41,18 +47,19 @@ function AccountIcon() {
   );
 }
 
-function DraftIcon() {
+function AdminIcon() {
   return (
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 17.2V20h2.8L17.8 9 15 6.2 4 17.2z" /><path d="M14 5.2l3 3" /></svg>
   );
 }
 
 const HUB_ITEMS = [
-  { href: '/tasks', title: 'Tasks', desc: 'Track tasks, deadlines, and who owns what.', tone: 'blue', Icon: TasksIcon },
-  { href: '/roster', title: 'Roster', desc: 'Committee member contact info, roles, and status.', tone: 'accent', Icon: RosterIcon },
-  { href: '/meetings', title: 'Meetings', desc: 'Agendas, minutes, and the upcoming schedule.', tone: 'navy', Icon: MeetingsIcon },
-  { href: '/scoring', title: 'RFP Scoring', desc: 'Score architect and contractor proposals.', tone: 'amber', Icon: ScoringIcon },
-  { href: '/my-account', title: 'My Account', desc: 'Update your password and contact card.', tone: 'slate', Icon: AccountIcon }
+  { href: '/tasks', title: 'Tasks', tone: 'blue', Icon: TasksIcon },
+  { href: '/roster', title: 'Roster', tone: 'accent', Icon: RosterIcon },
+  { href: '/meetings', title: 'Meetings', tone: 'navy', Icon: MeetingsIcon },
+  { href: '/key-documents', title: 'Key Documents', tone: 'purple', Icon: DocumentsIcon },
+  { href: '/scoring', title: 'RFP Scoring', tone: 'amber', Icon: ScoringIcon },
+  { href: '/my-account', title: 'My Account', tone: 'slate', Icon: AccountIcon }
 ];
 
 export default function HomePage() {
@@ -74,7 +81,7 @@ export default function HomePage() {
 
       <main className="hub">
         <div className="hub-grid">
-          {HUB_ITEMS.map(({ href, title, desc, tone, Icon }) => (
+          {HUB_ITEMS.map(({ href, title, tone, Icon }) => (
             <Link href={href} className="hub-card" key={href}>
               <div className="hub-card-head">
                 <div className={'hub-icon hub-icon-' + tone}>
@@ -83,7 +90,6 @@ export default function HomePage() {
                 <h3>{title}</h3>
                 <ChevronRightIcon />
               </div>
-              <p>{desc}</p>
             </Link>
           ))}
 
@@ -92,17 +98,16 @@ export default function HomePage() {
               <div className="hub-admin-header">
                 <h2>Admin</h2>
               </div>
-              <Link href="/drafts" className="hub-card">
+              <Link href="/admin" className="hub-card">
                 <div className="hub-card-head">
                   <div className="hub-icon hub-icon-red">
-                    <DraftIcon />
+                    <AdminIcon />
                   </div>
                   <div className="hub-title-row">
-                    <h3>Draft Tasks</h3>
+                    <h3>Admin</h3>
                     <span className="hub-badge">Admin</span>
                   </div>
                 </div>
-                <p>Preview tasks auto-imported from meeting notes.</p>
               </Link>
             </>
           ) : null}
