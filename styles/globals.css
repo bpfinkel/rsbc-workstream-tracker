@@ -281,6 +281,8 @@ main { padding: 4px 28px 60px 28px; }
 .card.status-Completed { opacity: 0.7; border-left-color: var(--accent); }
 .card.draft-pending { border-left-color: var(--amber); cursor: default; }
 .card.draft-pending:hover { border-color: var(--border); box-shadow: var(--shadow-sm); transform: none; }
+.static-card { cursor: default; padding: 20px 22px; }
+.static-card:hover { border-color: var(--border); box-shadow: var(--shadow-sm); transform: none; }
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
 .card .title { font-size: 15px; font-weight: 600; margin: 0 0 4px 0; }
 .card .desc { font-size: 13px; color: var(--slate); margin: 0 0 10px 0; white-space: pre-wrap; }
@@ -426,12 +428,6 @@ main { padding: 4px 28px 60px 28px; }
   position: relative;
 }
 .modal h3 { margin: 0 0 16px 0; font-size: 16px; }
-.modal-header-btn {
-  display: flex; align-items: center; justify-content: space-between; width: 100%;
-  background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: inherit; text-align: left;
-}
-.modal-header-btn h3 { margin: 0; }
-.modal-header-chevron { color: var(--muted); flex: none; margin-left: 12px; transition: transform .15s; }
 .close-btn {
   position: absolute; top: 18px; right: 18px;
   width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent;
@@ -604,7 +600,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .admin-row { padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
 .admin-row + .admin-row { border-top: 1px solid var(--border); }
-.admin-row-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .admin-firm-name { font-size: 13.5px; font-weight: 600; color: var(--navy); }
 .admin-toggles { display: flex; gap: 10px; flex-shrink: 0; }
 .admin-detail { font-size: 12px; color: var(--slate); }

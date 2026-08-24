@@ -14,14 +14,23 @@ function formatPhoneInput(raw) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
+function LockIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+  );
+}
+
+function ContactIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2" /><circle cx="9.5" cy="11" r="2" /><path d="M6 16c.6-1.8 2-2.7 3.5-2.7s2.9.9 3.5 2.7M14.5 10h4M14.5 13h3" /></svg>
+  );
+}
+
 function ChevronIcon({ open }) {
   return (
-    <svg
-      width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="modal-header-chevron"
-      style={{ transform: open ? 'rotate(180deg)' : 'none' }}
-    >
-      <path d="M6 9l6 6 6-6" />
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="ws-header-chevron"
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .15s', flexShrink: 0 }}>
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -137,86 +146,87 @@ export default function Account() {
         <title>Riverside School Building Committee — My Account</title>
       </Head>
       <Header active="account" />
-      <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40, gap: 20 }}>
-        <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
-          <button
-            type="button"
-            className="modal-header-btn"
-            style={{ marginBottom: passwordOpen ? 16 : 0 }}
-            onClick={() => setPasswordOpen((o) => !o)}
-          >
-            <h3>Change Password</h3>
+      <main style={{ maxWidth: 420, margin: '0 auto' }}>
+        <div className="workstream-group">
+          <button type="button" className="ws-header ws-header-btn" onClick={() => setPasswordOpen((o) => !o)}>
+            <LockIcon />
+            <h2>Change Password</h2>
             <ChevronIcon open={passwordOpen} />
           </button>
           {passwordOpen ? (
-            <form onSubmit={handleSubmit}>
-              <div className="field">
-                <label>New Password</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
-              </div>
-              <div className="field">
-                <label>Confirm Password</label>
-                <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-              </div>
-              {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
-              {success ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Password updated.</div> : null}
-              <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
-                {loading ? 'Saving…' : 'Save Password'}
-              </button>
-            </form>
+            <div className="card static-card">
+              <form onSubmit={handleSubmit}>
+                <div className="field">
+                  <label>New Password</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
+                </div>
+                <div className="field">
+                  <label>Confirm Password</label>
+                  <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+                </div>
+                {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
+                {success ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Password updated.</div> : null}
+                <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
+                  {loading ? 'Saving…' : 'Save Password'}
+                </button>
+              </form>
+            </div>
           ) : null}
         </div>
 
         {membersLoaded && myMember ? (
-          <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
-            <button
-              type="button"
-              className="modal-header-btn"
-              style={{ marginBottom: contactOpen ? 16 : 0 }}
-              onClick={() => setContactOpen((o) => !o)}
-            >
-              <h3>My Contact Card</h3>
+          <div className="workstream-group">
+            <button type="button" className="ws-header ws-header-btn" onClick={() => setContactOpen((o) => !o)}>
+              <ContactIcon />
+              <h2>My Contact Card</h2>
               <ChevronIcon open={contactOpen} />
             </button>
             {contactOpen ? (
-              <form onSubmit={handleContactSave}>
-                <div className="field">
-                  <label>Name</label>
-                  <div className="contact-value">{myMember.name}</div>
-                </div>
-                <div className="field">
-                  <label>Title</label>
-                  <div className="contact-value">{myMember.role}</div>
-                </div>
-                <div className="field">
-                  <label>Email</label>
-                  <div className="contact-value">{myMember.email}</div>
-                </div>
-                <div className="field">
-                  <label>Mobile</label>
-                  <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(formatPhoneInput(e.target.value))} />
-                </div>
-                {contactError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{contactError}</div> : null}
-                {contactSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Contact card updated.</div> : null}
-                <button className="btn-primary" type="submit" disabled={contactLoading} style={{ width: '100%' }}>
-                  {contactLoading ? 'Saving…' : 'Save Contact Card'}
-                </button>
-              </form>
+              <div className="card static-card">
+                <form onSubmit={handleContactSave}>
+                  <div className="field">
+                    <label>Name</label>
+                    <div className="contact-value">{myMember.name}</div>
+                  </div>
+                  <div className="field">
+                    <label>Title</label>
+                    <div className="contact-value">{myMember.role}</div>
+                  </div>
+                  <div className="field">
+                    <label>Email</label>
+                    <div className="contact-value">{myMember.email}</div>
+                  </div>
+                  <div className="field">
+                    <label>Mobile</label>
+                    <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(formatPhoneInput(e.target.value))} />
+                  </div>
+                  {contactError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{contactError}</div> : null}
+                  {contactSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Contact card updated.</div> : null}
+                  <button className="btn-primary" type="submit" disabled={contactLoading} style={{ width: '100%' }}>
+                    {contactLoading ? 'Saving…' : 'Save Contact Card'}
+                  </button>
+                </form>
+              </div>
             ) : null}
           </div>
         ) : membersLoaded && !myMember ? (
-          <div className="modal" style={{ maxWidth: 360, width: '100%' }}>
-            <h3>My Contact Card</h3>
-            <p style={{ fontSize: 13, color: 'var(--slate)', margin: 0 }}>
-              We couldn't match your sign-in email to a roster entry. Contact the secretary to link your account.
-            </p>
+          <div className="workstream-group">
+            <div className="ws-header">
+              <ContactIcon />
+              <h2>My Contact Card</h2>
+            </div>
+            <div className="card static-card">
+              <p style={{ fontSize: 13, color: 'var(--slate)', margin: 0 }}>
+                We couldn't match your sign-in email to a roster entry. Contact the secretary to link your account.
+              </p>
+            </div>
           </div>
         ) : null}
 
-        <div className="modal" style={{ maxWidth: 360, width: '100%', textAlign: 'center' }}>
+        <div className="card static-card" style={{ textAlign: 'center' }}>
           <button type="button" className="btn-secondary" onClick={handleSignOut} style={{ width: '100%' }}>Sign Out</button>
         </div>
-        {email ? <div className="account-note">Signed in as {email}</div> : null}
+        {email ? <div className="account-note" style={{ marginTop: 12 }}>Signed in as {email}</div> : null}
       </main>
     </>
   );
