@@ -58,7 +58,7 @@ export async function middleware(request) {
     return NextResponse.redirect(url);
   }
 
-  const isAdminPath = pathname === '/drafts' || pathname.startsWith('/api/drafts');
+  const isAdminPath = pathname === '/admin' || pathname === '/drafts' || pathname.startsWith('/api/drafts') || pathname.startsWith('/api/documents');
   if (isAdminPath && !isAdmin(user.email)) {
     if (isApiRoute) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
