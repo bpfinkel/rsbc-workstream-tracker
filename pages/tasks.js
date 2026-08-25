@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
+import { createClient } from '../lib/supabase/client';
 
 const EMPTY_FORM = {
   id: '',
@@ -97,6 +98,12 @@ function DeadlineIcon({ variant }) {
   );
 }
 
+function CheckIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
+  );
+}
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
@@ -115,10 +122,16 @@ export default function TasksPage() {
   const [toast, setToast] = useState('');
   const [customAssigneeInput, setCustomAssigneeInput] = useState('');
   const [viewMode, setViewMode] = useState('detailed');
+  const [myEmail, setMyEmail] = useState(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('rsbc-view-mode');
     if (saved === 'detailed' || saved === 'compact') setViewMode(saved);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setMyEmail(data?.user?.email || null));
   }, []);
 
   function setView(mode) {
@@ -253,6 +266,22 @@ export default function TasksPage() {
     }
   }
 
+  async function markComplete(e, task) {
+    e.stopPropagation();
+    if (task.status === 'Completed' || !isAssignedToMe(task)) return;
+    try {
+      await fetch('/api/tasks/' + task.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...task, status: 'Completed' })
+      });
+      showToast('Task marked complete');
+      await loadData();
+    } catch (err) {
+      showToast('Error: ' + err.message);
+    }
+  }
+
   const filteredTasks = useMemo(() => {
     const q = search.trim().toLowerCase();
     return tasks.filter((t) => {
@@ -303,6 +332,16 @@ export default function TasksPage() {
     tasks.forEach((t) => t.assignees.forEach((a) => names.add(a)));
     return Array.from(names).sort();
   }, [members, tasks]);
+
+  const myName = useMemo(() => {
+    if (!myEmail) return null;
+    const me = members.find((m) => m.email && m.email.toLowerCase() === myEmail.toLowerCase());
+    return me ? me.name : null;
+  }, [members, myEmail]);
+
+  function isAssignedToMe(task) {
+    return !!myName && task.assignees.includes(myName);
+  }
 
   const groups = useMemo(() => {
     const g = {};
@@ -454,6 +493,18 @@ export default function TasksPage() {
                         <div className="card-assignees">
                           {t.assignees.map((a) => <span className="chip-avatar" key={a}><span className="avatar">{initials(a)}</span>{a}</span>)}
                         </div>
+                        {t.status !== 'Completed' && (
+                          <button
+                            type="button"
+                            className={'mark-complete-btn' + (isAssignedToMe(t) ? '' : ' disabled')}
+                            disabled={!isAssignedToMe(t)}
+                            onClick={(e) => markComplete(e, t)}
+                            title={isAssignedToMe(t) ? 'Mark this task complete' : 'Only assigned members can mark this task complete'}
+                          >
+                            <CheckIcon />
+                            Mark Complete
+                          </button>
+                        )}
                         <div className={'deadline ' + deadlineClass}><DeadlineIcon variant={deadlineClass} />{deadlineLabel}</div>
                       </div>
                     );
