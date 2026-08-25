@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Header from '../components/Header';
 
 const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+const VIEWPORT_UNLOCKED = 'width=device-width, initial-scale=1';
 
 function formatShortDate(dateStr) {
   if (!dateStr) return '';
@@ -15,6 +16,15 @@ function formatDateTime(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+// Drive files embed directly via /preview — accepts either the /file/d/<id>/view
+// share-link shape or the older ?id=<id> download-link shape, matching the same
+// helper on pages/key-documents.js.
+function driveEmbedUrl(url) {
+  const match = String(url || '').match(/\/d\/([^/]+)/) || String(url || '').match(/[?&]id=([^&]+)/);
+  const id = match ? match[1] : null;
+  return id ? `https://drive.google.com/file/d/${id}/preview` : url;
 }
 
 // Groups a History list by the calendar day an item was created (ET, matching
@@ -101,6 +111,13 @@ export default function Admin() {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [docHistoryOpen, setDocHistoryOpen] = useState(null);
   const [docEdits, setDocEdits] = useState({});
+  const [pdfViewer, setPdfViewer] = useState(null);
+
+  const [docEditTitle, setDocEditTitle] = useState('');
+  const [docEditCategory, setDocEditCategory] = useState('');
+  const [docSaveError, setDocSaveError] = useState('');
+  const [docSaveSuccess, setDocSaveSuccess] = useState(false);
+  const [docSaving, setDocSaving] = useState(false);
 
   const [sectionOpen, setSectionOpen] = useState({
     tasksPending: false, tasksHistory: false, docsPending: false, docsHistory: false
@@ -133,8 +150,18 @@ export default function Admin() {
   useEffect(() => {
     const meta = document.querySelector('meta[name="viewport"]');
     if (!meta) return;
-    meta.setAttribute('content', VIEWPORT_LOCKED);
-  }, []);
+    meta.setAttribute('content', pdfViewer ? VIEWPORT_UNLOCKED : VIEWPORT_LOCKED);
+    return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
+  }, [pdfViewer]);
+
+  useEffect(() => {
+    if (selectedDoc) {
+      setDocEditTitle(selectedDoc.title);
+      setDocEditCategory(selectedDoc.category);
+      setDocSaveError('');
+      setDocSaveSuccess(false);
+    }
+  }, [selectedDoc]);
 
   async function handleTaskAction(id, action) {
     setError('');
@@ -183,6 +210,37 @@ export default function Admin() {
     } catch (e) {
       setError(e.message);
     }
+  }
+
+  async function handleSaveDocEdit() {
+    if (!selectedDoc) return;
+    if (!docEditTitle.trim()) {
+      setDocSaveError('Title is required');
+      return;
+    }
+    setDocSaveError('');
+    setDocSaveSuccess(false);
+    setDocSaving(true);
+    try {
+      const res = await fetch('/api/documents/' + selectedDoc.id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', title: docEditTitle.trim(), category: docEditCategory.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      setDocSaveSuccess(true);
+      setSelectedDoc((prev) => (prev ? { ...prev, title: docEditTitle.trim(), category: docEditCategory.trim() } : prev));
+      await loadDocuments();
+    } catch (e) {
+      setDocSaveError(e.message);
+    } finally {
+      setDocSaving(false);
+    }
+  }
+
+  function openDoc(title, driveLink) {
+    setPdfViewer({ title, driveLink });
   }
 
   const pendingTasks = tasks.filter((d) => d.status === 'Pending');
@@ -319,7 +377,7 @@ export default function Admin() {
                         onChange={(e) => setDocEdit(d.id, 'category', e.target.value)} />
                     </div>
                     {d.driveLink ? (
-                      <a className="chip chip-link" href={d.driveLink} target="_blank" rel="noopener noreferrer">View file ↗</a>
+                      <button type="button" className="chip chip-link" onClick={() => openDoc(d.title, d.driveLink)}>View file ↗</button>
                     ) : null}
                     <div className="draft-actions">
                       <button type="button" className="btn-veto" onClick={() => handleDocAction(d.id, 'reject')}>Veto</button>
@@ -428,16 +486,35 @@ export default function Admin() {
       <div className={'overlay' + (selectedDoc ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) setSelectedDoc(null); }}>
         {selectedDoc && (
           <div className="modal contact-card">
-            <h3>{selectedDoc.title}</h3>
+            <h3>{selectedDoc.status === 'Approved' ? 'Edit Key Document' : selectedDoc.title}</h3>
 
-            <div className="contact-field">
-              <span className="contact-label">Category</span>
-              <span className="contact-value">{selectedDoc.category || '—'}</span>
-            </div>
+            {selectedDoc.status === 'Approved' ? (
+              <>
+                <div className="field">
+                  <label>Title</label>
+                  <input type="text" value={docEditTitle} onChange={(e) => setDocEditTitle(e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Category</label>
+                  <input type="text" list="docCategoryList" value={docEditCategory} onChange={(e) => setDocEditCategory(e.target.value)} />
+                </div>
+                {docSaveError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{docSaveError}</div> : null}
+                {docSaveSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Saved.</div> : null}
+              </>
+            ) : (
+              <div className="contact-field">
+                <span className="contact-label">Category</span>
+                <span className="contact-value">{selectedDoc.category || '—'}</span>
+              </div>
+            )}
+
             <div className="contact-field">
               <span className="contact-label">File</span>
               <span className="contact-value">
-                {selectedDoc.driveLink ? <a href={selectedDoc.driveLink} target="_blank" rel="noopener noreferrer">View in Drive ↗</a> : '—'}
+                {selectedDoc.driveLink ? (
+                  <button type="button" className="chip-link" style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer' }}
+                    onClick={() => openDoc(selectedDoc.title, selectedDoc.driveLink)}>View in Drive ↗</button>
+                ) : '—'}
               </span>
             </div>
             <div className="contact-field">
@@ -473,6 +550,9 @@ export default function Admin() {
             <div className="modal-actions">
               <span />
               <div className="modal-right">
+                {selectedDoc.status === 'Approved' ? (
+                  <button className="btn-primary" onClick={handleSaveDocEdit} disabled={docSaving}>{docSaving ? 'Saving…' : 'Save Changes'}</button>
+                ) : null}
                 {selectedDoc.status === 'Rejected' ? (
                   <>
                     <button className="btn-secondary" onClick={() => handleDocAction(selectedDoc.id, 'move-to-pending')}>Move to Pending</button>
@@ -482,6 +562,21 @@ export default function Admin() {
                 <button className="btn-secondary" onClick={() => setSelectedDoc(null)}>Close</button>
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className={'overlay' + (pdfViewer ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) setPdfViewer(null); }}>
+        {pdfViewer && (
+          <div className="modal pdf-viewer">
+            <div className="pdf-viewer-header">
+              <h3>{pdfViewer.title}</h3>
+              <div className="pdf-viewer-header-actions">
+                <a href={pdfViewer.driveLink} target="_blank" rel="noreferrer">Open in Drive ↗</a>
+                <button className="btn-secondary" onClick={() => setPdfViewer(null)}>Close</button>
+              </div>
+            </div>
+            <iframe src={driveEmbedUrl(pdfViewer.driveLink)} title={pdfViewer.title} />
           </div>
         )}
       </div>
