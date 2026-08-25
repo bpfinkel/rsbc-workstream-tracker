@@ -572,7 +572,6 @@ export default function Admin() {
             <div className="pdf-viewer-header">
               <h3>{pdfViewer.title}</h3>
               <div className="pdf-viewer-header-actions">
-                <a href={pdfViewer.driveLink} target="_blank" rel="noreferrer">Open in Drive ↗</a>
                 <button className="btn-secondary" onClick={() => setPdfViewer(null)}>Close</button>
               </div>
             </div>
