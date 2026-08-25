@@ -11,6 +11,21 @@ function ExternalLinkIcon({ className }) {
   );
 }
 
+function FolderIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.2h8a1 1 0 0 1 1 1v9.3a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5z" /></svg>
+  );
+}
+
+function ChevronIcon({ open, className }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .15s', flexShrink: 0 }}>
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Drive files embed directly via /preview (no Google Docs viewer proxy needed,
 // unlike the Meetings page's external agenda/minutes PDFs) — accepts either the
 // /file/d/<id>/view share-link shape or the older ?id=<id> download-link shape
@@ -26,6 +41,9 @@ export default function KeyDocuments() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [pdfViewer, setPdfViewer] = useState(null);
+  // Sections default open (this is a browsing page, unlike the Admin review
+  // queue) — a category only collapses once the member explicitly closes it.
+  const [collapsedCategories, setCollapsedCategories] = useState(new Set());
 
   useEffect(() => {
     fetch('/api/key-documents')
@@ -56,6 +74,14 @@ export default function KeyDocuments() {
       .map((c) => ({ category: c, docs: g[c] }));
   }, [documents]);
 
+  function toggleCategory(category) {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category); else next.add(category);
+      return next;
+    });
+  }
+
   function openDoc(title, driveLink) {
     setPdfViewer({ title, driveLink });
   }
@@ -73,19 +99,29 @@ export default function KeyDocuments() {
         ) : !loaded ? null : groups.length === 0 ? (
           <div className="empty">No key documents yet.</div>
         ) : (
-          groups.map((g) => (
-            <div className="workstream-group" key={g.category}>
-              <h2>{g.category} ({g.docs.length})</h2>
-              <div className="roster-list">
-                {g.docs.map((d) => (
-                  <div className="roster-row" onClick={() => openDoc(d.title, d.driveLink)} key={d.id}>
-                    <span className="roster-name">{d.title}</span>
-                    <ExternalLinkIcon className="roster-chevron" />
+          groups.map((g) => {
+            const open = !collapsedCategories.has(g.category);
+            return (
+              <div className="workstream-group" key={g.category}>
+                <button type="button" className="ws-header ws-header-btn" onClick={() => toggleCategory(g.category)}>
+                  <FolderIcon />
+                  <h2>{g.category}</h2>
+                  <span className="ws-count">{g.docs.length}</span>
+                  <ChevronIcon open={open} className="ws-header-chevron" />
+                </button>
+                {open ? (
+                  <div className="roster-list">
+                    {g.docs.map((d) => (
+                      <div className="roster-row" onClick={() => openDoc(d.title, d.driveLink)} key={d.id}>
+                        <span className="roster-name">{d.title}</span>
+                        <ExternalLinkIcon className="roster-chevron" />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : null}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </main>
 
