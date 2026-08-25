@@ -1,4 +1,4 @@
-import { approveDraftDocument, rejectDraftDocument, moveDraftDocumentToPending, overrideApproveDraftDocument } from '../../../lib/sheets';
+import { approveDraftDocument, rejectDraftDocument, moveDraftDocumentToPending, overrideApproveDraftDocument, updateKeyDocument } from '../../../lib/sheets';
 import { getUserFromRequest } from '../../../lib/supabase/server';
 
 export default async function handler(req, res) {
@@ -28,7 +28,11 @@ export default async function handler(req, res) {
       const document = await overrideApproveDraftDocument(id, fields, actor);
       return res.status(200).json({ document });
     }
-    return res.status(400).json({ error: 'action must be "approve", "reject", "move-to-pending", or "override-approve"' });
+    if (action === 'update') {
+      const document = await updateKeyDocument(id, { title, category });
+      return res.status(200).json({ document });
+    }
+    return res.status(400).json({ error: 'action must be "approve", "reject", "move-to-pending", "override-approve", or "update"' });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
