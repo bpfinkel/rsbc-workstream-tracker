@@ -323,11 +323,13 @@ main { padding: 4px 28px 60px 28px; }
   width: 18px; height: 18px; border-radius: 50%; background: var(--navy); color: #fff;
   font-size: 8.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none;
 }
+.card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.card-bottom .deadline { margin-top: 0; min-width: 0; }
 .mark-complete-btn {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  width: 100%; margin-bottom: 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  flex: none; white-space: nowrap;
   background: var(--accent-soft); color: var(--accent-dark); border: 1px solid var(--accent);
-  padding: 7px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 700; font-family: inherit;
+  padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: inherit;
   cursor: pointer; transition: background .12s, box-shadow .12s, transform .08s;
 }
 .mark-complete-btn:hover { background: #cbe6d3; box-shadow: var(--shadow-sm); }

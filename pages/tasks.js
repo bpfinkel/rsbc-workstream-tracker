@@ -471,7 +471,7 @@ export default function TasksPage() {
                     if (t.deadline) {
                       if (t.status !== 'Completed' && du < 0) {
                         deadlineClass = 'overdue';
-                        deadlineLabel = 'Overdue — was due ' + formatDate(t.deadline);
+                        deadlineLabel = 'Was due ' + formatDate(t.deadline);
                       } else if (t.status !== 'Completed' && du <= 7) {
                         deadlineClass = 'soon';
                         deadlineLabel = 'Due ' + formatDate(t.deadline) + ' (' + du + 'd)';
@@ -493,19 +493,21 @@ export default function TasksPage() {
                         <div className="card-assignees">
                           {t.assignees.map((a) => <span className="chip-avatar" key={a}><span className="avatar">{initials(a)}</span>{a}</span>)}
                         </div>
-                        {t.status !== 'Completed' && (
-                          <button
-                            type="button"
-                            className={'mark-complete-btn' + (isAssignedToMe(t) ? '' : ' disabled')}
-                            disabled={!isAssignedToMe(t)}
-                            onClick={(e) => markComplete(e, t)}
-                            title={isAssignedToMe(t) ? 'Mark this task complete' : 'Only assigned members can mark this task complete'}
-                          >
-                            <CheckIcon />
-                            Mark Complete
-                          </button>
-                        )}
-                        <div className={'deadline ' + deadlineClass}><DeadlineIcon variant={deadlineClass} />{deadlineLabel}</div>
+                        <div className="card-bottom">
+                          <div className={'deadline ' + deadlineClass}><DeadlineIcon variant={deadlineClass} />{deadlineLabel}</div>
+                          {t.status !== 'Completed' && (
+                            <button
+                              type="button"
+                              className={'mark-complete-btn' + (isAssignedToMe(t) ? '' : ' disabled')}
+                              disabled={!isAssignedToMe(t)}
+                              onClick={(e) => markComplete(e, t)}
+                              title={isAssignedToMe(t) ? 'Mark this task complete' : 'Only assigned members can mark this task complete'}
+                            >
+                              <CheckIcon />
+                              Mark Complete
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
