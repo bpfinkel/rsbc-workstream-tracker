@@ -10,6 +10,12 @@ const GROUP_LABEL = {
   'External': 'External'
 };
 
+function GroupIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="3.6" /><path d="M22.5 20v-2a4 4 0 0 0-3-3.87" /><path d="M16 4.13a4 4 0 0 1 0 7.75" /></svg>
+  );
+}
+
 function initials(name) {
   return String(name || '')
     .split(' ')
@@ -57,7 +63,11 @@ export default function Roster() {
         ) : !loaded ? null : (
           groups.map((g) => (
             <div className="workstream-group" key={g.status}>
-              <h2>{g.label} ({g.members.length})</h2>
+              <div className="ws-header">
+                <GroupIcon />
+                <h2>{g.label}</h2>
+                <span className="ws-count">{g.members.length}</span>
+              </div>
               <div className="roster-list">
                 {g.members.map((m) => (
                   <div className="roster-row" key={m.name} onClick={() => setSelected(m)}>

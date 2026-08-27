@@ -4,9 +4,7 @@ import Header from '../components/Header';
 import { createClient } from '../lib/supabase/client';
 import { RFP_PHASES } from '../lib/rfpCriteria';
 import { isAdmin as checkIsAdmin } from '../lib/admin';
-
-const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
-const VIEWPORT_UNLOCKED = 'width=device-width, initial-scale=1';
+import { useModalViewportLock } from '../lib/useViewportLock';
 
 function embedUrl(pdfUrl) {
   return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
@@ -18,6 +16,18 @@ function emptyScores() {
 
 function totalFor(scores, criteria) {
   return criteria.reduce((sum, c, i) => sum + (Number(scores[i]) || 0), 0);
+}
+
+function ScoringIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
+  );
+}
+
+function AdminSectionIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 17.2V20h2.8L17.8 9 15 6.2 4 17.2z" /><path d="M14 5.2l3 3" /></svg>
+  );
 }
 
 function LockIcon() {
@@ -84,12 +94,7 @@ export default function Scoring() {
     load().catch((e) => setError(e.message));
   }, []);
 
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return;
-    meta.setAttribute('content', pdfViewer ? VIEWPORT_UNLOCKED : VIEWPORT_LOCKED);
-    return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
-  }, [pdfViewer]);
+  useModalViewportLock(!!pdfViewer);
 
   function showToast(msg) {
     setToast(msg);
@@ -193,7 +198,11 @@ export default function Scoring() {
         {error ? <div className="empty">{error}</div> : null}
 
         <div className="workstream-group">
-          <h2>Owner&rsquo;s Rep RFP — Score the Firms</h2>
+          <div className="ws-header">
+            <ScoringIcon />
+            <h2>Owner&rsquo;s Rep RFP — Score the Firms</h2>
+            <span className="ws-count">{firms.length}</span>
+          </div>
           {!loaded ? null : (
             <div className="cards">
               {firms.map((f) => {
@@ -245,7 +254,10 @@ export default function Scoring() {
 
         {isAdmin ? (
           <div className="workstream-group">
-            <h2>Admin — Submission Status</h2>
+            <div className="ws-header">
+              <AdminSectionIcon />
+              <h2>Admin — Submission Status</h2>
+            </div>
             <div className="admin-list">
               {firms.map((f) => {
                 const w = scorersFor(f.firm, 'Written');
