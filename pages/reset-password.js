@@ -87,7 +87,7 @@ export default function ResetPassword() {
                 <label>Confirm Password</label>
                 <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
               </div>
-              {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
+              {error ? <div className="form-error">{error}</div> : null}
               <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
                 {loading ? 'Saving…' : 'Set Password'}
               </button>

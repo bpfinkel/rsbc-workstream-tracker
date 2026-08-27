@@ -56,7 +56,7 @@ export default function Login() {
             <label>Password</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
+          {error ? <div className="form-error">{error}</div> : null}
           <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
             {loading ? 'Signing in…' : 'Sign In'}
           </button>

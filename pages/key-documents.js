@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
-
-const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
-const VIEWPORT_UNLOCKED = 'width=device-width, initial-scale=1';
+import { driveEmbedUrl } from '../lib/driveEmbed';
+import { useModalViewportLock } from '../lib/useViewportLock';
 
 function ExternalLinkIcon({ className }) {
   return (
@@ -26,16 +25,6 @@ function ChevronIcon({ open, className }) {
   );
 }
 
-// Drive files embed directly via /preview (no Google Docs viewer proxy needed,
-// unlike the Meetings page's external agenda/minutes PDFs) — accepts either the
-// /file/d/<id>/view share-link shape or the older ?id=<id> download-link shape
-// so it works regardless of which format a given DriveLink was saved with.
-function driveEmbedUrl(url) {
-  const match = String(url || '').match(/\/d\/([^/]+)/) || String(url || '').match(/[?&]id=([^&]+)/);
-  const id = match ? match[1] : null;
-  return id ? `https://drive.google.com/file/d/${id}/preview` : url;
-}
-
 export default function KeyDocuments() {
   const [documents, setDocuments] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -55,12 +44,7 @@ export default function KeyDocuments() {
       .catch((e) => setError(e.message));
   }, []);
 
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return;
-    meta.setAttribute('content', pdfViewer ? VIEWPORT_UNLOCKED : VIEWPORT_LOCKED);
-    return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
-  }, [pdfViewer]);
+  useModalViewportLock(!!pdfViewer);
 
   const groups = useMemo(() => {
     const g = {};

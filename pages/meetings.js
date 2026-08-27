@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
+import { useModalViewportLock } from '../lib/useViewportLock';
 
 const ZOOM_LINK = 'https://greenwichct.zoom.us/j/84949247205?pwd=7V3GrwayaIY0i0aw1rAcg81RFRUKWc.1';
 const ZOOM_DIAL_IN = '(646) 518-9805';
 const ZOOM_MEETING_ID = '849 4924 7205';
 const ZOOM_PASSCODE = '2155103';
-
-const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
-const VIEWPORT_UNLOCKED = 'width=device-width, initial-scale=1';
 
 function formatFullDate(dateStr) {
   if (!dateStr) return '';
@@ -138,12 +136,7 @@ export default function Meetings() {
       .catch((e) => { setError(e.message); setLoaded(true); });
   }, []);
 
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return;
-    meta.setAttribute('content', pdfViewer ? VIEWPORT_UNLOCKED : VIEWPORT_LOCKED);
-    return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
-  }, [pdfViewer]);
+  useModalViewportLock(!!pdfViewer);
 
   const { meetings, nextIndex, lastIndex, location, lastLocation } = data;
   const nextMeeting = nextIndex >= 0 ? meetings[nextIndex] : null;

@@ -3,8 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
 import Header from '../components/Header';
-
-const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+import { useModalViewportLock } from '../lib/useViewportLock';
 
 function formatPhoneInput(raw) {
   const digits = raw.replace(/\D/g, '').slice(0, 10);
@@ -54,11 +53,7 @@ export default function Account() {
   const [contactLoading, setContactLoading] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
 
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return;
-    meta.setAttribute('content', VIEWPORT_LOCKED);
-  }, []);
+  useModalViewportLock(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -164,8 +159,8 @@ export default function Account() {
                   <label>Confirm Password</label>
                   <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
                 </div>
-                {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
-                {success ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Password updated.</div> : null}
+                {error ? <div className="form-error">{error}</div> : null}
+                {success ? <div className="form-success">Password updated.</div> : null}
                 <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
                   {loading ? 'Saving…' : 'Save Password'}
                 </button>
@@ -200,8 +195,8 @@ export default function Account() {
                     <label>Mobile</label>
                     <input type="tel" placeholder="Optional" value={contactPhone} onChange={(e) => setContactPhone(formatPhoneInput(e.target.value))} />
                   </div>
-                  {contactError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{contactError}</div> : null}
-                  {contactSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Contact card updated.</div> : null}
+                  {contactError ? <div className="form-error">{contactError}</div> : null}
+                  {contactSuccess ? <div className="form-success">Contact card updated.</div> : null}
                   <button className="btn-primary" type="submit" disabled={contactLoading} style={{ width: '100%' }}>
                     {contactLoading ? 'Saving…' : 'Save Contact Card'}
                   </button>

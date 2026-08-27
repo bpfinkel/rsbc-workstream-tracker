@@ -44,7 +44,7 @@ export default function ForgotPassword() {
                 <label>Email</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
               </div>
-              {error ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{error}</div> : null}
+              {error ? <div className="form-error">{error}</div> : null}
               <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
                 {loading ? 'Sending…' : 'Send Reset Link'}
               </button>

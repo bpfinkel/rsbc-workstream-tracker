@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
-
-const VIEWPORT_LOCKED = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
-const VIEWPORT_UNLOCKED = 'width=device-width, initial-scale=1';
+import { driveEmbedUrl } from '../lib/driveEmbed';
+import { useModalViewportLock } from '../lib/useViewportLock';
 
 function formatShortDate(dateStr) {
   if (!dateStr) return '';
@@ -16,15 +15,6 @@ function formatDateTime(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-}
-
-// Drive files embed directly via /preview — accepts either the /file/d/<id>/view
-// share-link shape or the older ?id=<id> download-link shape, matching the same
-// helper on pages/key-documents.js.
-function driveEmbedUrl(url) {
-  const match = String(url || '').match(/\/d\/([^/]+)/) || String(url || '').match(/[?&]id=([^&]+)/);
-  const id = match ? match[1] : null;
-  return id ? `https://drive.google.com/file/d/${id}/preview` : url;
 }
 
 // Groups a History list by the calendar day an item was created (ET, matching
@@ -147,12 +137,7 @@ export default function Admin() {
     loadDocuments().catch((e) => setError(e.message));
   }, []);
 
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return;
-    meta.setAttribute('content', pdfViewer ? VIEWPORT_UNLOCKED : VIEWPORT_LOCKED);
-    return () => { meta.setAttribute('content', VIEWPORT_LOCKED); };
-  }, [pdfViewer]);
+  useModalViewportLock(!!pdfViewer);
 
   useEffect(() => {
     if (selectedDoc) {
@@ -498,8 +483,8 @@ export default function Admin() {
                   <label>Category</label>
                   <input type="text" list="docCategoryList" value={docEditCategory} onChange={(e) => setDocEditCategory(e.target.value)} />
                 </div>
-                {docSaveError ? <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 14 }}>{docSaveError}</div> : null}
-                {docSaveSuccess ? <div style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 14 }}>Saved.</div> : null}
+                {docSaveError ? <div className="form-error">{docSaveError}</div> : null}
+                {docSaveSuccess ? <div className="form-success">Saved.</div> : null}
               </>
             ) : (
               <div className="contact-field">
