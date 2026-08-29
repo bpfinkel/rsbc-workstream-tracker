@@ -100,7 +100,9 @@ export default function Header({ active }) {
     <div className="site-header">
       <header>
         <div className="header-left">
-          <img src="/api/apple-touch-icon" alt="RSBC" className="header-mark" />
+          <Link href="/" aria-label="Home" style={{ display: 'flex', flex: 'none' }}>
+            <img src="/api/apple-touch-icon" alt="RSBC" className="header-mark" />
+          </Link>
           <div className="header-titles">
             <h1>Riverside School Building Committee</h1>
             <div className="header-sub">Committee Member Portal</div>
