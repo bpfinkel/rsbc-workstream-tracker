@@ -27,6 +27,12 @@ function MeetingsIcon() {
   );
 }
 
+function PublicCalendarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 20.5h18" /><path d="M4.5 20.5v-9M9.5 20.5v-9M14.5 20.5v-9M19.5 20.5v-9" /><path d="M2.6 11.5L12 5.2l9.4 6.3" /></svg>
+  );
+}
+
 function DocumentsIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" /><path d="M14 3.5V8h4" /><path d="M8.5 12.5h7M8.5 16h7" /></svg>
@@ -56,6 +62,7 @@ const NAV_ITEMS = [
   { key: 'tasks', href: '/tasks', label: 'Tasks', Icon: TasksIcon },
   { key: 'roster', href: '/roster', label: 'Roster', Icon: RosterIcon },
   { key: 'meetings', href: '/meetings', label: 'Meetings', Icon: MeetingsIcon },
+  { key: 'public-meetings', href: '/public-meetings', label: 'Public Board Calendar', Icon: PublicCalendarIcon },
   { key: 'documents', href: '/key-documents', label: 'Key Documents', Icon: DocumentsIcon },
   { key: 'scoring', href: '/scoring', label: 'RFP Scoring', Icon: ScoringIcon },
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
