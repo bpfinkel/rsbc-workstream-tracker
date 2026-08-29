@@ -1,0 +1,202 @@
+/* ---------- Public Board Meeting Calendar (/public-meetings) ---------- */
+/* Scoped to this feature rather than appended to globals.css, so the page's
+   styles stay reviewable on their own. Loaded from pages/_app.js. */
+
+/* Hub-card tone for the Public Board Calendar tile on the home grid. */
+.hub-icon-teal { background: #ddeeec; color: #2d6a62; }
+/* Each board carries its own colour pair on a wrapper class, so chips, dots,
+   pills and legend swatches all read from --pbc-color / --pbc-soft rather than
+   repeating a colour per component. */
+.pbc-board-bos { --pbc-color: var(--navy-light); --pbc-soft: #e5e9f0; }
+.pbc-board-boe { --pbc-color: var(--accent); --pbc-soft: var(--accent-soft); }
+.pbc-board-rtm { --pbc-color: var(--blue); --pbc-soft: var(--blue-soft); }
+.pbc-board-bet { --pbc-color: var(--amber); --pbc-soft: #faf0dc; }
+.pbc-board-pz { --pbc-color: #6a4c93; --pbc-soft: #efe6f5; }
+
+.pbc-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin: 4px 0 12px 0;
+}
+.pbc-monthnav { display: flex; align-items: center; gap: 6px; }
+.pbc-nav-btn {
+  width: 34px; height: 34px; border-radius: 8px; flex: none;
+  background: var(--card); border: 1px solid var(--border); color: var(--navy);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: border-color .12s, box-shadow .12s, transform .08s;
+}
+.pbc-nav-btn:hover:not(:disabled) { border-color: var(--navy-light); box-shadow: var(--shadow-sm); }
+.pbc-nav-btn:active:not(:disabled) { transform: scale(0.94); }
+.pbc-nav-btn:disabled { opacity: 0.35; cursor: default; }
+.pbc-monthlabel {
+  font-size: 17px; font-weight: 700; color: var(--navy);
+  min-width: 168px; text-align: center;
+}
+.pbc-toolbar-right { display: flex; align-items: center; gap: 10px; }
+.pbc-today-btn { padding: 7px 14px; font-size: 13px; }
+.pbc-viewtoggle { display: flex; gap: 6px; }
+
+.pbc-filters {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px 18px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.pbc-legend { display: flex; flex-wrap: wrap; gap: 6px; }
+.pbc-legend-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+  padding: 5px 12px 5px 9px; font: inherit; font-size: 12px; font-weight: 600;
+  color: var(--muted); cursor: pointer;
+  transition: border-color .12s, color .12s, background .12s, opacity .12s;
+}
+.pbc-legend-btn .pbc-legend-swatch {
+  width: 10px; height: 10px; border-radius: 3px; flex: none;
+  background: var(--border); transition: background .12s;
+}
+.pbc-legend-btn.on { color: var(--navy); border-color: var(--pbc-color); background: var(--pbc-soft); }
+.pbc-legend-btn.on .pbc-legend-swatch { background: var(--pbc-color); }
+.pbc-legend-btn:not(.on) { opacity: 0.65; text-decoration: line-through; }
+.pbc-legend-btn:hover { border-color: var(--pbc-color); }
+.pbc-legend-abbr { display: none; }
+
+.pbc-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--slate); cursor: pointer; }
+.pbc-switch input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex: none; }
+
+/* The grid is its own scroll container so a narrow phone never forces the whole
+   page to scroll sideways. */
+.pbc-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.pbc-grid {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.pbc-dow {
+  background: var(--card); text-align: center; padding: 9px 2px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--muted);
+}
+.pbc-dow-abbr { display: none; }
+.pbc-cell {
+  background: var(--card); border: none; font: inherit; text-align: left;
+  min-height: 108px; padding: 6px 6px 8px 6px; cursor: default;
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  transition: background .12s;
+}
+.pbc-cell.pbc-has { cursor: pointer; }
+.pbc-cell.pbc-has:hover { background: #f2f5f8; }
+.pbc-cell.pbc-outside { background: #fafbfc; }
+.pbc-cell.pbc-outside .pbc-daynum { color: #c3cbd4; }
+.pbc-daynum {
+  font-size: 12px; font-weight: 700; color: var(--slate);
+  width: 22px; height: 22px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pbc-cell.pbc-today .pbc-daynum { background: var(--red); color: #fff; border-radius: 50%; }
+.pbc-chips { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pbc-chip {
+  display: flex; align-items: baseline; gap: 4px; min-width: 0;
+  background: var(--pbc-soft); border-left: 3px solid var(--pbc-color);
+  border-radius: 4px; padding: 3px 5px;
+}
+.pbc-chip-label {
+  font-size: 10.5px; font-weight: 700; color: var(--navy);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pbc-chip-time { font-size: 10px; font-weight: 600; color: var(--slate); white-space: nowrap; margin-left: auto; }
+.pbc-chip-more { font-size: 10px; font-weight: 600; color: var(--muted); padding-left: 5px; }
+.pbc-dots { display: none; gap: 4px; justify-content: center; }
+.pbc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pbc-color); flex: none; }
+
+.pbc-list { display: flex; flex-direction: column; gap: 10px; }
+.pbc-list-day {
+  display: flex; gap: 14px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; box-shadow: var(--shadow-sm);
+}
+.pbc-list-day.pbc-today { border-color: var(--red); }
+.pbc-list-date {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  width: 46px; flex: none; padding-top: 2px;
+}
+.pbc-list-dow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+.pbc-list-dnum { font-size: 21px; font-weight: 700; color: var(--navy); line-height: 1.15; }
+.pbc-list-day.pbc-today .pbc-list-dnum { color: var(--red); }
+.pbc-list-items { display: flex; flex-direction: column; gap: 14px; flex: 1; min-width: 0; }
+
+.pbc-detail { min-width: 0; border-left: 3px solid var(--pbc-color); padding-left: 11px; }
+.pbc-detail + .pbc-detail { border-top: 1px solid var(--border); padding-top: 12px; }
+.pbc-detail-top { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; flex-wrap: wrap; }
+.pbc-pill {
+  background: var(--pbc-soft); color: var(--pbc-color);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  padding: 3px 9px; border-radius: 20px; flex: none;
+}
+.pbc-detail-time { font-size: 12.5px; font-weight: 700; color: var(--navy); }
+.pbc-detail-title { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 3px; }
+.pbc-detail-meta { font-size: 12.5px; color: var(--slate); line-height: 1.5; }
+.pbc-detail-note { color: var(--amber); font-weight: 600; }
+.pbc-detail-muted { color: var(--muted); }
+.pbc-detail-link {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 7px;
+  font-size: 12px; font-weight: 600; color: var(--navy-light); text-decoration: none;
+}
+.pbc-detail-link:hover { text-decoration: underline; }
+.pbc-detail-link svg { flex: none; }
+
+.pbc-next-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.pbc-next-card { border-left-width: 5px; border-left-color: var(--pbc-color); padding: 16px 18px; }
+.pbc-next-date { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 9px; }
+.pbc-next-card .pbc-detail { border-left: none; padding-left: 0; }
+
+.pbc-day-modal { max-width: 520px; }
+.pbc-day-list { display: flex; flex-direction: column; gap: 16px; }
+
+.pbc-sources-group { margin-top: 30px; }
+.pbc-sources {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 18px; box-shadow: var(--shadow-sm);
+}
+.pbc-sources-intro, .pbc-sources-note { font-size: 12.5px; color: var(--slate); line-height: 1.6; margin: 0 0 14px 0; }
+.pbc-sources-note { margin: 14px 0 0 0; }
+.pbc-source-row { padding: 11px 0; }
+.pbc-source-row + .pbc-source-row { border-top: 1px solid var(--border); }
+.pbc-source-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 4px; }
+.pbc-source-name { font-size: 13.5px; font-weight: 600; color: var(--navy); }
+.pbc-source-status { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--accent); }
+.pbc-source-status.bad { color: var(--red); }
+.pbc-source-meta { font-size: 12px; color: var(--slate); line-height: 1.6; }
+.pbc-source-meta a { color: var(--navy-light); }
+.pbc-source-error { color: var(--red); }
+
+@media (max-width: 760px) {
+  /* Below this width a day cell can't hold a readable chip, so cells collapse
+     to a day number plus one dot per meeting and the details move into the
+     day modal that tapping a cell opens. */
+  .pbc-cell { min-height: 58px; padding: 5px 2px 6px 2px; align-items: center; gap: 3px; }
+  .pbc-daynum { width: 20px; height: 20px; font-size: 11.5px; }
+  .pbc-chips { display: none; }
+  .pbc-dots { display: flex; }
+  .pbc-dow { font-size: 10px; padding: 7px 0; }
+  .pbc-dow-full { display: none; }
+  .pbc-dow-abbr { display: inline; }
+  .pbc-monthlabel { font-size: 15px; min-width: 132px; }
+  .pbc-toolbar { gap: 8px; }
+  .pbc-toolbar-right { flex: 1 0 100%; justify-content: space-between; }
+  .pbc-legend-full { display: none; }
+  .pbc-legend-abbr { display: inline; }
+  .pbc-legend-btn { padding: 5px 11px 5px 8px; }
+  /* Stacked, these three cards push the calendar a full screen down. A
+     snap-scrolling row keeps them at full detail while the grid stays in view. */
+  .pbc-next-grid {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  }
+  .pbc-next-card { flex: 0 0 84%; scroll-snap-align: start; }
+  .pbc-day-modal { max-width: 100%; }
+}
+
+@media (max-width: 400px) {
+  .pbc-monthlabel { font-size: 14px; min-width: 108px; }
+  .pbc-today-btn { padding: 7px 10px; font-size: 12px; }
+  .view-btn { padding: 6px 11px; }
+  .pbc-list-day { padding: 12px 13px; gap: 10px; }
+}
