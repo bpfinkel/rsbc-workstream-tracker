@@ -415,13 +415,6 @@ export default function PublicMeetings() {
                       ) : null}
                     </div>
                   ))}
-                  <p className="pbc-sources-note">
-                    Boards publish different distances into the future, so later months fill in as
-                    each board adopts its next schedule. Times and locations are shown exactly as
-                    the source calendar lists them — where a board has not published one, the entry
-                    says so rather than guessing. Always confirm against the posted agenda before
-                    attending; agendas are generally posted about 24 hours ahead.
-                  </p>
                   {data.fetchedAt ? (
                     <p className="pbc-sources-note pbc-detail-muted">
                       Last refreshed {new Date(data.fetchedAt).toLocaleString('en-US', {
