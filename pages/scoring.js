@@ -342,6 +342,7 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
 
   const total = totalFor(scores, criteria);
   const maxTotal = criteria.reduce((sum, c) => sum + c.max, 0);
+  const maxPoints = Math.max(...criteria.map((c) => c.max));
 
   function setScore(i, value) {
     const next = scores.slice();
@@ -365,14 +366,18 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
               <span className="criterion-label">{c.label}</span>
               <span className="criterion-score">{scores[i] === null || scores[i] === undefined ? 0 : scores[i]} / {c.max}</span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max={c.max}
-              step="1"
-              value={scores[i] === null || scores[i] === undefined ? 0 : scores[i]}
-              onChange={(e) => setScore(i, e.target.value)}
-            />
+            <div className="track-wrap">
+              <input
+                type="range"
+                min="0"
+                max={c.max}
+                step="1"
+                value={scores[i] === null || scores[i] === undefined ? 0 : scores[i]}
+                onChange={(e) => setScore(i, e.target.value)}
+                style={{ '--w': `${(c.max / maxPoints) * 100}%` }}
+              />
+              <span className="track-max">{c.max} pts</span>
+            </div>
           </div>
         ))}
         <div className="field">
