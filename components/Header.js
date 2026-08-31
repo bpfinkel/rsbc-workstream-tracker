@@ -68,6 +68,8 @@ const NAV_ITEMS = [
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
 ];
 
+const PAGE_NAME_STYLE = { fontSize: 'clamp(9px, 2.9vw, 12px)', letterSpacing: '0.7px', color: '#eaf1f7' };
+
 // The header's second line doubles as the "you are here" cue: on inner pages it
 // shows the page name (taken from NAV_ITEMS, so it can't drift from the menu),
 // and on Home / the signed-out auth pages it falls back to the portal name.
@@ -116,7 +118,9 @@ export default function Header({ active }) {
           </Link>
           <div className="header-titles">
             <h1>Riverside School Building Committee</h1>
-            <div className={'header-sub' + (pageName ? ' header-sub-page' : '')}>
+            {/* The page name is the glance target, so it carries a little more
+                presence than the constant subtitle it replaces. */}
+            <div className="header-sub" style={pageName ? PAGE_NAME_STYLE : undefined}>
               {pageName || 'Committee Member Portal'}
             </div>
           </div>
