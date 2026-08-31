@@ -360,26 +360,33 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
     <div className="overlay open" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
       <div className="modal">
         <h3>{firm} — {RFP_PHASES[phase].label}</h3>
-        {criteria.map((c, i) => (
-          <div className="criterion" key={c.key}>
-            <div className="criterion-top">
-              <span className="criterion-label">{c.label}</span>
-              <span className="criterion-score">{scores[i] === null || scores[i] === undefined ? 0 : scores[i]} / {c.max}</span>
+        {criteria.map((c, i) => {
+          const val = scores[i] === null || scores[i] === undefined ? 0 : scores[i];
+          const fillPct = c.max ? (val / c.max) * 100 : 0;
+          return (
+            <div className="criterion" key={c.key}>
+              <div className="criterion-top">
+                <span className="criterion-label">{c.label}</span>
+                <span className="criterion-score">{val} / {c.max}</span>
+              </div>
+              <div className="track-wrap">
+                <input
+                  type="range"
+                  min="0"
+                  max={c.max}
+                  step="1"
+                  value={val}
+                  onChange={(e) => setScore(i, e.target.value)}
+                  style={{
+                    '--w': `${(c.max / maxPoints) * 100}%`,
+                    background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${fillPct}%, var(--border) ${fillPct}%, var(--border) 100%)`
+                  }}
+                />
+                <span className="track-max">{c.max} pts</span>
+              </div>
             </div>
-            <div className="track-wrap">
-              <input
-                type="range"
-                min="0"
-                max={c.max}
-                step="1"
-                value={scores[i] === null || scores[i] === undefined ? 0 : scores[i]}
-                onChange={(e) => setScore(i, e.target.value)}
-                style={{ '--w': `${(c.max / maxPoints) * 100}%` }}
-              />
-              <span className="track-max">{c.max} pts</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <div className="field">
           <label>Notes</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
