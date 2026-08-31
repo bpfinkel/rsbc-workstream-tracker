@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
 import { useModalViewportLock } from '../lib/useViewportLock';
+import { UNKNOWN_LOCATION, mapLinks, normalizeLocation } from '../lib/meetingLocation';
 
 const ZOOM_LINK = 'https://greenwichct.zoom.us/j/84949247205?pwd=7V3GrwayaIY0i0aw1rAcg81RFRUKWc.1';
 const ZOOM_DIAL_IN = '(646) 518-9805';
@@ -63,23 +64,76 @@ function ChevronIcon({ open, className }) {
   );
 }
 
-function locationText(location) {
-  if (location === 'hybrid') {
-    return <>Riverside School – Media Center | 90 Hendrie Ave, Riverside, CT 06878<br />Or via Zoom</>;
+function MeetingLocation({ location, onOpenMaps }) {
+  const { mode, venue, address } = normalizeLocation(location);
+
+  if (!address) {
+    return (
+      <div className="nm-location">
+        <LocationIcon />
+        <span>{mode === 'virtual' ? 'Virtual Meeting via Zoom' : 'See the agenda below for meeting location'}</span>
+      </div>
+    );
   }
-  if (location === 'virtual') return 'Virtual Meeting via Zoom';
-  return 'See the agenda below for meeting location';
+
+  return (
+    <div className="nm-location">
+      <LocationIcon />
+      <span>
+        {venue ? <>{venue}<br /></> : null}
+        <button type="button" className="nm-address-btn" onClick={() => onOpenMaps({ venue, address })}>
+          {address}
+        </button>
+      </span>
+    </div>
+  );
 }
 
-function MeetingHighlightCard({ meeting, location, openPdf }) {
+// Apple vs. Google is a per-person preference, and neither platform exposes the
+// viewer's default map app, so let them pick rather than guessing from the OS.
+function MapChooser({ target, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const links = mapLinks(target ? target.address : '');
+
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(target.address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (err) {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div className={'overlay' + (target ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      {target && (
+        <div className="modal map-chooser">
+          <h3>Open in Maps</h3>
+          <p className="map-chooser-address">
+            {target.venue ? <><strong>{target.venue}</strong><br /></> : null}
+            {target.address}
+          </p>
+          <div className="map-chooser-actions">
+            <a className="btn-secondary map-choice" href={links.apple} target="_blank" rel="noreferrer" onClick={onClose}>Apple Maps</a>
+            <a className="btn-secondary map-choice" href={links.google} target="_blank" rel="noreferrer" onClick={onClose}>Google Maps</a>
+          </div>
+          <div className="map-chooser-foot">
+            <button type="button" className="btn-danger" onClick={copyAddress}>{copied ? 'Copied ✓' : 'Copy address'}</button>
+            <button type="button" className="btn-secondary" onClick={onClose}>Close</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MeetingHighlightCard({ meeting, location, openPdf, onOpenMaps }) {
   return (
     <div className="card next-meeting-card">
       <p className="nm-date">{formatFullDate(meeting.date)}</p>
       <p className="nm-time">{meeting.time} ET</p>
-      <div className="nm-location">
-        <LocationIcon />
-        <span>{locationText(location)}</span>
-      </div>
+      <MeetingLocation location={location} onOpenMaps={onOpenMaps} />
       <div className="zoom-callout">
         <div className="zb-label">Zoom Details</div>
         <div><a href={ZOOM_LINK} target="_blank" rel="noreferrer">{ZOOM_LINK}</a></div>
@@ -114,10 +168,11 @@ function MeetingHighlightCard({ meeting, location, openPdf }) {
 }
 
 export default function Meetings() {
-  const [data, setData] = useState({ meetings: [], nextIndex: -1, lastIndex: -1, location: 'unknown', lastLocation: 'unknown' });
+  const [data, setData] = useState({ meetings: [], nextIndex: -1, lastIndex: -1, location: UNKNOWN_LOCATION, lastLocation: UNKNOWN_LOCATION });
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [pdfViewer, setPdfViewer] = useState(null);
+  const [mapTarget, setMapTarget] = useState(null);
   const [nextOpen, setNextOpen] = useState(true);
   const [lastOpen, setLastOpen] = useState(true);
   const [archiveOpen, setArchiveOpen] = useState(true);
@@ -136,7 +191,7 @@ export default function Meetings() {
       .catch((e) => { setError(e.message); setLoaded(true); });
   }, []);
 
-  useModalViewportLock(!!pdfViewer);
+  useModalViewportLock(!!pdfViewer || !!mapTarget);
 
   const { meetings, nextIndex, lastIndex, location, lastLocation } = data;
   const nextMeeting = nextIndex >= 0 ? meetings[nextIndex] : null;
@@ -196,7 +251,7 @@ export default function Meetings() {
               </button>
               {nextOpen ? (
                 nextMeeting ? (
-                  <MeetingHighlightCard meeting={nextMeeting} location={location} openPdf={openPdf} />
+                  <MeetingHighlightCard meeting={nextMeeting} location={location} openPdf={openPdf} onOpenMaps={setMapTarget} />
                 ) : (
                   <div className="empty">No upcoming meeting found on the committee's public schedule.</div>
                 )
@@ -211,7 +266,7 @@ export default function Meetings() {
               </button>
               {lastOpen ? (
                 lastMeeting ? (
-                  <MeetingHighlightCard meeting={lastMeeting} location={lastLocation} openPdf={openPdf} />
+                  <MeetingHighlightCard meeting={lastMeeting} location={lastLocation} openPdf={openPdf} onOpenMaps={setMapTarget} />
                 ) : (
                   <div className="empty">No prior meeting found on the committee's public schedule.</div>
                 )
@@ -260,6 +315,8 @@ export default function Meetings() {
           </>
         )}
       </main>
+
+      <MapChooser target={mapTarget} onClose={() => setMapTarget(null)} />
 
       <div className={'overlay' + (pdfViewer ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) setPdfViewer(null); }}>
         {pdfViewer && (
