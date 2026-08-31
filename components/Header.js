@@ -68,10 +68,21 @@ const NAV_ITEMS = [
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
 ];
 
+// The header's second line doubles as the "you are here" cue: on inner pages it
+// shows the page name (taken from NAV_ITEMS, so it can't drift from the menu),
+// and on Home / the signed-out auth pages it falls back to the portal name.
+function pageLabel(active) {
+  if (!active || active === 'home') return null;
+  if (active === 'admin') return 'Admin';
+  const item = NAV_ITEMS.find((i) => i.key === active);
+  return item ? item.label : null;
+}
+
 export default function Header({ active }) {
   const [admin, setAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const pageName = pageLabel(active);
 
   useEffect(() => {
     const supabase = createClient();
@@ -105,7 +116,9 @@ export default function Header({ active }) {
           </Link>
           <div className="header-titles">
             <h1>Riverside School Building Committee</h1>
-            <div className="header-sub">Committee Member Portal</div>
+            <div className={'header-sub' + (pageName ? ' header-sub-page' : '')}>
+              {pageName || 'Committee Member Portal'}
+            </div>
           </div>
         </div>
         <div className="nav-menu-wrap" ref={menuRef}>
