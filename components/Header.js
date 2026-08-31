@@ -68,7 +68,12 @@ const NAV_ITEMS = [
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
 ];
 
-const PAGE_NAME_STYLE = { fontSize: 'clamp(9px, 2.9vw, 12px)', letterSpacing: '0.7px', color: '#eaf1f7' };
+const PAGE_NAME_STYLE = {
+  fontSize: 'clamp(10px, 3.1vw, 13px)',
+  letterSpacing: '0.2px',
+  textTransform: 'none',
+  color: '#eaf1f7'
+};
 
 // The header's second line doubles as the "you are here" cue: on inner pages it
 // shows the page name (taken from NAV_ITEMS, so it can't drift from the menu),
