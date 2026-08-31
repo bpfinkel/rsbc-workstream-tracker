@@ -1,4 +1,5 @@
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import { parseAgendaLocation, UNKNOWN_LOCATION } from '../../lib/meetingLocation';
 
 const SOURCE_URL = 'https://www.greenwichschools.org/departments/facilities-rentals/building-grounds-projects/riverside-building-committee';
 const BASE_URL = 'https://www.greenwichschools.org';
@@ -88,23 +89,21 @@ function parseAllMeetings(html) {
   return all.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// The committee's own agenda-drafting workflow always writes one of two exact
-// location lines into the PDF ("Virtual Meeting via Zoom" or "...Media Center...").
-// Reading the actual posted agenda beats guessing from a fixed date cutoff, since
-// the virtual-vs-hybrid decision is made meeting-by-meeting, not on a set schedule.
+// Read the location straight out of the posted agenda PDF rather than guessing
+// from a date cutoff or a list of known venues: the committee decides virtual vs.
+// in-person meeting by meeting, and when it does meet in person the building
+// varies (Riverside School's Media Center, the Havemeyer Building downtown).
+// The parsing itself lives in lib/meetingLocation.js so it can be tested directly.
 async function detectLocation(agendaUrl) {
-  if (!agendaUrl) return 'unknown';
+  if (!agendaUrl) return UNKNOWN_LOCATION;
   try {
     const pdfRes = await fetch(agendaUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (RSBC Workstream Tracker)' } });
-    if (!pdfRes.ok) return 'unknown';
+    if (!pdfRes.ok) return UNKNOWN_LOCATION;
     const buf = Buffer.from(await pdfRes.arrayBuffer());
     const { text } = await pdfParse(buf);
-    const t = text.toLowerCase();
-    if (t.includes('media center') || t.includes('90 hendrie')) return 'hybrid';
-    if (t.includes('virtual meeting via zoom')) return 'virtual';
-    return 'unknown';
+    return parseAgendaLocation(text);
   } catch (err) {
-    return 'unknown';
+    return UNKNOWN_LOCATION;
   }
 }
 
@@ -122,12 +121,12 @@ export default async function handler(req, res) {
     const nextIndex = meetings.findIndex((m) => m.date >= todayET);
     const lastIndex = nextIndex === -1 ? meetings.length - 1 : nextIndex - 1;
     const [location, lastLocation] = await Promise.all([
-      nextIndex >= 0 ? detectLocation(meetings[nextIndex].agendaUrl) : Promise.resolve('unknown'),
-      lastIndex >= 0 ? detectLocation(meetings[lastIndex].agendaUrl) : Promise.resolve('unknown')
+      nextIndex >= 0 ? detectLocation(meetings[nextIndex].agendaUrl) : Promise.resolve(UNKNOWN_LOCATION),
+      lastIndex >= 0 ? detectLocation(meetings[lastIndex].agendaUrl) : Promise.resolve(UNKNOWN_LOCATION)
     ]);
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
     return res.status(200).json({ meetings, nextIndex, lastIndex, todayET, location, lastLocation, sourceUrl: SOURCE_URL });
   } catch (err) {
-    return res.status(200).json({ meetings: [], nextIndex: -1, lastIndex: -1, todayET, location: 'unknown', lastLocation: 'unknown', error: err.message, sourceUrl: SOURCE_URL });
+    return res.status(200).json({ meetings: [], nextIndex: -1, lastIndex: -1, todayET, location: UNKNOWN_LOCATION, lastLocation: UNKNOWN_LOCATION, error: err.message, sourceUrl: SOURCE_URL });
   }
 }
