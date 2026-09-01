@@ -61,6 +61,15 @@ function ChevronIcon({ open, className }) {
   );
 }
 
+// Most sources here are the town's own calendar, so a clicked-through link is
+// a listing on that calendar; RSBC's own source is the district's posted
+// agenda/notice for that meeting instead, which reads oddly under the generic
+// "Town calendar listing" label.
+function eventLinkLabel(event, board) {
+  if (!event.url) return board.name + ' calendar';
+  return event.board === 'rsbc' ? 'Meeting agenda' : 'Town calendar listing';
+}
+
 function EventDetail({ event }) {
   const board = BOARDS[event.board];
   return (
@@ -86,7 +95,7 @@ function EventDetail({ event }) {
         rel="noreferrer"
       >
         <LinkIcon />
-        {event.url ? 'Town calendar listing' : board.name + ' calendar'}
+        {eventLinkLabel(event, board)}
       </a>
     </div>
   );

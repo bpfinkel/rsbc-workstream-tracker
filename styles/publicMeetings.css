@@ -7,6 +7,7 @@
 /* Each board carries its own colour pair on a wrapper class, so chips, dots,
    pills and legend swatches all read from --pbc-color / --pbc-soft rather than
    repeating a colour per component. */
+.pbc-board-rsbc { --pbc-color: #0f7d84; --pbc-soft: #d9eef0; }
 .pbc-board-bos { --pbc-color: var(--navy-light); --pbc-soft: #e5e9f0; }
 .pbc-board-boe { --pbc-color: var(--accent); --pbc-soft: var(--accent-soft); }
 .pbc-board-rtm { --pbc-color: var(--blue); --pbc-soft: var(--blue-soft); }

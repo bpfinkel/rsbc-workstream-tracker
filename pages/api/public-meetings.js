@@ -4,8 +4,10 @@ import {
   icalToEvents,
   parseBoeSchedule,
   findBoeCalendarLink,
-  sortEvents
+  sortEvents,
+  clockTimeToSortKey
 } from '../../lib/publicMeetings';
+import { parseRsbcMeetings, RSBC_SOURCE_URL } from '../../lib/rsbcSchedule';
 
 const UA = 'Mozilla/5.0 (RSBC Committee Member Portal)';
 const TOWN_BASE = 'https://www.greenwichct.gov';
@@ -85,6 +87,39 @@ async function fetchBoeSchedule() {
   }
 }
 
+// The committee's own schedule table (the same source pages/api/meetings.js
+// reads for the Meetings page) carries no attendance-format text, so unlike
+// the town feeds every row becomes a single primary event — there's no
+// committee/subcommittee split to hide behind the "Include committee &
+// subcommittee meetings" toggle. Unlike the Meetings page, this does not fetch
+// each meeting's agenda PDF to detect a venue — six sources already means six
+// network round trips per request, and the Meetings page is the authoritative
+// place for that level of detail.
+async function fetchRsbcSchedule() {
+  try {
+    const pageRes = await fetch(RSBC_SOURCE_URL, { headers: { 'User-Agent': UA } });
+    if (!pageRes.ok) throw new Error(`Committee website returned ${pageRes.status}`);
+    const meetings = parseRsbcMeetings(await pageRes.text());
+    if (!meetings.length) throw new Error('Could not read any meeting dates from the posted schedule');
+    const events = meetings.map((m) => ({
+      id: `rsbc-${m.date}`,
+      board: 'rsbc',
+      title: 'Riverside Building Committee Meeting',
+      chipLabel: 'RSBC',
+      date: m.date,
+      time: m.time || null,
+      sortTime: clockTimeToSortKey(m.time),
+      location: null,
+      format: null,
+      url: m.agendaUrl || m.noticeUrl || null,
+      primary: true
+    }));
+    return { board: 'rsbc', events, ok: true, error: null };
+  } catch (err) {
+    return { board: 'rsbc', events: [], ok: false, error: err.message };
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET']);
@@ -96,7 +131,8 @@ export default async function handler(req, res) {
 
   const results = await Promise.all([
     ...TOWN_FEEDS.map(fetchTownFeed),
-    fetchBoeSchedule()
+    fetchBoeSchedule(),
+    fetchRsbcSchedule()
   ]);
 
   const byBoard = new Map(results.map((r) => [r.board, r]));
