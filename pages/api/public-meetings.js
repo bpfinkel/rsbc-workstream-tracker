@@ -7,6 +7,7 @@ import {
   sortEvents,
   clockTimeToSortKey
 } from '../../lib/publicMeetings';
+import { parseAgendaLocation, parseAgendaTime, UNKNOWN_LOCATION } from '../../lib/meetingLocation';
 import { parseRsbcMeetings, RSBC_SOURCE_URL } from '../../lib/rsbcSchedule';
 
 const UA = 'Mozilla/5.0 (RSBC Committee Member Portal)';
@@ -87,33 +88,70 @@ async function fetchBoeSchedule() {
   }
 }
 
+// Reads a meeting's venue and (as a correction on the schedule table, which
+// has shipped an AM/PM typo before) its time straight out of the posted
+// agenda PDF. Shares its parsing with pages/api/meetings.js via
+// lib/meetingLocation.js; each route still does its own fetch/pdfParse
+// wiring, matching this codebase's existing split between pure lib parsers
+// and route-owned network calls.
+async function detectAgendaDetails(agendaUrl) {
+  if (!agendaUrl) return { location: UNKNOWN_LOCATION, time: null };
+  try {
+    const pdfRes = await fetch(agendaUrl, { headers: { 'User-Agent': UA } });
+    if (!pdfRes.ok) return { location: UNKNOWN_LOCATION, time: null };
+    const buf = Buffer.from(await pdfRes.arrayBuffer());
+    const { text } = await pdfParse(buf);
+    return { location: parseAgendaLocation(text), time: parseAgendaTime(text) };
+  } catch (err) {
+    return { location: UNKNOWN_LOCATION, time: null };
+  }
+}
+
+function formatEventLocation(details) {
+  if (!details || !details.location.address) return null;
+  return [details.location.venue, details.location.address].filter(Boolean).join(' — ');
+}
+
 // The committee's own schedule table (the same source pages/api/meetings.js
 // reads for the Meetings page) carries no attendance-format text, so unlike
 // the town feeds every row becomes a single primary event — there's no
 // committee/subcommittee split to hide behind the "Include committee &
-// subcommittee meetings" toggle. Unlike the Meetings page, this does not fetch
-// each meeting's agenda PDF to detect a venue — six sources already means six
-// network round trips per request, and the Meetings page is the authoritative
-// place for that level of detail.
+// subcommittee meetings" toggle. Only the immediate next and most recent
+// meetings get their agenda PDF fetched for a corrected time/venue — doing
+// that for every row would add 10-15 PDF fetches on top of the other five
+// sources' calls.
 async function fetchRsbcSchedule() {
   try {
     const pageRes = await fetch(RSBC_SOURCE_URL, { headers: { 'User-Agent': UA } });
     if (!pageRes.ok) throw new Error(`Committee website returned ${pageRes.status}`);
     const meetings = parseRsbcMeetings(await pageRes.text());
     if (!meetings.length) throw new Error('Could not read any meeting dates from the posted schedule');
-    const events = meetings.map((m) => ({
-      id: `rsbc-${m.date}`,
-      board: 'rsbc',
-      title: 'Riverside Building Committee Meeting',
-      chipLabel: 'RSBC',
-      date: m.date,
-      time: m.time || null,
-      sortTime: clockTimeToSortKey(m.time),
-      location: null,
-      format: null,
-      url: m.agendaUrl || m.noticeUrl || null,
-      primary: true
-    }));
+
+    const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const nextIndex = meetings.findIndex((m) => m.date >= todayET);
+    const lastIndex = nextIndex === -1 ? meetings.length - 1 : nextIndex - 1;
+    const [nextDetails, lastDetails] = await Promise.all([
+      nextIndex >= 0 ? detectAgendaDetails(meetings[nextIndex].agendaUrl) : null,
+      lastIndex >= 0 ? detectAgendaDetails(meetings[lastIndex].agendaUrl) : null
+    ]);
+
+    const events = meetings.map((m, i) => {
+      const details = i === nextIndex ? nextDetails : i === lastIndex ? lastDetails : null;
+      const time = (details && details.time) || m.time || null;
+      return {
+        id: `rsbc-${m.date}`,
+        board: 'rsbc',
+        title: 'Riverside Building Committee Meeting',
+        chipLabel: 'RSBC',
+        date: m.date,
+        time,
+        sortTime: clockTimeToSortKey(time),
+        location: formatEventLocation(details),
+        format: details && details.location.mode === 'virtual' ? 'Virtual via Zoom' : null,
+        url: m.agendaUrl || m.noticeUrl || null,
+        primary: true
+      };
+    });
     return { board: 'rsbc', events, ok: true, error: null };
   } catch (err) {
     return { board: 'rsbc', events: [], ok: false, error: err.message };
