@@ -1,0 +1,99 @@
+/* Home page ---------------------------------------------------------------
+   The tile grid alone was built for a phone: with no column ceiling it spread
+   into a single thin row on a desktop monitor and left the rest of the screen
+   empty. Above 1024px the page is now two columns — what is happening (the
+   next meeting, the tasks assigned to you) on the left, the destinations as a
+   rail on the right. Below that width everything stacks in the same order and
+   the tiles keep the full-width card layout they have always had on a phone.
+
+   The tiles themselves still use .hub-card / .hub-icon-* from globals.css, so
+   there is one definition of what a destination card looks like. */
+
+/* The Public Board Calendar tile has always asked for a 'teal' tone that was
+   never defined anywhere, so its icon sat on a transparent square while every
+   other tile had a tint. The hub icons are only used on this page. */
+.hub-icon-teal { background: #e0f0ef; color: #1f6f6a; }
+
+.home-inner { max-width: 1180px; margin: 0 auto; }
+
+.home-greet { margin: 0; font-size: clamp(17px, 4.4vw, 20px); font-weight: 700; letter-spacing: -0.2px; }
+.home-date { font-size: 12.5px; color: var(--slate); margin-top: 2px; }
+
+.home-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 18px; }
+.home-main, .home-rail { min-width: 0; }
+@media (min-width: 1024px) {
+  .home-cols { grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+}
+
+/* --- next meeting -------------------------------------------------------- */
+.home-next {
+  background: var(--card); border: 1px solid var(--border); border-left: 5px solid var(--accent);
+  border-radius: 12px; box-shadow: var(--shadow-sm); padding: 20px 22px; margin-bottom: 16px;
+}
+.home-next-kicker {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent);
+}
+.home-next-when { font-size: clamp(17px, 4.6vw, 21px); font-weight: 700; margin: 7px 0 5px 0; letter-spacing: -0.2px; line-height: 1.2; }
+.home-next-where { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; color: var(--slate); line-height: 1.45; }
+.home-next-where svg { flex: none; margin-top: 2px; }
+.home-next-zoom { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.home-next-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+.home-next-actions .btn-primary,
+.home-next-actions .btn-secondary {
+  display: inline-flex; align-items: center; gap: 7px; text-decoration: none; font-family: inherit;
+}
+
+/* --- panels (assigned to me, recent documents) --------------------------- */
+.home-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden; }
+.home-panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 18px; border-bottom: 1px solid #eceef1;
+}
+.home-panel-head h2 { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--navy); }
+.home-panel-link { font-size: 12px; font-weight: 600; color: var(--blue); text-decoration: none; }
+.home-panel-link:hover { text-decoration: underline; }
+.home-panel-note { padding: 20px 18px; font-size: 13px; color: var(--muted); text-align: center; }
+
+.home-task { display: flex; align-items: center; gap: 12px; padding: 12px 18px; }
+.home-task + .home-task { border-top: 1px solid #f1f3f5; }
+.home-task-title { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--navy); text-decoration: none; }
+.home-task-title:hover { text-decoration: underline; }
+.home-task-due { font-size: 11.5px; color: var(--slate); white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 78px; text-align: right; }
+.home-task-due.overdue { color: var(--red); font-weight: 700; }
+.home-task-due.soon { color: var(--amber); font-weight: 700; }
+/* On a narrow phone the status badge and date would squeeze the title down to
+   two or three words, so they drop to their own line instead. */
+@media (max-width: 520px) {
+  .home-task { flex-wrap: wrap; gap: 8px 10px; }
+  .home-task-title { flex: 1 1 100%; }
+  .home-task-due { min-width: 0; text-align: left; }
+}
+
+/* --- destination rail ---------------------------------------------------- */
+.home-rail-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 9px 2px;
+}
+.home-rail-block + .home-rail-block { margin-top: 20px; }
+.home-rail-links { display: grid; gap: 12px; }
+
+/* A tablet is wide enough for two tiles but not for the two-column page. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .home-rail-links { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* In the rail the tiles are a list, not the main event, so they tighten up. */
+@media (min-width: 1024px) {
+  .home-rail-links { gap: 7px; }
+  .home-rail-links .hub-card { padding: 10px 13px; border-radius: 9px; }
+  .home-rail-links .hub-icon { width: 28px; height: 28px; border-radius: 7px; }
+  .home-rail-links .hub-icon svg { width: 15px; height: 15px; }
+  .home-rail-links .hub-card h3 { font-size: 13px; }
+}
+
+.home-doc { display: flex; align-items: center; gap: 10px; padding: 11px 16px; font-size: 12.5px; color: var(--navy); text-decoration: none; }
+.home-doc + .home-doc { border-top: 1px solid #f1f3f5; }
+.home-doc:hover { background: #f8fafb; }
+.home-doc-icon { width: 24px; height: 24px; border-radius: 6px; flex: none; display: flex; align-items: center; justify-content: center; }
+.home-doc-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-doc-cat { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
