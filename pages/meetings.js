@@ -3,11 +3,9 @@ import Head from 'next/head';
 import Header from '../components/Header';
 import { useModalViewportLock } from '../lib/useViewportLock';
 import { UNKNOWN_LOCATION, mapLinks, normalizeLocation } from '../lib/meetingLocation';
-
-const ZOOM_LINK = 'https://greenwichct.zoom.us/j/84949247205?pwd=7V3GrwayaIY0i0aw1rAcg81RFRUKWc.1';
-const ZOOM_DIAL_IN = '(646) 518-9805';
-const ZOOM_MEETING_ID = '849 4924 7205';
-const ZOOM_PASSCODE = '2155103';
+// Moved to lib/zoom.js when the home page's next-meeting panel started showing
+// the same details — one definition, two readers.
+import { ZOOM_LINK, ZOOM_DIAL_IN, ZOOM_MEETING_ID, ZOOM_PASSCODE } from '../lib/zoom';
 
 function formatFullDate(dateStr) {
   if (!dateStr) return '';
