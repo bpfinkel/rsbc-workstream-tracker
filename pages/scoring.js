@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
 import { createClient } from '../lib/supabase/client';
-import { RFP_PHASES } from '../lib/rfpCriteria';
+import { RFP_PHASES, RFP_PHASE_ORDER, RFP_RUBRIC_INTRO, RFP_RUBRIC_NOTE, phaseTotal } from '../lib/rfpCriteria';
 import { isAdmin as checkIsAdmin } from '../lib/admin';
 import { useModalViewportLock } from '../lib/useViewportLock';
 
@@ -45,6 +45,80 @@ function UnlockIcon() {
       <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="2" />
       <path d="M8 11V7a4 4 0 0 1 7.4-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
+  );
+}
+
+function GuideIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z" /><path d="M8 7.5h7M8 11h7" /></svg>
+  );
+}
+
+function ChevronIcon({ open, className }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+  );
+}
+
+// Whether the scoring modal shows the rubric's "What to look for" commentary
+// under each slider. Defaults to ON so every member sees the guidance the first
+// time they score; the choice is remembered per-browser after that.
+const GUIDANCE_PREF_KEY = 'rsbc-scoring-guidance';
+
+function readGuidancePref() {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.localStorage.getItem(GUIDANCE_PREF_KEY) !== '0';
+  } catch (e) {
+    return true;
+  }
+}
+
+function writeGuidancePref(on) {
+  try {
+    window.localStorage.setItem(GUIDANCE_PREF_KEY, on ? '1' : '0');
+  } catch (e) {
+    /* private mode / storage disabled — the toggle still works for this session */
+  }
+}
+
+// The full rubric, collapsed by default, so the commentary is available as a
+// standalone reference and not only from inside a scoring modal.
+function ScoringGuide() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="workstream-group">
+      <button type="button" className="ws-header ws-header-btn" onClick={() => setOpen(!open)}
+        aria-expanded={open}>
+        <GuideIcon />
+        <h2>Scoring Guide &mdash; What to Look For</h2>
+        <span className="ws-count">100 pts</span>
+        <ChevronIcon open={open} className="ws-header-chevron" />
+      </button>
+      {open ? (
+        <div className="card static-card guide-card">
+          <p className="guide-intro">{RFP_RUBRIC_INTRO}</p>
+          {RFP_PHASE_ORDER.map((phase) => (
+            <div className="guide-phase" key={phase}>
+              <p className="guide-phase-title">
+                {RFP_PHASES[phase].label} &mdash; {phaseTotal(phase)} points
+              </p>
+              {RFP_PHASES[phase].criteria.map((c) => (
+                <div className="guide-criterion" key={c.key}>
+                  <div className="guide-criterion-top">
+                    <span className="guide-criterion-label">{c.label}</span>
+                    <span className="guide-criterion-pts">{c.max} pts</span>
+                  </div>
+                  <p className="guide-text">{c.guidance}</p>
+                </div>
+              ))}
+            </div>
+          ))}
+          <p className="guide-note">{RFP_RUBRIC_NOTE}</p>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -140,7 +214,7 @@ export default function Scoring() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update');
-      showToast(`${phase} scoring ${unlocked ? 'unlocked' : 'locked'} for all firms`);
+      showToast(`${RFP_PHASES[phase].shortLabel} scoring ${unlocked ? 'unlocked' : 'locked'} for all firms`);
       await load();
     } catch (e) {
       setError(e.message);
@@ -197,6 +271,8 @@ export default function Scoring() {
       <main>
         {error ? <div className="empty">{error}</div> : null}
 
+        <ScoringGuide />
+
         <div className="workstream-group">
           <div className="ws-header">
             <ScoringIcon />
@@ -212,7 +288,7 @@ export default function Scoring() {
                   <div className="firm-card" key={f.firm}>
                     <p className="firm-name">{f.firm}</p>
                     <div className="firm-row">
-                      <span className="firm-row-label">Proposal</span>
+                      <span className="firm-row-label">Submission</span>
                       {f.proposalPdfUrl ? (
                         <a className="chip chip-link" href={f.proposalPdfUrl} onClick={(e) => openPdf(e, f.firm, f.proposalPdfUrl)}>Proposal PDF</a>
                       ) : (
@@ -220,7 +296,7 @@ export default function Scoring() {
                       )}
                     </div>
                     <div className="firm-row">
-                      <span className="firm-row-label">Written</span>
+                      <span className="firm-row-label">{RFP_PHASES.Written.shortLabel}</span>
                       {f.writtenUnlocked ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <span className={'status-chip' + (written ? ' done' : '')}>{written ? 'Submitted' : 'Not started'}</span>
@@ -233,7 +309,7 @@ export default function Scoring() {
                       )}
                     </div>
                     <div className="firm-row">
-                      <span className="firm-row-label">Interview</span>
+                      <span className="firm-row-label">{RFP_PHASES.Interview.shortLabel}</span>
                       {f.interviewUnlocked ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <span className={'status-chip' + (interview ? ' done' : '')}>{interview ? 'Submitted' : 'Not started'}</span>
@@ -267,16 +343,16 @@ export default function Scoring() {
                     <div className="admin-row-top">
                       <span className="admin-firm-name">{f.firm}</span>
                       <div className="admin-toggles">
-                        <LockToggle unlocked={f.writtenUnlocked} label="Written" onClick={() => toggleFirmLock(f.firm, 'Written', !f.writtenUnlocked)} />
-                        <LockToggle unlocked={f.interviewUnlocked} label="Interview" onClick={() => toggleFirmLock(f.firm, 'Interview', !f.interviewUnlocked)} />
+                        <LockToggle unlocked={f.writtenUnlocked} label={RFP_PHASES.Written.shortLabel} onClick={() => toggleFirmLock(f.firm, 'Written', !f.writtenUnlocked)} />
+                        <LockToggle unlocked={f.interviewUnlocked} label={RFP_PHASES.Interview.shortLabel} onClick={() => toggleFirmLock(f.firm, 'Interview', !f.interviewUnlocked)} />
                       </div>
                     </div>
                     <span className="admin-detail">
-                      Written: {w.length} submitted{w.length ? ` (${w.map((s) => s.scorerEmail).join(', ')})` : ''}
+                      {RFP_PHASES.Written.shortLabel}: {w.length} submitted{w.length ? ` (${w.map((s) => s.scorerEmail).join(', ')})` : ''}
                     </span>
                     {f.interviewUnlocked ? (
                       <span className="admin-detail">
-                        Interview: {iv.length} submitted{iv.length ? ` (${iv.map((s) => s.scorerEmail).join(', ')})` : ''}
+                        {RFP_PHASES.Interview.shortLabel}: {iv.length} submitted{iv.length ? ` (${iv.map((s) => s.scorerEmail).join(', ')})` : ''}
                       </span>
                     ) : null}
                   </div>
@@ -287,12 +363,12 @@ export default function Scoring() {
               <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
                 onClick={() => toggleAllLock('Written', !allWrittenUnlocked)}>
                 {allWrittenUnlocked ? <LockIcon /> : <UnlockIcon />}
-                {allWrittenUnlocked ? 'Lock All — Written' : 'Unlock All — Written'}
+                {(allWrittenUnlocked ? 'Lock All — ' : 'Unlock All — ') + RFP_PHASES.Written.shortLabel}
               </button>
               <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
                 onClick={() => toggleAllLock('Interview', !allInterviewUnlocked)}>
                 {allInterviewUnlocked ? <LockIcon /> : <UnlockIcon />}
-                {allInterviewUnlocked ? 'Lock All — Interview' : 'Unlock All — Interview'}
+                {(allInterviewUnlocked ? 'Lock All — ' : 'Unlock All — ') + RFP_PHASES.Interview.shortLabel}
               </button>
             </div>
           </div>
@@ -339,6 +415,17 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
   });
   const [notes, setNotes] = useState(existing?.notes || '');
   const [saving, setSaving] = useState(false);
+  const [showGuidance, setShowGuidance] = useState(true);
+
+  // Read the remembered preference after mount so server and client render the
+  // same markup on the first pass (localStorage isn't available during SSR).
+  useEffect(() => { setShowGuidance(readGuidancePref()); }, []);
+
+  function toggleGuidance() {
+    const next = !showGuidance;
+    setShowGuidance(next);
+    writeGuidancePref(next);
+  }
 
   const total = totalFor(scores, criteria);
   const maxTotal = criteria.reduce((sum, c) => sum + c.max, 0);
@@ -360,6 +447,12 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
     <div className="overlay open" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
       <div className="modal">
         <h3>{firm} — {RFP_PHASES[phase].label}</h3>
+        <div className="guidance-bar">
+          <span className="guidance-bar-total">{maxTotal} points across {criteria.length} criteria</span>
+          <button type="button" className="guidance-toggle" onClick={toggleGuidance} aria-expanded={showGuidance}>
+            {showGuidance ? 'Hide' : 'Show'} what to look for
+          </button>
+        </div>
         {criteria.map((c, i) => {
           const val = scores[i] === null || scores[i] === undefined ? 0 : scores[i];
           const fillPct = c.max ? (val / c.max) * 100 : 0;
@@ -384,6 +477,9 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
                 />
                 <span className="track-max">{c.max} pts</span>
               </div>
+              {showGuidance && c.guidance ? (
+                <p className="criterion-guidance">{c.guidance}</p>
+              ) : null}
             </div>
           );
         })}
@@ -395,6 +491,7 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
           <span>Total</span>
           <span className="value">{total} / {maxTotal}</span>
         </div>
+        <p className="modal-footnote">{RFP_RUBRIC_NOTE}</p>
         <div className="modal-actions">
           {existing ? (
             <button className="btn-danger" onClick={onClear}>Clear</button>
