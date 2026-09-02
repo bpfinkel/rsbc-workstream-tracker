@@ -172,7 +172,9 @@ export default function Meetings() {
   const [pdfViewer, setPdfViewer] = useState(null);
   const [mapTarget, setMapTarget] = useState(null);
   const [nextOpen, setNextOpen] = useState(true);
-  const [lastOpen, setLastOpen] = useState(true);
+  // Collapsed by default — the archive and Next Meeting matter more on load,
+  // and this keeps the page from opening two full meeting cards deep.
+  const [lastOpen, setLastOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(true);
   // null = default state (only the most recent school year open) until the
   // user explicitly expands/collapses one, matching the Drafts History pattern.
