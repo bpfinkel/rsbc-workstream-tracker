@@ -68,6 +68,12 @@ const NAV_ITEMS = [
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
 ];
 
+// A desktop screen has room to show the destinations instead of hiding them
+// behind a menu, but not room for all eight: these five sit inline in the
+// header and the rest fall into a "More" dropdown. Below 1024px the CSS hides
+// this nav entirely and the hamburger below takes over, unchanged.
+const PRIMARY_KEYS = ['home', 'tasks', 'roster', 'meetings', 'documents'];
+
 const PAGE_NAME_STYLE = {
   fontSize: 'clamp(10px, 3.1vw, 13px)',
   letterSpacing: '0.2px',
@@ -88,8 +94,12 @@ function pageLabel(active) {
 export default function Header({ active }) {
   const [admin, setAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const menuRef = useRef(null);
   const pageName = pageLabel(active);
+  const primaryItems = NAV_ITEMS.filter((i) => PRIMARY_KEYS.includes(i.key));
+  const overflowItems = NAV_ITEMS.filter((i) => !PRIMARY_KEYS.includes(i.key));
+  const moreActive = active === 'admin' || overflowItems.some((i) => i.key === active);
 
   useEffect(() => {
     const supabase = createClient();
@@ -99,12 +109,16 @@ export default function Header({ active }) {
   }, []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !moreOpen) return;
+    function closeAll() {
+      setMenuOpen(false);
+      setMoreOpen(false);
+    }
     function onDocClick(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target)) closeAll();
     }
     function onKeyDown(e) {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Escape') closeAll();
     }
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKeyDown);
@@ -112,7 +126,7 @@ export default function Header({ active }) {
       document.removeEventListener('mousedown', onDocClick);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [menuOpen]);
+  }, [menuOpen, moreOpen]);
 
   return (
     <div className="site-header">
@@ -131,6 +145,55 @@ export default function Header({ active }) {
           </div>
         </div>
         <div className="nav-menu-wrap" ref={menuRef}>
+          <nav className="desktop-nav" aria-label="Main">
+            {primaryItems.map(({ key, href, label }) => (
+              <Link key={key} href={href} className={'desktop-nav-link' + (active === key ? ' active' : '')}>
+                {label}
+              </Link>
+            ))}
+            <div className="desktop-more">
+              <button
+                type="button"
+                className={'desktop-nav-link desktop-more-btn' + (moreActive ? ' active' : '')}
+                aria-expanded={moreOpen}
+                onClick={() => setMoreOpen((o) => !o)}
+              >
+                More
+                <svg className={'desktop-more-chevron' + (moreOpen ? ' open' : '')} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+              {moreOpen ? (
+                <div className="nav-menu">
+                  <div className="nav-menu-list">
+                    {overflowItems.map(({ key, href, label, Icon }) => (
+                      <Link
+                        key={key}
+                        href={href}
+                        className={'nav-menu-link' + (active === key ? ' active' : '')}
+                        onClick={() => setMoreOpen(false)}
+                      >
+                        <Icon />
+                        {label}
+                      </Link>
+                    ))}
+                    {admin ? (
+                      <>
+                        <div className="nav-menu-divider" />
+                        <Link
+                          href="/admin"
+                          className={'nav-menu-link admin-link' + (active === 'admin' ? ' active' : '')}
+                          onClick={() => setMoreOpen(false)}
+                        >
+                          <AdminIcon />
+                          Admin
+                          <span className="admin-tag">Admin</span>
+                        </Link>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </nav>
           <button
             type="button"
             className="hamburger-btn"
