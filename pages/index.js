@@ -134,7 +134,6 @@ function NextMeetingPanel({ data }) {
   if (!data) {
     return (
       <div className="home-next">
-        <div className="home-next-kicker">Next meeting</div>
         <div className="home-next-when">Checking the schedule&hellip;</div>
       </div>
     );
@@ -146,7 +145,6 @@ function NextMeetingPanel({ data }) {
   if (!meeting) {
     return (
       <div className="home-next">
-        <div className="home-next-kicker">Next meeting</div>
         <div className="home-next-when">Not posted yet</div>
         <div className="home-next-where">
           <LocationIcon />
@@ -169,7 +167,6 @@ function NextMeetingPanel({ data }) {
 
   return (
     <div className="home-next">
-      <div className="home-next-kicker">Next meeting</div>
       <div className="home-next-when">
         {formatMeetingDate(meeting.date)}{meeting.time ? ` · ${meeting.time}` : ''}
       </div>
@@ -300,13 +297,19 @@ export default function HomePage() {
 
           <div className="home-cols">
             <div className="home-main">
-              <NextMeetingPanel data={meetingData} />
-              <MyTasksPanel tasks={tasks} myName={myName} loaded={!!taskData} />
+              <div className="home-main-block">
+                <div className="home-section-label">Meetings</div>
+                <NextMeetingPanel data={meetingData} />
+              </div>
+              <div className="home-main-block">
+                <div className="home-section-label">Tasks</div>
+                <MyTasksPanel tasks={tasks} myName={myName} loaded={!!taskData} />
+              </div>
             </div>
 
             <div className="home-rail">
               <div className="home-rail-block">
-                <div className="home-rail-label">Go to</div>
+                <div className="home-section-label">Go to</div>
                 <div className="home-rail-links">
                   {HUB_ITEMS.map(({ href, title, tone, Icon }) => (
                     <Link href={href} className="hub-card" key={href}>
@@ -337,7 +340,7 @@ export default function HomePage() {
 
               {recentDocs.length ? (
                 <div className="home-rail-block">
-                  <div className="home-rail-label">Recently added documents</div>
+                  <div className="home-section-label">Recently added documents</div>
                   <div className="home-panel">
                     {recentDocs.map((doc) => (
                       <Link href="/key-documents" className="home-doc" key={doc.id}>

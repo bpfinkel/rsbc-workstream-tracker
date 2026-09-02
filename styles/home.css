@@ -25,15 +25,22 @@
   .home-cols { grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
 }
 
+/* --- sections (both columns) --------------------------------------------- */
+/* Every section in both columns is headed by one of these, which is also what
+   makes the two columns line up: same label height, same first-card top. */
+.home-section-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 9px 2px;
+}
+.home-main-block + .home-main-block,
+.home-rail-block + .home-rail-block { margin-top: 20px; }
+
 /* --- next meeting -------------------------------------------------------- */
 .home-next {
   background: var(--card); border: 1px solid var(--border); border-left: 5px solid var(--accent);
-  border-radius: 12px; box-shadow: var(--shadow-sm); padding: 20px 22px; margin-bottom: 16px;
+  border-radius: 12px; box-shadow: var(--shadow-sm); padding: 20px 22px;
 }
-.home-next-kicker {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent);
-}
-.home-next-when { font-size: clamp(17px, 4.6vw, 21px); font-weight: 700; margin: 7px 0 5px 0; letter-spacing: -0.2px; line-height: 1.2; }
+.home-next-when { font-size: clamp(17px, 4.6vw, 21px); font-weight: 700; margin: 0 0 5px 0; letter-spacing: -0.2px; line-height: 1.2; }
 .home-next-where { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; color: var(--slate); line-height: 1.45; }
 .home-next-where svg { flex: none; margin-top: 2px; }
 .home-next-zoom { font-size: 12px; color: var(--muted); margin-top: 5px; }
@@ -70,11 +77,6 @@
 }
 
 /* --- destination rail ---------------------------------------------------- */
-.home-rail-label {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
-  color: var(--muted); margin: 0 0 9px 2px;
-}
-.home-rail-block + .home-rail-block { margin-top: 20px; }
 .home-rail-links { display: grid; gap: 12px; }
 
 /* A tablet is wide enough for two tiles but not for the two-column page. */
