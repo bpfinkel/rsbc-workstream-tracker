@@ -92,8 +92,7 @@ function ScoringGuide() {
       <button type="button" className="ws-header ws-header-btn" onClick={() => setOpen(!open)}
         aria-expanded={open}>
         <GuideIcon />
-        <h2>Scoring Guide &mdash; What to Look For</h2>
-        <span className="ws-count">100 pts</span>
+        <h2>Scoring Criteria</h2>
         <ChevronIcon open={open} className="ws-header-chevron" />
       </button>
       {open ? (
