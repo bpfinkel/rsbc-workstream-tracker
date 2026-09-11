@@ -10,6 +10,54 @@ function embedUrl(pdfUrl) {
   return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
 }
 
+// The roster stores full names; the Admin submission list shows last names so a
+// glance tells you who's outstanding without parsing addresses. Two members with
+// the same last name are disambiguated with a first initial ("J. Smith").
+const NAME_SUFFIXES = /^(jr|sr|ii|iii|iv|phd|ed\.?d|m\.?d|esq)\.?$/i;
+
+// Nobiliary particles belong to the surname: "Julian De La Rosa" -> "De La Rosa".
+const NAME_PARTICLES = new Set(['de', 'del', 'della', 'di', 'da', 'du', 'la', 'le', 'van', 'von', 'der', 'den', 'ter', 'bin', 'al', 'mac', 'st', "st.", 'saint', 'dos', 'das']);
+
+// Surnames the rule above can't infer — a two-word surname with no particle is
+// indistinguishable from a middle name. Add a row here if a member displays wrong.
+const LAST_NAME_OVERRIDES = {
+  'mary dolan collette': 'Dolan Collette'
+};
+
+function lastNameOf(fullName) {
+  const override = LAST_NAME_OVERRIDES[String(fullName || '').trim().toLowerCase()];
+  if (override) return override;
+
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '';
+
+  let end = parts.length - 1;
+  if (end > 1 && NAME_SUFFIXES.test(parts[end])) end -= 1;
+
+  // Walk back over any particles, but never consume the first name itself.
+  let start = end;
+  while (start > 1 && NAME_PARTICLES.has(parts[start - 1].toLowerCase().replace(/\.$/, ''))) start -= 1;
+
+  return parts.slice(start, end + 1).join(' ');
+}
+
+function buildScorerNames(members) {
+  const rows = (members || []).filter((m) => m && m.email && m.name);
+  const lastNameCounts = {};
+  rows.forEach((m) => {
+    const key = lastNameOf(m.name).toLowerCase();
+    lastNameCounts[key] = (lastNameCounts[key] || 0) + 1;
+  });
+  const map = {};
+  rows.forEach((m) => {
+    const parts = String(m.name).trim().split(/\s+/).filter(Boolean);
+    const last = lastNameOf(m.name);
+    const collides = lastNameCounts[last.toLowerCase()] > 1 && parts.length > 1;
+    map[m.email.toLowerCase()] = collides ? `${parts[0][0]}. ${last}` : last;
+  });
+  return map;
+}
+
 function emptyScores() {
   return [null, null, null, null, null, null];
 }
@@ -141,6 +189,7 @@ export default function Scoring() {
   const [toast, setToast] = useState('');
   const [editing, setEditing] = useState(null);
   const [pdfViewer, setPdfViewer] = useState(null);
+  const [scorerNames, setScorerNames] = useState({});
 
   async function load() {
     const supabase = createClient();
@@ -156,9 +205,14 @@ export default function Scoring() {
     setFirms((firmsRes.firms || []).slice().sort((a, b) => a.firm.localeCompare(b.firm)));
     setMyScores(myRes.scores || []);
 
+    // Only the admin section names scorers, so the roster is fetched just for admins.
     if (admin) {
-      const allRes = await fetch('/api/scoring?all=1').then((r) => r.json());
+      const [allRes, membersRes] = await Promise.all([
+        fetch('/api/scoring?all=1').then((r) => r.json()),
+        fetch('/api/members').then((r) => r.json())
+      ]);
       setAllScores(allRes.scores || []);
+      setScorerNames(buildScorerNames(membersRes.members));
     }
     setLoaded(true);
   }
@@ -180,6 +234,19 @@ export default function Scoring() {
 
   function scorersFor(firm, phase) {
     return allScores.filter((s) => s.firm === firm && s.phase === phase);
+  }
+
+  // Falls back to the raw address when a scorer has no matching roster row, so an
+  // unrecognized submitter stays visible rather than being silently mislabeled.
+  function scorerLabel(email) {
+    return scorerNames[String(email || '').toLowerCase()] || email;
+  }
+
+  // Hovering a name reveals the address it resolved from.
+  function renderScorers(scores) {
+    return scores.map((s, i) => (
+      <span key={s.scorerEmail} title={s.scorerEmail}>{i ? ', ' : ''}{scorerLabel(s.scorerEmail)}</span>
+    ));
   }
 
   function openPdf(e, firm, url) {
@@ -347,11 +414,11 @@ export default function Scoring() {
                       </div>
                     </div>
                     <span className="admin-detail">
-                      {RFP_PHASES.Written.shortLabel}: {w.length} submitted{w.length ? ` (${w.map((s) => s.scorerEmail).join(', ')})` : ''}
+                      {RFP_PHASES.Written.shortLabel}: {w.length} submitted{w.length ? <> ({renderScorers(w)})</> : ''}
                     </span>
                     {f.interviewUnlocked ? (
                       <span className="admin-detail">
-                        {RFP_PHASES.Interview.shortLabel}: {iv.length} submitted{iv.length ? ` (${iv.map((s) => s.scorerEmail).join(', ')})` : ''}
+                        {RFP_PHASES.Interview.shortLabel}: {iv.length} submitted{iv.length ? <> ({renderScorers(iv)})</> : ''}
                       </span>
                     ) : null}
                   </div>
