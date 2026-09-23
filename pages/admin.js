@@ -508,7 +508,7 @@ export default function Admin() {
         <div className="workstream-group">
           <button type="button" className="ws-header ws-header-btn" onClick={() => toggleSection('roster')}>
             <RosterIcon />
-            <h2>Roster ({members.length})</h2>
+            <h2>Roster Editor</h2>
             <ChevronIcon open={sectionOpen.roster} className="ws-header-chevron" />
           </button>
           {sectionOpen.roster ? (
@@ -551,9 +551,12 @@ export default function Admin() {
                       {memberError ? <div className="form-error">{memberError}</div> : null}
                       <div className="draft-actions">
                         {editingMember.id ? <button type="button" className="btn-veto" onClick={handleDeleteMember}>Remove</button> : <span />}
-                        <button type="button" className="btn-primary" disabled={memberSaving} onClick={handleSaveMember}>
-                          {memberSaving ? 'Saving…' : editingMember.id ? 'Save' : 'Add'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button type="button" className="btn-primary" disabled={memberSaving} onClick={handleSaveMember}>
+                            {memberSaving ? 'Saving…' : editingMember.id ? 'Save' : 'Add'}
+                          </button>
+                          <button type="button" className="btn-secondary" onClick={resetMemberForm}>Cancel</button>
+                        </div>
                       </div>
                     </>
                   ) : null}
