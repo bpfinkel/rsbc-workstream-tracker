@@ -48,7 +48,10 @@
    ranked by median), shown at the bottom of /scoring for admins only. Mirrors
    the committee's own scoring-review deck: a low-high range bar per firm with
    median and average markers, not a full box plot, since it has to stay
-   legible while scores are still coming in and recomputes on every load. */
+   legible while scores are still coming in and recomputes on every load.
+   Each row expands on click into the same stats broken down by rubric
+   category (.summary-row-detail), indented and on a tinted background so it
+   reads as a sub-level of the firm row above it. */
 .summary-legend { margin: 0 0 16px 0; font-size: 11.5px; line-height: 1.5; color: var(--slate); }
 .summary-block + .summary-block { margin-top: 22px; }
 .summary-block-title { margin: 0 0 8px 0; font-size: 12.5px; font-weight: 700; color: var(--navy); }
@@ -57,6 +60,7 @@
   background: var(--card); border: 1px solid var(--border); border-radius: 10px;
   overflow: hidden; box-shadow: var(--shadow-sm);
 }
+.summary-item + .summary-item { border-top: 1px solid var(--border); }
 .summary-head-row, .summary-row {
   display: grid; grid-template-columns: minmax(100px, 1fr) minmax(90px, 2fr) 40px 40px 26px;
   align-items: center; gap: 10px; padding: 10px 14px;
@@ -66,13 +70,27 @@
   color: var(--muted); border-bottom: 1px solid var(--border);
 }
 .summary-head-row .summary-col-num, .summary-head-row .summary-col-range { text-align: right; }
-.summary-row + .summary-row { border-top: 1px solid var(--border); }
-.summary-col-firm { font-size: 12.5px; font-weight: 600; color: var(--navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summary-col-firm {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 600; color: var(--navy);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .summary-col-range { display: block; }
 .summary-col-num { font-size: 12.5px; font-weight: 600; color: var(--slate); text-align: right; }
 .summary-med { color: var(--red); font-weight: 700; }
 .summary-n { color: var(--muted); font-weight: 500; }
+.summary-row-clickable { cursor: pointer; transition: background .12s; }
+.summary-row-clickable:hover, .summary-row-clickable.open { background: var(--bg); }
+.summary-row-clickable:focus-visible { outline: 2px solid var(--red); outline-offset: -2px; }
+.summary-row-chevron { color: var(--muted); flex: none; }
+.summary-detail { background: var(--bg); }
+.summary-row-detail { padding: 7px 14px 7px 32px; border-top: 1px dashed var(--border); }
+.summary-row-detail .summary-col-firm { font-weight: 400; color: var(--slate); }
+.summary-detail-label { font-size: 11.5px; }
+.summary-detail-max { font-weight: 400; color: var(--muted); font-size: 10.5px; }
+.summary-row-detail .summary-col-num { font-size: 11.5px; }
 .range-track { display: block; position: relative; width: 100%; height: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; }
+.summary-row-detail .range-track { background: var(--card); }
 .range-bar { position: absolute; top: -1px; bottom: -1px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 4px; }
 .range-median { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--red); transform: translateX(-1px); }
 .range-mean {
@@ -81,5 +99,6 @@
 }
 @media (max-width: 640px) {
   .summary-head-row, .summary-row { grid-template-columns: minmax(84px, 1fr) minmax(64px, 1.5fr) 32px 32px 20px; gap: 6px; padding: 9px 10px; }
+  .summary-row-detail { padding-left: 26px; }
   .summary-col-firm, .summary-col-num { font-size: 11px; }
 }

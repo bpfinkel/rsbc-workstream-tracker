@@ -80,6 +80,32 @@ function fmt1(n) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
+// Median/average/low/high in one shot — used for both a firm's overall totals
+// and, when a row is expanded, each individual rubric category.
+function statsOf(nums) {
+  return {
+    med: median(nums),
+    avg: mean(nums),
+    lo: Math.min(...nums),
+    hi: Math.max(...nums)
+  };
+}
+
+// The low-high range bar with median tick and average dot, scaled to `max`.
+// Shared between a firm's overall row and its per-category breakdown rows.
+function RangeBar({ lo, hi, med, avg, max }) {
+  return (
+    <span className="range-track">
+      <span
+        className="range-bar"
+        style={{ left: `${(lo / max) * 100}%`, width: `${Math.max(((hi - lo) / max) * 100, 1.5)}%` }}
+      />
+      <span className="range-median" style={{ left: `${(med / max) * 100}%` }} />
+      <span className="range-mean" style={{ left: `${(avg / max) * 100}%` }} title={`Average ${fmt1(avg)}`} />
+    </span>
+  );
+}
+
 function ScoringIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
@@ -204,26 +230,30 @@ function LockToggle({ unlocked, label, onClick }) {
 // (highest first) the same way the committee's own scoring-review deck is. It
 // recomputes live from allScores on every page load, so it always reflects
 // whatever has been submitted up to that moment — a firm/phase with no
-// submissions yet is simply left out rather than shown as zero.
+// submissions yet is simply left out rather than shown as zero. Clicking a
+// firm's row expands it into the same stats broken down by rubric category,
+// reusing each score row's raw per-criterion values rather than re-fetching.
 function ScoringSummary({ firms, allScores }) {
+  const [expanded, setExpanded] = useState({});
+
+  function toggleExpanded(key) {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   const blocks = RFP_PHASE_ORDER.map((phase) => {
     const max = phaseTotal(phase);
     const criteria = RFP_PHASES[phase].criteria;
     const rows = firms
       .map((f) => {
-        const totals = allScores
-          .filter((s) => s.phase === phase && s.firm === f.firm)
-          .map((s) => totalFor(s.scores, criteria));
-        if (!totals.length) return null;
-        const med = median(totals);
-        const avg = mean(totals);
-        const lo = Math.min(...totals);
-        const hi = Math.max(...totals);
-        return { firm: f.firm, med, avg, lo, hi, n: totals.length };
+        const scoreRows = allScores.filter((s) => s.phase === phase && s.firm === f.firm);
+        if (!scoreRows.length) return null;
+        const totals = scoreRows.map((s) => totalFor(s.scores, criteria));
+        const { med, avg, lo, hi } = statsOf(totals);
+        return { firm: f.firm, med, avg, lo, hi, n: totals.length, scoreRows };
       })
       .filter(Boolean)
       .sort((a, b) => b.med - a.med || b.avg - a.avg || a.firm.localeCompare(b.firm));
-    return { phase, max, rows };
+    return { phase, max, criteria, rows };
   }).filter((b) => b.rows.length > 0);
 
   if (!blocks.length) return null;
@@ -235,9 +265,9 @@ function ScoringSummary({ firms, allScores }) {
         <h2>Admin — Scoring Summary</h2>
       </div>
       <p className="summary-legend">
-        Ranked by median. The bar spans each firm&rsquo;s low&ndash;high range; the red tick marks the median and the navy dot marks the average.
+        Ranked by median. Click a firm to break its score down by rubric category. The bar spans the low&ndash;high range; the red tick marks the median and the navy dot marks the average.
       </p>
-      {blocks.map(({ phase, max, rows }) => (
+      {blocks.map(({ phase, max, criteria, rows }) => (
         <div className="summary-block" key={phase}>
           <p className="summary-block-title">
             {RFP_PHASES[phase].label} <span className="summary-block-sub">(out of {max})</span>
@@ -250,24 +280,59 @@ function ScoringSummary({ firms, allScores }) {
               <span className="summary-col-num">Avg.</span>
               <span className="summary-col-num">n</span>
             </div>
-            {rows.map((r) => (
-              <div className="summary-row" key={r.firm}>
-                <span className="summary-col-firm">{r.firm}</span>
-                <span className="summary-col-range">
-                  <span className="range-track">
-                    <span
-                      className="range-bar"
-                      style={{ left: `${(r.lo / max) * 100}%`, width: `${Math.max(((r.hi - r.lo) / max) * 100, 1.5)}%` }}
-                    />
-                    <span className="range-median" style={{ left: `${(r.med / max) * 100}%` }} />
-                    <span className="range-mean" style={{ left: `${(r.avg / max) * 100}%` }} title={`Average ${fmt1(r.avg)}`} />
-                  </span>
-                </span>
-                <span className="summary-col-num summary-med">{fmt1(r.med)}</span>
-                <span className="summary-col-num">{fmt1(r.avg)}</span>
-                <span className="summary-col-num summary-n">{r.n}</span>
-              </div>
-            ))}
+            {rows.map((r) => {
+              const key = `${phase}::${r.firm}`;
+              const isOpen = !!expanded[key];
+              return (
+                <div className="summary-item" key={r.firm}>
+                  <div
+                    className={'summary-row summary-row-clickable' + (isOpen ? ' open' : '')}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isOpen}
+                    onClick={() => toggleExpanded(key)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleExpanded(key);
+                      }
+                    }}
+                  >
+                    <span className="summary-col-firm">
+                      <ChevronIcon open={isOpen} className="summary-row-chevron" />
+                      {r.firm}
+                    </span>
+                    <span className="summary-col-range">
+                      <RangeBar lo={r.lo} hi={r.hi} med={r.med} avg={r.avg} max={max} />
+                    </span>
+                    <span className="summary-col-num summary-med">{fmt1(r.med)}</span>
+                    <span className="summary-col-num">{fmt1(r.avg)}</span>
+                    <span className="summary-col-num summary-n">{r.n}</span>
+                  </div>
+                  {isOpen ? (
+                    <div className="summary-detail">
+                      {criteria.map((c, i) => {
+                        const vals = r.scoreRows.map((s) => Number(s.scores[i]) || 0);
+                        const cs = statsOf(vals);
+                        return (
+                          <div className="summary-row summary-row-detail" key={c.key}>
+                            <span className="summary-col-firm summary-detail-label">
+                              {c.label} <span className="summary-detail-max">/ {c.max}</span>
+                            </span>
+                            <span className="summary-col-range">
+                              <RangeBar lo={cs.lo} hi={cs.hi} med={cs.med} avg={cs.avg} max={c.max} />
+                            </span>
+                            <span className="summary-col-num summary-med">{fmt1(cs.med)}</span>
+                            <span className="summary-col-num">{fmt1(cs.avg)}</span>
+                            <span className="summary-col-num summary-n" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
