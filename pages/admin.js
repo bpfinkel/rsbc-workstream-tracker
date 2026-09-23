@@ -6,16 +6,7 @@ import { useModalViewportLock } from '../lib/useViewportLock';
 
 const ROSTER_STATUS_OPTIONS = ['Officer', 'Voting Member', 'Ex-Officio Member'];
 const EMPTY_MEMBER = { id: null, name: '', role: '', status: ROSTER_STATUS_OPTIONS[0], email: '', phone: '' };
-
-function initials(name) {
-  return String(name || '')
-    .split(' ')
-    .filter(Boolean)
-    .map((p) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
+const NEW_MEMBER_VALUE = '__new__';
 
 function formatShortDate(dateStr) {
   if (!dateStr) return '';
@@ -130,6 +121,7 @@ export default function Admin() {
 
   const [members, setMembers] = useState([]);
   const [membersLoaded, setMembersLoaded] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
   const [editingMember, setEditingMember] = useState(null);
   const [memberError, setMemberError] = useState('');
   const [memberSaving, setMemberSaving] = useState(false);
@@ -263,17 +255,23 @@ export default function Admin() {
     setPdfViewer({ title, driveLink });
   }
 
-  function openEditMember(member) {
+  // Single dropdown drives which member (or "new") is loaded into the form
+  // below it — this is the whole editing surface, no per-row forms/modal.
+  function handleSelectMember(value) {
     setMemberError('');
-    setEditingMember({ ...member });
+    setSelectedMemberId(value);
+    if (value === '') {
+      setEditingMember(null);
+    } else if (value === NEW_MEMBER_VALUE) {
+      setEditingMember({ ...EMPTY_MEMBER });
+    } else {
+      const m = members.find((mm) => mm.id === value);
+      setEditingMember(m ? { ...m } : null);
+    }
   }
 
-  function openAddMember() {
-    setMemberError('');
-    setEditingMember({ ...EMPTY_MEMBER });
-  }
-
-  function closeMemberModal() {
+  function resetMemberForm() {
+    setSelectedMemberId('');
     setEditingMember(null);
     setMemberError('');
   }
@@ -298,7 +296,7 @@ export default function Admin() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
-      closeMemberModal();
+      resetMemberForm();
       await loadMembers();
     } catch (e) {
       setMemberError(e.message);
@@ -317,7 +315,7 @@ export default function Admin() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Delete failed');
       }
-      closeMemberModal();
+      resetMemberForm();
       await loadMembers();
     } catch (e) {
       setMemberError(e.message);
@@ -515,19 +513,52 @@ export default function Admin() {
           </button>
           {sectionOpen.roster ? (
             !membersLoaded ? null : (
-              <>
-                <div className="roster-list">
-                  {members.map((m) => (
-                    <div className="roster-row" key={m.id} onClick={() => openEditMember(m)}>
-                      <span className="roster-avatar">{initials(m.name)}</span>
-                      <span className="roster-name">{m.name}</span>
-                      <span className="roster-role">{m.role}</span>
-                      <svg className="roster-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-                    </div>
-                  ))}
+              <div className="cards">
+                <div className="card draft-pending">
+                  <div className="field">
+                    <label>Select Member</label>
+                    <select value={selectedMemberId} onChange={(e) => handleSelectMember(e.target.value)}>
+                      <option value="">— Select a member —</option>
+                      <option value={NEW_MEMBER_VALUE}>+ Add New Member</option>
+                      {members.map((m) => <option value={m.id} key={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+
+                  {editingMember ? (
+                    <>
+                      <div className="field">
+                        <label>Name</label>
+                        <input type="text" value={editingMember.name} onChange={(e) => setEditingField('name', e.target.value)} />
+                      </div>
+                      <div className="field">
+                        <label>Title</label>
+                        <input type="text" value={editingMember.role} onChange={(e) => setEditingField('role', e.target.value)} />
+                      </div>
+                      <div className="field">
+                        <label>Status</label>
+                        <select value={editingMember.status} onChange={(e) => setEditingField('status', e.target.value)}>
+                          {ROSTER_STATUS_OPTIONS.map((s) => <option value={s} key={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label>Email</label>
+                        <input type="text" value={editingMember.email} onChange={(e) => setEditingField('email', e.target.value)} />
+                      </div>
+                      <div className="field">
+                        <label>Phone</label>
+                        <input type="text" value={editingMember.phone} onChange={(e) => setEditingField('phone', e.target.value)} />
+                      </div>
+                      {memberError ? <div className="form-error">{memberError}</div> : null}
+                      <div className="draft-actions">
+                        {editingMember.id ? <button type="button" className="btn-veto" onClick={handleDeleteMember}>Remove</button> : <span />}
+                        <button type="button" className="btn-primary" disabled={memberSaving} onClick={handleSaveMember}>
+                          {memberSaving ? 'Saving…' : editingMember.id ? 'Save' : 'Add'}
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
-                <button type="button" className="btn-primary" style={{ marginTop: 12 }} onClick={openAddMember}>+ Add Member</button>
-              </>
+              </div>
             )
           ) : null}
         </div>
@@ -666,49 +697,6 @@ export default function Admin() {
                   </>
                 ) : null}
                 <button className="btn-secondary" onClick={() => setSelectedDoc(null)}>Close</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className={'overlay' + (editingMember ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) closeMemberModal(); }}>
-        {editingMember && (
-          <div className="modal contact-card">
-            <h3>{editingMember.id ? 'Edit Member' : 'Add Member'}</h3>
-
-            <div className="field">
-              <label>Name</label>
-              <input type="text" value={editingMember.name} onChange={(e) => setEditingField('name', e.target.value)} />
-            </div>
-            <div className="field">
-              <label>Title</label>
-              <input type="text" value={editingMember.role} onChange={(e) => setEditingField('role', e.target.value)} />
-            </div>
-            <div className="field">
-              <label>Status</label>
-              <select value={editingMember.status} onChange={(e) => setEditingField('status', e.target.value)}>
-                {ROSTER_STATUS_OPTIONS.map((s) => <option value={s} key={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label>Email</label>
-              <input type="text" value={editingMember.email} onChange={(e) => setEditingField('email', e.target.value)} />
-            </div>
-            <div className="field">
-              <label>Phone</label>
-              <input type="text" value={editingMember.phone} onChange={(e) => setEditingField('phone', e.target.value)} />
-            </div>
-            {memberError ? <div className="form-error">{memberError}</div> : null}
-
-            <div className="modal-actions">
-              <span />
-              <div className="modal-right">
-                {editingMember.id ? <button className="btn-veto" onClick={handleDeleteMember}>Remove</button> : null}
-                <button className="btn-primary" onClick={handleSaveMember} disabled={memberSaving}>
-                  {memberSaving ? 'Saving…' : editingMember.id ? 'Save' : 'Add'}
-                </button>
-                <button className="btn-secondary" onClick={closeMemberModal}>Cancel</button>
               </div>
             </div>
           </div>
