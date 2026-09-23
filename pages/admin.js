@@ -5,6 +5,17 @@ import { driveEmbedUrl } from '../lib/driveEmbed';
 import { useModalViewportLock } from '../lib/useViewportLock';
 
 const ROSTER_STATUS_OPTIONS = ['Officer', 'Voting Member', 'Ex-Officio Member'];
+const EMPTY_MEMBER = { id: null, name: '', role: '', status: ROSTER_STATUS_OPTIONS[0], email: '', phone: '' };
+
+function initials(name) {
+  return String(name || '')
+    .split(' ')
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 function formatShortDate(dateStr) {
   if (!dateStr) return '';
@@ -119,10 +130,9 @@ export default function Admin() {
 
   const [members, setMembers] = useState([]);
   const [membersLoaded, setMembersLoaded] = useState(false);
-  const [memberEdits, setMemberEdits] = useState({});
-  const [memberSavingId, setMemberSavingId] = useState(null);
-  const [newMember, setNewMember] = useState({ name: '', role: '', status: ROSTER_STATUS_OPTIONS[0], email: '', phone: '' });
-  const [addingMember, setAddingMember] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+  const [memberError, setMemberError] = useState('');
+  const [memberSaving, setMemberSaving] = useState(false);
 
   const [sectionOpen, setSectionOpen] = useState({
     tasksPending: false, tasksHistory: false, docsPending: false, docsHistory: false, roster: false
@@ -253,82 +263,64 @@ export default function Admin() {
     setPdfViewer({ title, driveLink });
   }
 
-  function setMemberEdit(id, field, value) {
-    setMemberEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  function openEditMember(member) {
+    setMemberError('');
+    setEditingMember({ ...member });
   }
 
-  function memberFieldValue(member, field) {
-    return memberEdits[member.id]?.[field] ?? member[field];
+  function openAddMember() {
+    setMemberError('');
+    setEditingMember({ ...EMPTY_MEMBER });
   }
 
-  async function handleSaveMember(member) {
-    setError('');
-    setMemberSavingId(member.id);
+  function closeMemberModal() {
+    setEditingMember(null);
+    setMemberError('');
+  }
+
+  function setEditingField(field, value) {
+    setEditingMember((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSaveMember() {
+    if (!editingMember.name.trim()) {
+      setMemberError('Name is required');
+      return;
+    }
+    setMemberError('');
+    setMemberSaving(true);
     try {
-      const edits = memberEdits[member.id] || {};
-      const body = {
-        name: edits.name ?? member.name,
-        role: edits.role ?? member.role,
-        status: edits.status ?? member.status,
-        email: edits.email ?? member.email,
-        phone: edits.phone ?? member.phone
-      };
-      const res = await fetch('/api/roster/' + member.id, {
-        method: 'PUT',
+      const isNew = !editingMember.id;
+      const res = await fetch(isNew ? '/api/roster' : '/api/roster/' + editingMember.id, {
+        method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(editingMember)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
-      setMemberEdits((prev) => {
-        const next = { ...prev };
-        delete next[member.id];
-        return next;
-      });
+      closeMemberModal();
       await loadMembers();
     } catch (e) {
-      setError(e.message);
+      setMemberError(e.message);
     } finally {
-      setMemberSavingId(null);
+      setMemberSaving(false);
     }
   }
 
-  async function handleDeleteMember(member) {
-    if (!window.confirm(`Remove ${member.name} from the roster?`)) return;
-    setError('');
+  async function handleDeleteMember() {
+    if (!editingMember?.id) return;
+    if (!window.confirm(`Remove ${editingMember.name} from the roster?`)) return;
+    setMemberError('');
     try {
-      const res = await fetch('/api/roster/' + member.id, { method: 'DELETE' });
+      const res = await fetch('/api/roster/' + editingMember.id, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Delete failed');
       }
+      closeMemberModal();
       await loadMembers();
     } catch (e) {
-      setError(e.message);
-    }
-  }
-
-  async function handleAddMember() {
-    if (!newMember.name.trim()) {
-      setError('Name is required to add a member');
-      return;
-    }
-    setError('');
-    setAddingMember(true);
-    try {
-      const res = await fetch('/api/roster', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMember)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Add failed');
-      setNewMember({ name: '', role: '', status: ROSTER_STATUS_OPTIONS[0], email: '', phone: '' });
-      await loadMembers();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setAddingMember(false);
+      setMemberError(e.message);
     }
   }
 
@@ -523,80 +515,19 @@ export default function Admin() {
           </button>
           {sectionOpen.roster ? (
             !membersLoaded ? null : (
-              <div className="cards">
-                {members.map((m) => (
-                  <div className="card draft-pending" key={m.id}>
-                    <div className="field">
-                      <label>Name</label>
-                      <input type="text" value={memberFieldValue(m, 'name')}
-                        onChange={(e) => setMemberEdit(m.id, 'name', e.target.value)} />
+              <>
+                <div className="roster-list">
+                  {members.map((m) => (
+                    <div className="roster-row" key={m.id} onClick={() => openEditMember(m)}>
+                      <span className="roster-avatar">{initials(m.name)}</span>
+                      <span className="roster-name">{m.name}</span>
+                      <span className="roster-role">{m.role}</span>
+                      <svg className="roster-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                     </div>
-                    <div className="field">
-                      <label>Title</label>
-                      <input type="text" value={memberFieldValue(m, 'role')}
-                        onChange={(e) => setMemberEdit(m.id, 'role', e.target.value)} />
-                    </div>
-                    <div className="field">
-                      <label>Status</label>
-                      <select value={memberFieldValue(m, 'status')}
-                        onChange={(e) => setMemberEdit(m.id, 'status', e.target.value)}>
-                        {ROSTER_STATUS_OPTIONS.map((s) => <option value={s} key={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label>Email</label>
-                      <input type="text" value={memberFieldValue(m, 'email')}
-                        onChange={(e) => setMemberEdit(m.id, 'email', e.target.value)} />
-                    </div>
-                    <div className="field">
-                      <label>Phone</label>
-                      <input type="text" value={memberFieldValue(m, 'phone')}
-                        onChange={(e) => setMemberEdit(m.id, 'phone', e.target.value)} />
-                    </div>
-                    <div className="draft-actions">
-                      <button type="button" className="btn-veto" onClick={() => handleDeleteMember(m)}>Remove</button>
-                      <button type="button" className="btn-primary" disabled={memberSavingId === m.id}
-                        onClick={() => handleSaveMember(m)}>{memberSavingId === m.id ? 'Saving…' : 'Save'}</button>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="card draft-pending">
-                  <p className="title">Add Member</p>
-                  <div className="field">
-                    <label>Name</label>
-                    <input type="text" value={newMember.name}
-                      onChange={(e) => setNewMember((p) => ({ ...p, name: e.target.value }))} />
-                  </div>
-                  <div className="field">
-                    <label>Title</label>
-                    <input type="text" value={newMember.role}
-                      onChange={(e) => setNewMember((p) => ({ ...p, role: e.target.value }))} />
-                  </div>
-                  <div className="field">
-                    <label>Status</label>
-                    <select value={newMember.status}
-                      onChange={(e) => setNewMember((p) => ({ ...p, status: e.target.value }))}>
-                      {ROSTER_STATUS_OPTIONS.map((s) => <option value={s} key={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div className="field">
-                    <label>Email</label>
-                    <input type="text" value={newMember.email}
-                      onChange={(e) => setNewMember((p) => ({ ...p, email: e.target.value }))} />
-                  </div>
-                  <div className="field">
-                    <label>Phone</label>
-                    <input type="text" value={newMember.phone}
-                      onChange={(e) => setNewMember((p) => ({ ...p, phone: e.target.value }))} />
-                  </div>
-                  <div className="draft-actions">
-                    <span />
-                    <button type="button" className="btn-primary" disabled={addingMember}
-                      onClick={handleAddMember}>{addingMember ? 'Adding…' : 'Add to Roster'}</button>
-                  </div>
+                  ))}
                 </div>
-              </div>
+                <button type="button" className="btn-primary" style={{ marginTop: 12 }} onClick={openAddMember}>+ Add Member</button>
+              </>
             )
           ) : null}
         </div>
@@ -735,6 +666,49 @@ export default function Admin() {
                   </>
                 ) : null}
                 <button className="btn-secondary" onClick={() => setSelectedDoc(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className={'overlay' + (editingMember ? ' open' : '')} onClick={(e) => { if (e.target === e.currentTarget) closeMemberModal(); }}>
+        {editingMember && (
+          <div className="modal contact-card">
+            <h3>{editingMember.id ? 'Edit Member' : 'Add Member'}</h3>
+
+            <div className="field">
+              <label>Name</label>
+              <input type="text" value={editingMember.name} onChange={(e) => setEditingField('name', e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Title</label>
+              <input type="text" value={editingMember.role} onChange={(e) => setEditingField('role', e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Status</label>
+              <select value={editingMember.status} onChange={(e) => setEditingField('status', e.target.value)}>
+                {ROSTER_STATUS_OPTIONS.map((s) => <option value={s} key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Email</label>
+              <input type="text" value={editingMember.email} onChange={(e) => setEditingField('email', e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Phone</label>
+              <input type="text" value={editingMember.phone} onChange={(e) => setEditingField('phone', e.target.value)} />
+            </div>
+            {memberError ? <div className="form-error">{memberError}</div> : null}
+
+            <div className="modal-actions">
+              <span />
+              <div className="modal-right">
+                {editingMember.id ? <button className="btn-veto" onClick={handleDeleteMember}>Remove</button> : null}
+                <button className="btn-primary" onClick={handleSaveMember} disabled={memberSaving}>
+                  {memberSaving ? 'Saving…' : editingMember.id ? 'Save' : 'Add'}
+                </button>
+                <button className="btn-secondary" onClick={closeMemberModal}>Cancel</button>
               </div>
             </div>
           </div>
