@@ -91,17 +91,23 @@ function statsOf(nums) {
   };
 }
 
-// The low-high range bar with median tick and average dot, scaled to `max`.
-// Shared between a firm's overall row and its per-category breakdown rows.
+// The low-high range bar with median tick and average dot, scaled to `max`,
+// flanked by the low/high numbers themselves so the range reads at a glance
+// without hovering. Shared between a firm's overall row and its per-category
+// breakdown rows.
 function RangeBar({ lo, hi, med, avg, max }) {
   return (
-    <span className="range-track">
-      <span
-        className="range-bar"
-        style={{ left: `${(lo / max) * 100}%`, width: `${Math.max(((hi - lo) / max) * 100, 1.5)}%` }}
-      />
-      <span className="range-median" style={{ left: `${(med / max) * 100}%` }} />
-      <span className="range-mean" style={{ left: `${(avg / max) * 100}%` }} title={`Average ${fmt1(avg)}`} />
+    <span className="range-wrap">
+      <span className="range-endpoint range-lo">{fmt1(lo)}</span>
+      <span className="range-track">
+        <span
+          className="range-bar"
+          style={{ left: `${(lo / max) * 100}%`, width: `${Math.max(((hi - lo) / max) * 100, 1.5)}%` }}
+        />
+        <span className="range-median" style={{ left: `${(med / max) * 100}%` }} />
+        <span className="range-mean" style={{ left: `${(avg / max) * 100}%` }} title={`Average ${fmt1(avg)}`} />
+      </span>
+      <span className="range-endpoint range-hi">{fmt1(hi)}</span>
     </span>
   );
 }
@@ -155,6 +161,25 @@ function ChevronIcon({ open, className }) {
   );
 }
 
+// Generic collapsible top-level section: a clickable ws-header with a chevron
+// that shows/hides its children. Every workstream-group on this page uses it
+// (Scoring Criteria started this way; the others were made to match).
+function CollapsibleSection({ icon, title, count, defaultOpen, children }) {
+  const [open, setOpen] = useState(defaultOpen !== false);
+  return (
+    <div className="workstream-group">
+      <button type="button" className="ws-header ws-header-btn" onClick={() => setOpen(!open)}
+        aria-expanded={open}>
+        {icon}
+        <h2>{title}</h2>
+        {count != null ? <span className="ws-count">{count}</span> : null}
+        <ChevronIcon open={open} className="ws-header-chevron" />
+      </button>
+      {open ? children : null}
+    </div>
+  );
+}
+
 // Whether the scoring modal shows the rubric's "What to look for" commentary
 // under each slider. Defaults to ON so every member sees the guidance the first
 // time they score; the choice is remembered per-browser after that.
@@ -180,38 +205,29 @@ function writeGuidancePref(on) {
 // The full rubric, collapsed by default, so the commentary is available as a
 // standalone reference and not only from inside a scoring modal.
 function ScoringGuide() {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="workstream-group">
-      <button type="button" className="ws-header ws-header-btn" onClick={() => setOpen(!open)}
-        aria-expanded={open}>
-        <GuideIcon />
-        <h2>Scoring Criteria</h2>
-        <ChevronIcon open={open} className="ws-header-chevron" />
-      </button>
-      {open ? (
-        <div className="card static-card guide-card">
-          <p className="guide-intro">{RFP_RUBRIC_INTRO}</p>
-          {RFP_PHASE_ORDER.map((phase) => (
-            <div className="guide-phase" key={phase}>
-              <p className="guide-phase-title">
-                {RFP_PHASES[phase].label} &mdash; {phaseTotal(phase)} points
-              </p>
-              {RFP_PHASES[phase].criteria.map((c) => (
-                <div className="guide-criterion" key={c.key}>
-                  <div className="guide-criterion-top">
-                    <span className="guide-criterion-label">{c.label}</span>
-                    <span className="guide-criterion-pts">{c.max} pts</span>
-                  </div>
-                  <p className="guide-text">{c.guidance}</p>
+    <CollapsibleSection icon={<GuideIcon />} title="Scoring Criteria" defaultOpen={false}>
+      <div className="card static-card guide-card">
+        <p className="guide-intro">{RFP_RUBRIC_INTRO}</p>
+        {RFP_PHASE_ORDER.map((phase) => (
+          <div className="guide-phase" key={phase}>
+            <p className="guide-phase-title">
+              {RFP_PHASES[phase].label} &mdash; {phaseTotal(phase)} points
+            </p>
+            {RFP_PHASES[phase].criteria.map((c) => (
+              <div className="guide-criterion" key={c.key}>
+                <div className="guide-criterion-top">
+                  <span className="guide-criterion-label">{c.label}</span>
+                  <span className="guide-criterion-pts">{c.max} pts</span>
                 </div>
-              ))}
-            </div>
-          ))}
-          <p className="guide-note">{RFP_RUBRIC_NOTE}</p>
-        </div>
-      ) : null}
-    </div>
+                <p className="guide-text">{c.guidance}</p>
+              </div>
+            ))}
+          </div>
+        ))}
+        <p className="guide-note">{RFP_RUBRIC_NOTE}</p>
+      </div>
+    </CollapsibleSection>
   );
 }
 
@@ -259,11 +275,7 @@ function ScoringSummary({ firms, allScores }) {
   if (!blocks.length) return null;
 
   return (
-    <div className="workstream-group">
-      <div className="ws-header">
-        <SummaryIcon />
-        <h2>Admin — Scoring Summary</h2>
-      </div>
+    <CollapsibleSection icon={<SummaryIcon />} title="Admin — Scoring Summary">
       <p className="summary-legend">
         Ranked by median. Click a firm to break its score down by rubric category. The bar spans the low&ndash;high range; the red tick marks the median and the navy dot marks the average.
       </p>
@@ -336,7 +348,7 @@ function ScoringSummary({ firms, allScores }) {
           </div>
         </div>
       ))}
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -500,12 +512,7 @@ export default function Scoring() {
 
         <ScoringGuide />
 
-        <div className="workstream-group">
-          <div className="ws-header">
-            <ScoringIcon />
-            <h2>Owner&rsquo;s Rep RFP — Score the Firms</h2>
-            <span className="ws-count">{firms.length}</span>
-          </div>
+        <CollapsibleSection icon={<ScoringIcon />} title={'Owner’s Rep RFP — Score the Firms'} count={firms.length}>
           {!loaded ? null : (
             <div className="cards">
               {firms.map((f) => {
@@ -553,15 +560,11 @@ export default function Scoring() {
               })}
             </div>
           )}
-        </div>
+        </CollapsibleSection>
 
         {isAdmin ? (
           <>
-            <div className="workstream-group">
-              <div className="ws-header">
-                <AdminSectionIcon />
-                <h2>Admin — Submission Status</h2>
-              </div>
+            <CollapsibleSection icon={<AdminSectionIcon />} title="Admin — Submission Status">
               <div className="admin-list">
                 {firms.map((f) => {
                   const w = scorersFor(f.firm, 'Written');
@@ -599,7 +602,7 @@ export default function Scoring() {
                   {(allInterviewUnlocked ? 'Lock All — ' : 'Unlock All — ') + RFP_PHASES.Interview.shortLabel}
                 </button>
               </div>
-            </div>
+            </CollapsibleSection>
 
             <ScoringSummary firms={firms} allScores={allScores} />
           </>
