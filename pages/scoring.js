@@ -66,6 +66,20 @@ function totalFor(scores, criteria) {
   return criteria.reduce((sum, c, i) => sum + (Number(scores[i]) || 0), 0);
 }
 
+function median(nums) {
+  const sorted = nums.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function mean(nums) {
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
+function fmt1(n) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
 function ScoringIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
@@ -75,6 +89,12 @@ function ScoringIcon() {
 function AdminSectionIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 17.2V20h2.8L17.8 9 15 6.2 4 17.2z" /><path d="M14 5.2l3 3" /></svg>
+  );
+}
+
+function SummaryIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 20V13M11 20V6M17 20V16M3 20h18" /></svg>
   );
 }
 
@@ -176,6 +196,82 @@ function LockToggle({ unlocked, label, onClick }) {
       {unlocked ? <UnlockIcon /> : <LockIcon />}
       {label}
     </button>
+  );
+}
+
+// Admin-only "quick glance" rollup of running scores per firm/phase: median,
+// average, and range across everyone who has scored so far, ranked by median
+// (highest first) the same way the committee's own scoring-review deck is. It
+// recomputes live from allScores on every page load, so it always reflects
+// whatever has been submitted up to that moment — a firm/phase with no
+// submissions yet is simply left out rather than shown as zero.
+function ScoringSummary({ firms, allScores }) {
+  const blocks = RFP_PHASE_ORDER.map((phase) => {
+    const max = phaseTotal(phase);
+    const criteria = RFP_PHASES[phase].criteria;
+    const rows = firms
+      .map((f) => {
+        const totals = allScores
+          .filter((s) => s.phase === phase && s.firm === f.firm)
+          .map((s) => totalFor(s.scores, criteria));
+        if (!totals.length) return null;
+        const med = median(totals);
+        const avg = mean(totals);
+        const lo = Math.min(...totals);
+        const hi = Math.max(...totals);
+        return { firm: f.firm, med, avg, lo, hi, n: totals.length };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.med - a.med || b.avg - a.avg || a.firm.localeCompare(b.firm));
+    return { phase, max, rows };
+  }).filter((b) => b.rows.length > 0);
+
+  if (!blocks.length) return null;
+
+  return (
+    <div className="workstream-group">
+      <div className="ws-header">
+        <SummaryIcon />
+        <h2>Admin — Scoring Summary</h2>
+      </div>
+      <p className="summary-legend">
+        Ranked by median. The bar spans each firm&rsquo;s low&ndash;high range; the red tick marks the median and the navy dot marks the average.
+      </p>
+      {blocks.map(({ phase, max, rows }) => (
+        <div className="summary-block" key={phase}>
+          <p className="summary-block-title">
+            {RFP_PHASES[phase].label} <span className="summary-block-sub">(out of {max})</span>
+          </p>
+          <div className="summary-table">
+            <div className="summary-head-row">
+              <span className="summary-col-firm">Firm</span>
+              <span className="summary-col-range">Range</span>
+              <span className="summary-col-num">Med.</span>
+              <span className="summary-col-num">Avg.</span>
+              <span className="summary-col-num">n</span>
+            </div>
+            {rows.map((r) => (
+              <div className="summary-row" key={r.firm}>
+                <span className="summary-col-firm">{r.firm}</span>
+                <span className="summary-col-range">
+                  <span className="range-track">
+                    <span
+                      className="range-bar"
+                      style={{ left: `${(r.lo / max) * 100}%`, width: `${Math.max(((r.hi - r.lo) / max) * 100, 1.5)}%` }}
+                    />
+                    <span className="range-median" style={{ left: `${(r.med / max) * 100}%` }} />
+                    <span className="range-mean" style={{ left: `${(r.avg / max) * 100}%` }} title={`Average ${fmt1(r.avg)}`} />
+                  </span>
+                </span>
+                <span className="summary-col-num summary-med">{fmt1(r.med)}</span>
+                <span className="summary-col-num">{fmt1(r.avg)}</span>
+                <span className="summary-col-num summary-n">{r.n}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -395,49 +491,53 @@ export default function Scoring() {
         </div>
 
         {isAdmin ? (
-          <div className="workstream-group">
-            <div className="ws-header">
-              <AdminSectionIcon />
-              <h2>Admin — Submission Status</h2>
-            </div>
-            <div className="admin-list">
-              {firms.map((f) => {
-                const w = scorersFor(f.firm, 'Written');
-                const iv = scorersFor(f.firm, 'Interview');
-                return (
-                  <div className="admin-row" key={f.firm}>
-                    <div className="admin-row-top">
-                      <span className="admin-firm-name">{f.firm}</span>
-                      <div className="admin-toggles">
-                        <LockToggle unlocked={f.writtenUnlocked} label={RFP_PHASES.Written.shortLabel} onClick={() => toggleFirmLock(f.firm, 'Written', !f.writtenUnlocked)} />
-                        <LockToggle unlocked={f.interviewUnlocked} label={RFP_PHASES.Interview.shortLabel} onClick={() => toggleFirmLock(f.firm, 'Interview', !f.interviewUnlocked)} />
+          <>
+            <div className="workstream-group">
+              <div className="ws-header">
+                <AdminSectionIcon />
+                <h2>Admin — Submission Status</h2>
+              </div>
+              <div className="admin-list">
+                {firms.map((f) => {
+                  const w = scorersFor(f.firm, 'Written');
+                  const iv = scorersFor(f.firm, 'Interview');
+                  return (
+                    <div className="admin-row" key={f.firm}>
+                      <div className="admin-row-top">
+                        <span className="admin-firm-name">{f.firm}</span>
+                        <div className="admin-toggles">
+                          <LockToggle unlocked={f.writtenUnlocked} label={RFP_PHASES.Written.shortLabel} onClick={() => toggleFirmLock(f.firm, 'Written', !f.writtenUnlocked)} />
+                          <LockToggle unlocked={f.interviewUnlocked} label={RFP_PHASES.Interview.shortLabel} onClick={() => toggleFirmLock(f.firm, 'Interview', !f.interviewUnlocked)} />
+                        </div>
                       </div>
-                    </div>
-                    <span className="admin-detail">
-                      {RFP_PHASES.Written.shortLabel}: {w.length} submitted{w.length ? <> ({renderScorers(w)})</> : ''}
-                    </span>
-                    {f.interviewUnlocked ? (
                       <span className="admin-detail">
-                        {RFP_PHASES.Interview.shortLabel}: {iv.length} submitted{iv.length ? <> ({renderScorers(iv)})</> : ''}
+                        {RFP_PHASES.Written.shortLabel}: {w.length} submitted{w.length ? <> ({renderScorers(w)})</> : ''}
                       </span>
-                    ) : null}
-                  </div>
-                );
-              })}
+                      {f.interviewUnlocked ? (
+                        <span className="admin-detail">
+                          {RFP_PHASES.Interview.shortLabel}: {iv.length} submitted{iv.length ? <> ({renderScorers(iv)})</> : ''}
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="admin-actions">
+                <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
+                  onClick={() => toggleAllLock('Written', !allWrittenUnlocked)}>
+                  {allWrittenUnlocked ? <LockIcon /> : <UnlockIcon />}
+                  {(allWrittenUnlocked ? 'Lock All — ' : 'Unlock All — ') + RFP_PHASES.Written.shortLabel}
+                </button>
+                <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
+                  onClick={() => toggleAllLock('Interview', !allInterviewUnlocked)}>
+                  {allInterviewUnlocked ? <LockIcon /> : <UnlockIcon />}
+                  {(allInterviewUnlocked ? 'Lock All — ' : 'Unlock All — ') + RFP_PHASES.Interview.shortLabel}
+                </button>
+              </div>
             </div>
-            <div className="admin-actions">
-              <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
-                onClick={() => toggleAllLock('Written', !allWrittenUnlocked)}>
-                {allWrittenUnlocked ? <LockIcon /> : <UnlockIcon />}
-                {(allWrittenUnlocked ? 'Lock All — ' : 'Unlock All — ') + RFP_PHASES.Written.shortLabel}
-              </button>
-              <button type="button" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
-                onClick={() => toggleAllLock('Interview', !allInterviewUnlocked)}>
-                {allInterviewUnlocked ? <LockIcon /> : <UnlockIcon />}
-                {(allInterviewUnlocked ? 'Lock All — ' : 'Unlock All — ') + RFP_PHASES.Interview.shortLabel}
-              </button>
-            </div>
-          </div>
+
+            <ScoringSummary firms={firms} allScores={allScores} />
+          </>
         ) : null}
       </main>
 
