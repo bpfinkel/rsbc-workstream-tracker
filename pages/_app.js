@@ -4,6 +4,7 @@ import '../styles/meetingLocation.css';
 import '../styles/rfpScoring.css';
 import '../styles/desktopNav.css';
 import '../styles/home.css';
+import '../styles/keyDocuments.css';
 import Footer from '../components/Footer';
 
 export default function App({ Component, pageProps }) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
 import { driveEmbedUrl } from '../lib/driveEmbed';
@@ -14,6 +14,26 @@ function FolderIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.2h8a1 1 0 0 1 1 1v9.3a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5z" /></svg>
   );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+  );
+}
+
+function ClearIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+  );
+}
+
+// Every word typed must appear somewhere in the title or category, in any
+// order, so "enrollment oct" finds "RivSch Enrollment History ... Oct 25.pdf".
+function matchesSearch(doc, terms) {
+  if (!terms.length) return true;
+  const haystack = `${doc.title} ${doc.category || 'Uncategorized'}`.toLowerCase();
+  return terms.every((t) => haystack.includes(t));
 }
 
 function ChevronIcon({ open, className }) {
@@ -33,6 +53,10 @@ export default function KeyDocuments() {
   // Sections default open (this is a browsing page, unlike the Admin review
   // queue) — a category only collapses once the member explicitly closes it.
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
+  const [query, setQuery] = useState('');
+  const searchRef = useRef(null);
+  const terms = useMemo(() => query.trim().toLowerCase().split(/\s+/).filter(Boolean), [query]);
+  const searching = terms.length > 0;
 
   useEffect(() => {
     fetch('/api/key-documents')
@@ -48,7 +72,7 @@ export default function KeyDocuments() {
 
   const groups = useMemo(() => {
     const g = {};
-    documents.forEach((d) => {
+    documents.filter((d) => matchesSearch(d, terms)).forEach((d) => {
       const c = d.category || 'Uncategorized';
       (g[c] = g[c] || []).push(d);
     });
@@ -56,7 +80,21 @@ export default function KeyDocuments() {
     return Object.keys(g)
       .sort((a, b) => (a === 'Uncategorized' ? 1 : b === 'Uncategorized' ? -1 : a.localeCompare(b)))
       .map((c) => ({ category: c, docs: g[c] }));
-  }, [documents]);
+  }, [documents, terms]);
+
+  const matchCount = groups.reduce((n, g) => n + g.docs.length, 0);
+
+  // Starting a search re-opens any collapsed sections so a match is never
+  // hidden behind a closed header; the toggles keep working while searching.
+  function updateQuery(value) {
+    if (!query.trim() && value.trim()) setCollapsedCategories(new Set());
+    setQuery(value);
+  }
+
+  function clearSearch() {
+    updateQuery('');
+    searchRef.current?.focus();
+  }
 
   function toggleCategory(category) {
     setCollapsedCategories((prev) => {
@@ -80,10 +118,48 @@ export default function KeyDocuments() {
       <main>
         {error ? (
           <div className="empty">Error: {error}</div>
-        ) : !loaded ? null : groups.length === 0 ? (
+        ) : !loaded ? null : documents.length === 0 ? (
           <div className="empty">No key documents yet.</div>
         ) : (
-          groups.map((g) => {
+          <>
+          <div className="doc-search" role="search">
+            <div className="doc-search-box">
+              <SearchIcon />
+              <input
+                ref={searchRef}
+                type="search"
+                aria-label="Search documents"
+                placeholder="Search by file name or category"
+                value={query}
+                onChange={(e) => updateQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape' && query) {
+                    e.preventDefault();
+                    updateQuery('');
+                  }
+                }}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              {query ? (
+                <button type="button" className="doc-search-clear" aria-label="Clear search" onClick={clearSearch}>
+                  <ClearIcon />
+                </button>
+              ) : null}
+            </div>
+            <p className={'doc-search-status' + (searching && !matchCount ? ' visually-hidden' : '')} aria-live="polite">
+              {!searching ? '' : matchCount
+                ? `${matchCount} of ${documents.length} document${documents.length === 1 ? '' : 's'} match`
+                : 'No documents match your search'}
+            </p>
+          </div>
+          {groups.length === 0 ? (
+            <div className="doc-search-empty">
+              <p className="doc-search-empty-title">No documents match &ldquo;{query.trim()}&rdquo;</p>
+              <p className="doc-search-empty-hint">Try a shorter or different word, or browse every category.</p>
+              <button type="button" className="btn-secondary" onClick={clearSearch}>Clear search</button>
+            </div>
+          ) : groups.map((g) => {
             const open = !collapsedCategories.has(g.category);
             return (
               <div className="workstream-group" key={g.category}>
@@ -105,7 +181,8 @@ export default function KeyDocuments() {
                 ) : null}
               </div>
             );
-          })
+          })}
+          </>
         )}
       </main>
 
