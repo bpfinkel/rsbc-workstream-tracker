@@ -49,12 +49,29 @@ export default function Login() {
         <form className="modal" style={{ maxWidth: 360, width: '100%' }} onSubmit={handleSubmit}>
           <h3>Sign In</h3>
           <div className="field">
-            <label>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
+            <label htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
           </div>
           <div className="field">
-            <label>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <label htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
           {error ? <div className="form-error">{error}</div> : null}
           <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>

@@ -70,12 +70,17 @@ export default function Roster() {
               </div>
               <div className="roster-list">
                 {g.members.map((m) => (
-                  <div className="roster-row" key={m.name} onClick={() => setSelected(m)}>
-                    <span className="roster-avatar">{initials(m.name)}</span>
+                  <button
+                    type="button"
+                    className="roster-row"
+                    key={m.name}
+                    onClick={() => setSelected(m)}
+                  >
+                    <span className="roster-avatar" aria-hidden="true">{initials(m.name)}</span>
                     <span className="roster-name">{m.name}</span>
                     <span className="roster-role">{m.role}</span>
-                    <svg className="roster-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-                  </div>
+                    <svg className="roster-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                  </button>
                 ))}
               </div>
             </div>
