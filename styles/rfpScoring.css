@@ -44,6 +44,43 @@
   font-size: 10.5px; line-height: 1.5; color: var(--muted); font-style: italic;
 }
 
+/* RFP Scoring — the signed-in member's own progress (one row per open phase)
+   and the per-firm scored / needs-score markers on each card. */
+.score-progress {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow-sm); padding: 14px 16px; margin-bottom: 12px;
+}
+.score-progress-row + .score-progress-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.score-progress-top {
+  display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap;
+  gap: 4px 12px; margin-bottom: 8px;
+}
+.score-progress-text { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--navy); }
+.score-progress-row.complete .score-progress-text { color: var(--accent); }
+.score-progress-phase { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.score-progress-track {
+  display: block; position: relative; height: 8px; overflow: hidden;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 999px;
+}
+.score-progress-fill { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s ease; }
+.firm-card-head { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 12px; }
+.firm-card-head .firm-name { margin: 0; }
+.firm-card-done { border-left: 4px solid var(--accent); }
+.firm-card-todo { border-left: 4px solid var(--amber); }
+.firm-score-badge {
+  display: inline-flex; align-items: center; gap: 4px; flex: none; white-space: nowrap;
+  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+}
+.firm-score-badge.done { background: #dcefe1; color: var(--accent); }
+.firm-score-badge.todo { background: #faf0dc; color: var(--amber); }
+@media (prefers-reduced-motion: reduce) {
+  .score-progress-fill { transition: none; }
+}
+@media (max-width: 640px) {
+  .score-progress { padding: 12px 14px; }
+  .score-progress-text { font-size: 13.5px; }
+}
+
 /* RFP Scoring — Admin "quick glance" summary (median/average/range per firm,
    ranked by median), shown at the bottom of /scoring for admins only. Mirrors
    the committee's own scoring-review deck: a low-high range bar per firm with
