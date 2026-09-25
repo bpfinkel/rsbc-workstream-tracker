@@ -457,7 +457,12 @@ export default function TasksPage() {
                     return (
                       <div className="row-compact" key={t.id} onClick={() => openEditModal(t)}>
                         <span className="row-title">{t.title}</span>
-                        <span className={'row-date ' + deadlineClass}>{t.deadline ? formatDate(t.deadline) : 'No deadline'}</span>
+                        <span
+                          className={'row-date ' + (t.deadline ? deadlineClass : 'none')}
+                          title={t.deadline ? undefined : 'No deadline has been set for this task — it is tracked as ongoing.'}
+                        >
+                          {t.deadline ? formatDate(t.deadline) : 'Ongoing (no deadline)'}
+                        </span>
                       </div>
                     );
                   })}
@@ -467,7 +472,7 @@ export default function TasksPage() {
                   {groups[w].map((t) => {
                     const du = daysUntil(t.deadline);
                     let deadlineClass = 'none';
-                    let deadlineLabel = 'No deadline set';
+                    let deadlineLabel = 'Ongoing — no deadline set';
                     if (t.deadline) {
                       if (t.status !== 'Completed' && du < 0) {
                         deadlineClass = 'overdue';
@@ -494,7 +499,12 @@ export default function TasksPage() {
                           {t.assignees.map((a) => <span className="chip-avatar" key={a}><span className="avatar">{initials(a)}</span>{a}</span>)}
                         </div>
                         <div className="card-bottom">
-                          <div className={'deadline ' + deadlineClass}><DeadlineIcon variant={deadlineClass} />{deadlineLabel}</div>
+                          <div
+                            className={'deadline ' + deadlineClass}
+                            title={t.deadline ? undefined : 'No deadline has been set for this task — it is tracked as ongoing.'}
+                          >
+                            <DeadlineIcon variant={deadlineClass} />{deadlineLabel}
+                          </div>
                           {t.status !== 'Completed' && (
                             <button
                               type="button"
