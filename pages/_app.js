@@ -4,7 +4,13 @@ import '../styles/meetingLocation.css';
 import '../styles/rfpScoring.css';
 import '../styles/desktopNav.css';
 import '../styles/home.css';
+import Footer from '../components/Footer';
 
 export default function App({ Component, pageProps }) {
-  return <Component {...pageProps} />;
+  return (
+    <>
+      <Component {...pageProps} />
+      <Footer />
+    </>
+  );
 }
