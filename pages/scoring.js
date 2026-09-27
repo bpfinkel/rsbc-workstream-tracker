@@ -286,6 +286,133 @@ function ScoringProgress({ firms, myScores }) {
   );
 }
 
+// A single filled bar scaled to `max` — the member's own score, so there is no
+// range to show, just how much of the available points they gave.
+function ScoreBar({ value, max }) {
+  const pct = max ? Math.min(100, (value / max) * 100) : 0;
+  return (
+    <span className="myscore-track">
+      <span className="myscore-fill" style={{ width: `${pct}%` }} />
+    </span>
+  );
+}
+
+// The signed-in member's own submitted scores for every firm, one block per
+// phase, ranked by their total (highest first) so they can see how they've
+// ordered the firms without reopening each score. Each row expands into the
+// per-category breakdown and their notes; "Expand all" opens every row at once.
+// Only the member's own rows are used (myScores), never anyone else's.
+function MyScoresSummary({ firms, myScores, onEdit }) {
+  const [expanded, setExpanded] = useState({});
+
+  const blocks = RFP_PHASE_ORDER.map((phase) => {
+    const max = phaseTotal(phase);
+    const criteria = RFP_PHASES[phase].criteria;
+    const rows = myScores
+      .filter((s) => s.phase === phase)
+      .map((s) => {
+        const firm = firms.find((f) => f.firm === s.firm);
+        return {
+          firm: s.firm,
+          total: totalFor(s.scores, criteria),
+          scores: s.scores,
+          notes: s.notes,
+          editable: !!(firm && firm[PHASE_UNLOCK_FLAG[phase]])
+        };
+      })
+      .sort((a, b) => b.total - a.total || a.firm.localeCompare(b.firm));
+    return { phase, max, criteria, rows };
+  }).filter((b) => b.rows.length > 0);
+
+  if (!blocks.length) return null;
+
+  const allKeys = blocks.flatMap((b) => b.rows.map((r) => `${b.phase}::${r.firm}`));
+  const allOpen = allKeys.every((k) => expanded[k]);
+
+  function toggleExpanded(key) {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function toggleAll() {
+    const next = {};
+    if (!allOpen) allKeys.forEach((k) => { next[k] = true; });
+    setExpanded(next);
+  }
+
+  return (
+    <CollapsibleSection icon={<SummaryIcon />} title="My Scores" count={myScores.length}>
+      <div className="myscores-bar">
+        <p className="summary-legend">
+          Your submitted scores, ranked by your total. Click a firm to see your score in each category.
+        </p>
+        <button type="button" className="guidance-toggle" onClick={toggleAll} aria-expanded={allOpen}>
+          {allOpen ? 'Collapse all' : 'Expand all'}
+        </button>
+      </div>
+      {blocks.map(({ phase, max, criteria, rows }) => (
+        <div className="summary-block" key={phase}>
+          <p className="summary-block-title">
+            {RFP_PHASES[phase].label} <span className="summary-block-sub">(out of {max})</span>
+          </p>
+          <div className="summary-table">
+            {rows.map((r) => {
+              const key = `${phase}::${r.firm}`;
+              const isOpen = !!expanded[key];
+              return (
+                <div className="summary-item" key={r.firm}>
+                  <div
+                    className={'myscore-row summary-row-clickable' + (isOpen ? ' open' : '')}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isOpen}
+                    onClick={() => toggleExpanded(key)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleExpanded(key);
+                      }
+                    }}
+                  >
+                    <span className="summary-col-firm">
+                      <ChevronIcon open={isOpen} className="summary-row-chevron" />
+                      {r.firm}
+                    </span>
+                    <ScoreBar value={r.total} max={max} />
+                    <span className="myscore-total">{r.total}<span className="myscore-max"> / {max}</span></span>
+                  </div>
+                  {isOpen ? (
+                    <div className="summary-detail">
+                      {criteria.map((c, i) => {
+                        const v = r.scores[i];
+                        const blank = v === null || v === undefined;
+                        return (
+                          <div className="myscore-row myscore-row-detail" key={c.key}>
+                            <span className="summary-col-firm summary-detail-label">{c.label}</span>
+                            <ScoreBar value={blank ? 0 : v} max={c.max} />
+                            <span className="myscore-total">{blank ? '–' : v}<span className="myscore-max"> / {c.max}</span></span>
+                          </div>
+                        );
+                      })}
+                      {r.notes || r.editable ? (
+                        <div className="myscore-foot">
+                          {r.notes ? <p className="myscore-notes"><strong>Your notes:</strong> {r.notes}</p> : <span />}
+                          {r.editable ? (
+                            <button type="button" className="btn-secondary" onClick={() => onEdit(r.firm, phase)}>Edit</button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </CollapsibleSection>
+  );
+}
+
 function LockToggle({ unlocked, label, onClick }) {
   return (
     <button type="button" className={'lock-toggle ' + (unlocked ? 'unlocked' : 'locked')} onClick={onClick}
@@ -629,6 +756,10 @@ export default function Scoring() {
             </>
           )}
         </CollapsibleSection>
+
+        {loaded ? (
+          <MyScoresSummary firms={firms} myScores={myScores} onEdit={(firm, phase) => setEditing({ firm, phase })} />
+        ) : null}
 
         {isAdmin ? (
           <>
