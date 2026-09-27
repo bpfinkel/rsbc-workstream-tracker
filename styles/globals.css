@@ -428,6 +428,14 @@ main { padding: 4px 28px 60px 28px; }
 .contact-value a { color: var(--navy); text-decoration: none; }
 .contact-value a:hover { text-decoration: underline; }
 .empty { color: var(--muted); font-size: 14px; padding: 30px 0; text-align: center; }
+.activity-note { font-size: 13px; color: var(--slate); margin: 0 0 10px; line-height: 1.45; }
+.activity-row { cursor: default; align-items: flex-start; }
+.activity-row:hover { background: none; }
+.activity-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.activity-detail { font-size: 12px; color: var(--slate); }
+.activity-signin { color: var(--muted); }
+.activity-days { flex: none; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; background: #dcefe1; color: var(--accent); white-space: nowrap; }
+.activity-days.none { background: #eceef2; color: var(--muted); }
 .overlay {
   display: none;
   position: fixed; inset: 0;

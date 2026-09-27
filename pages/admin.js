@@ -97,6 +97,33 @@ function RosterIcon() {
   );
 }
 
+function ActivityIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4" /></svg>
+  );
+}
+
+const PAGE_LABELS = {
+  '/': 'Home', '/tasks': 'Tasks', '/roster': 'Roster', '/meetings': 'Meetings', '/public-meetings': 'Public Meetings',
+  '/scoring': 'RFP Scoring', '/key-documents': 'Key Documents', '/my-account': 'My Account', '/admin': 'Admin'
+};
+
+function pageLabel(path) {
+  if (!path) return '';
+  return PAGE_LABELS[path] || path;
+}
+
+function formatRelative(iso) {
+  if (!iso) return '';
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'yesterday' : `${days} days ago`;
+}
+
 export default function Admin() {
   const [error, setError] = useState('');
 
@@ -126,8 +153,12 @@ export default function Admin() {
   const [memberError, setMemberError] = useState('');
   const [memberSaving, setMemberSaving] = useState(false);
 
+  const [activity, setActivity] = useState([]);
+  const [activityWindow, setActivityWindow] = useState(30);
+  const [activityLoaded, setActivityLoaded] = useState(false);
+
   const [sectionOpen, setSectionOpen] = useState({
-    tasksPending: false, tasksHistory: false, docsPending: false, docsHistory: false, roster: false
+    tasksPending: false, tasksHistory: false, docsPending: false, docsHistory: false, roster: false, activity: false
   });
 
   function toggleSection(key) {
@@ -158,8 +189,18 @@ export default function Admin() {
     setMembersLoaded(true);
   }
 
+  async function loadActivity() {
+    const res = await fetch('/api/activity');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not load member activity');
+    setActivity(data.members || []);
+    setActivityWindow(data.windowDays || 30);
+    setActivityLoaded(true);
+  }
+
   useEffect(() => {
     loadTasks().catch((e) => setError(e.message));
+    loadActivity().catch((e) => setError(e.message));
     loadDocuments().catch((e) => setError(e.message));
     loadMembers().catch((e) => setError(e.message));
   }, []);
@@ -562,6 +603,43 @@ export default function Admin() {
                   ) : null}
                 </div>
               </div>
+            )
+          ) : null}
+        </div>
+
+        <div className="workstream-group">
+          <button type="button" className="ws-header ws-header-btn" onClick={() => toggleSection('activity')}>
+            <ActivityIcon />
+            <h2>Member Activity</h2>
+            <ChevronIcon open={sectionOpen.activity} className="ws-header-chevron" />
+          </button>
+          {sectionOpen.activity ? (
+            !activityLoaded ? null : (
+              <>
+                <p className="activity-note">
+                  Last time each member loaded a page or data in the portal, and how many days they were active in the last {activityWindow}. Sign-in is shown for comparison; persistent logins keep it from updating often.
+                </p>
+                <div className="roster-list">
+                  {activity.map((m) => (
+                    <div className="roster-row activity-row" key={m.id}>
+                      <div className="activity-main">
+                        <span className="roster-name">{m.name}</span>
+                        <span className="activity-detail">
+                          {m.lastActive
+                            ? <>Active {formatRelative(m.lastActive)} · {formatDateTime(m.lastActive)}{m.lastPath ? ` · ${pageLabel(m.lastPath)}` : ''}</>
+                            : m.email ? 'No activity recorded' : 'No email on roster'}
+                        </span>
+                        <span className="activity-detail activity-signin">
+                          Last sign-in: {m.lastSignIn ? formatDateTime(m.lastSignIn) : 'never'}
+                        </span>
+                      </div>
+                      <span className={'activity-days' + (m.activeDays ? '' : ' none')}>
+                        {m.activeDays} {m.activeDays === 1 ? 'day' : 'days'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )
           ) : null}
         </div>
