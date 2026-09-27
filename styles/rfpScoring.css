@@ -81,6 +81,38 @@
   .score-progress-text { font-size: 13.5px; }
 }
 
+/* RFP Scoring — "My Scores": the signed-in member's own submitted scores,
+   ranked by their total, each row expanding into the per-category breakdown.
+   Shares the admin summary's table/detail shell (.summary-table, .summary-item,
+   .summary-detail) but uses its own 3-column grid: firm, bar, score. */
+.myscores-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.myscores-bar .summary-legend { margin: 0; }
+.myscores-bar .guidance-toggle { flex: none; }
+.myscore-row {
+  display: grid; grid-template-columns: minmax(110px, 1.2fr) minmax(80px, 2fr) 64px;
+  align-items: center; gap: 10px; padding: 10px 14px;
+}
+.myscore-row-detail { padding: 7px 14px 7px 32px; border-top: 1px dashed var(--border); }
+.myscore-row-detail .summary-col-firm { font-weight: 400; color: var(--slate); white-space: normal; }
+.myscore-track { display: block; position: relative; height: 8px; overflow: hidden; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; }
+.myscore-row-detail .myscore-track { background: var(--card); }
+.myscore-fill { display: block; height: 100%; background: var(--accent); }
+.myscore-total { font-size: 13px; font-weight: 700; color: var(--navy); text-align: right; white-space: nowrap; }
+.myscore-row-detail .myscore-total { font-size: 11.5px; font-weight: 600; color: var(--slate); }
+.myscore-max { font-weight: 400; color: var(--muted); font-size: 10.5px; }
+.myscore-foot {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 10px 14px 12px 32px; border-top: 1px dashed var(--border);
+}
+.myscore-notes { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--slate); white-space: pre-wrap; }
+.myscore-notes strong { color: var(--navy); font-weight: 600; }
+.myscore-foot .btn-secondary { flex: none; }
+@media (max-width: 640px) {
+  .myscore-row { grid-template-columns: minmax(96px, 1.3fr) minmax(50px, 1fr) 54px; gap: 8px; padding: 9px 10px; }
+  .myscore-row-detail { padding-left: 26px; }
+  .myscore-foot { padding-left: 26px; padding-right: 10px; }
+}
+
 /* RFP Scoring — Admin "quick glance" summary (median/average/range per firm,
    ranked by median), shown at the bottom of /scoring for admins only. Mirrors
    the committee's own scoring-review deck: a low-high range bar per firm with
