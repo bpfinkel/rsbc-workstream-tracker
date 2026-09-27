@@ -6,6 +6,8 @@ import { createClient } from '../lib/supabase/client';
 import { isAdmin } from '../lib/admin';
 import { UNKNOWN_LOCATION, normalizeLocation } from '../lib/meetingLocation';
 import { ZOOM_LINK, ZOOM_MEETING_ID, ZOOM_PASSCODE } from '../lib/zoom';
+import { RFP_PHASE_ORDER, RFP_SCORES_DUE } from '../lib/rfpCriteria';
+import ScoringProgress, { phaseProgress } from '../components/ScoringProgress';
 
 function ChevronRightIcon() {
   return (
@@ -70,6 +72,12 @@ function LocationIcon() {
 function VideoIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10.5l6-3.5v10l-6-3.5" /></svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
   );
 }
 
@@ -187,6 +195,50 @@ function NextMeetingPanel({ data }) {
   );
 }
 
+function RfpScoringPanel({ data }) {
+  if (!data) {
+    return (
+      <div className="home-panel">
+        <div className="home-panel-note">Loading your scoring progress&hellip;</div>
+      </div>
+    );
+  }
+
+  const { firms, myScores } = data;
+  const phases = RFP_PHASE_ORDER.map((p) => phaseProgress(firms, myScores, p)).filter((p) => p.total > 0);
+  const allDone = phases.length > 0 && phases.every((p) => p.done === p.total);
+  const showDue = RFP_SCORES_DUE && new Date() < new Date(RFP_SCORES_DUE.at);
+
+  return (
+    <div className="home-panel home-scoring">
+      <div className="home-panel-head">
+        <h2>Owner&rsquo;s Rep RFP</h2>
+        <Link href="/scoring" className="home-panel-link">Go to scoring</Link>
+      </div>
+      <div className="home-scoring-body">
+        {showDue ? (
+          <div className={'home-scoring-due' + (allDone ? ' done' : '')}>
+            <ClockIcon />
+            <span>Scores are due by <strong>{RFP_SCORES_DUE.label}</strong>.</span>
+          </div>
+        ) : null}
+        {phases.length ? (
+          <ScoringProgress firms={firms} myScores={myScores} />
+        ) : (
+          <div className="home-scoring-note">No firms are open for scoring right now.</div>
+        )}
+        {phases.length ? (
+          <div className="home-next-actions">
+            <Link href="/scoring" className={allDone ? 'btn-secondary' : 'btn-primary'}>
+              {allDone ? 'Review my scores' : 'Score the firms'}
+            </Link>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function MyTasksPanel({ tasks, myName, loaded }) {
   // Overdue first, then soonest deadline; anything without a deadline sits at
   // the bottom rather than sorting as if it were due in 1970.
@@ -247,6 +299,7 @@ export default function HomePage() {
   const [meetingData, setMeetingData] = useState(null);
   const [taskData, setTaskData] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [scoringData, setScoringData] = useState(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -257,12 +310,18 @@ export default function HomePage() {
     });
   }, []);
 
-  // Three independent loads: a panel that fails leaves the rest of the page
+  // Independent loads: a panel that fails leaves the rest of the page
   // intact rather than blanking the hub, which is still the page's main job.
   useEffect(() => {
     fetch('/api/meetings').then((r) => r.json()).then(setMeetingData).catch(() => setMeetingData({ meetings: [], nextIndex: -1 }));
     fetch('/api/tasks').then((r) => r.json()).then(setTaskData).catch(() => setTaskData({ tasks: [], members: [] }));
     fetch('/api/key-documents').then((r) => r.json()).then((d) => setDocuments(d.documents || [])).catch(() => setDocuments([]));
+    Promise.all([
+      fetch('/api/scoring/firms').then((r) => r.json()),
+      fetch('/api/scoring').then((r) => r.json())
+    ])
+      .then(([f, s]) => setScoringData({ firms: f.firms || [], myScores: s.scores || [] }))
+      .catch(() => setScoringData({ firms: [], myScores: [] }));
   }, []);
 
   const tasks = taskData?.tasks || [];
@@ -300,6 +359,10 @@ export default function HomePage() {
               <div className="home-main-block">
                 <div className="home-section-label">Meetings</div>
                 <NextMeetingPanel data={meetingData} />
+              </div>
+              <div className="home-main-block">
+                <div className="home-section-label">RFP Scoring</div>
+                <RfpScoringPanel data={scoringData} />
               </div>
               <div className="home-main-block">
                 <div className="home-section-label">Tasks</div>

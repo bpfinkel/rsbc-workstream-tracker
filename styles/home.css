@@ -99,3 +99,21 @@
 .home-doc-icon { width: 24px; height: 24px; border-radius: 6px; flex: none; display: flex; align-items: center; justify-content: center; }
 .home-doc-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-doc-cat { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+
+/* --- RFP scoring box ------------------------------------------------------
+   Sits between Meetings and Tasks. Reuses the /scoring page's own progress
+   tracker (components/ScoringProgress.js, styled in rfpScoring.css); inside
+   this panel it drops its own card chrome so it isn't a box within a box. */
+.home-scoring-body { padding: 14px 18px 16px; }
+.home-scoring-due {
+  display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; padding: 9px 12px;
+  background: #faf0dc; color: #7a5206; border-radius: 8px; font-size: 13px; line-height: 1.45;
+}
+.home-scoring-due svg { flex: none; margin-top: 2px; color: var(--amber); }
+.home-scoring-due strong { font-weight: 700; }
+.home-scoring-due.done { background: var(--bg); color: var(--slate); }
+.home-scoring-due.done svg { color: var(--muted); }
+.home-scoring .score-progress { background: none; border: 0; box-shadow: none; padding: 0; margin: 0; }
+.home-scoring .home-next-actions { margin-top: 14px; }
+.home-scoring .home-next-actions a { display: inline-flex; align-items: center; text-decoration: none; }
+.home-scoring-note { font-size: 13px; color: var(--muted); }
