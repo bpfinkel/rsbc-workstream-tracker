@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
 import { createClient } from '../lib/supabase/client';
-import { RFP_PHASES, RFP_PHASE_ORDER, RFP_RUBRIC_INTRO, RFP_RUBRIC_NOTE, phaseTotal } from '../lib/rfpCriteria';
+import { RFP_PHASES, RFP_PHASE_ORDER, RFP_RUBRIC_INTRO, RFP_RUBRIC_NOTE, phaseTotal, isFirmShown } from '../lib/rfpCriteria';
 import { isAdmin as checkIsAdmin } from '../lib/admin';
 import { useModalViewportLock } from '../lib/useViewportLock';
 import ScoringProgress, { CheckIcon, PHASE_UNLOCK_FLAG } from '../components/ScoringProgress';
@@ -503,8 +503,8 @@ export default function Scoring() {
       fetch('/api/scoring/firms').then((r) => r.json()),
       fetch('/api/scoring').then((r) => r.json())
     ]);
-    setFirms((firmsRes.firms || []).slice().sort((a, b) => a.firm.localeCompare(b.firm)));
-    setMyScores(myRes.scores || []);
+    setFirms((firmsRes.firms || []).filter((f) => isFirmShown(f.firm)).sort((a, b) => a.firm.localeCompare(b.firm)));
+    setMyScores((myRes.scores || []).filter((s) => isFirmShown(s.firm)));
 
     // Only the admin section names scorers, so the roster is fetched just for admins.
     if (admin) {
@@ -512,7 +512,7 @@ export default function Scoring() {
         fetch('/api/scoring?all=1').then((r) => r.json()),
         fetch('/api/members').then((r) => r.json())
       ]);
-      setAllScores(allRes.scores || []);
+      setAllScores((allRes.scores || []).filter((s) => isFirmShown(s.firm)));
       setScorerNames(buildScorerNames(membersRes.members));
     }
     setLoaded(true);
