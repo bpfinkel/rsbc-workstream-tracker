@@ -176,3 +176,48 @@
   .summary-row-detail { padding-left: 26px; }
   .summary-col-firm, .summary-col-num { font-size: 11px; }
 }
+
+/* Interviewer Sheet — the fill-in worksheet at the top of /scoring.
+   Draft-only (kept in the member's browser); official scores go through the
+   Score the Firms modal. Content lives in lib/interviewSheet.js. */
+.interview-sheet { padding: 18px 20px; }
+.interview-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--navy); }
+.interview-sub { margin: 3px 0 16px 0; font-size: 12px; color: var(--slate); }
+.interview-meta { display: grid; grid-template-columns: 2fr 2fr 1.2fr; gap: 12px; }
+.interview-pick { margin: 4px 0 0 0; font-size: 12.5px; color: var(--muted); font-style: italic; }
+.interview-q { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border); }
+.interview-q-text { margin: 0 0 10px 0; font-size: 12.5px; line-height: 1.55; color: var(--navy); }
+.interview-q-num { font-weight: 700; color: var(--accent); }
+.interview-scores-title {
+  margin: 20px 0 8px 0; padding-top: 14px; border-top: 1px solid var(--border);
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--slate);
+}
+.interview-table { border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.interview-row {
+  display: grid; grid-template-columns: 1.3fr 3fr 52px 76px; gap: 12px; align-items: center;
+  padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--slate);
+}
+.interview-row + .interview-row { border-top: 1px solid var(--border); }
+.interview-row-head {
+  background: var(--bg); font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  text-transform: uppercase; color: var(--slate);
+}
+.interview-row-total { background: var(--bg); font-weight: 700; color: var(--navy); }
+.interview-col-label { font-weight: 600; color: var(--navy); }
+.interview-col-num { text-align: center; }
+.interview-row input[type=number] {
+  width: 100%; padding: 7px 6px; border: 1px solid var(--border); border-radius: 7px;
+  font: inherit; font-size: 13px; text-align: center; color: var(--navy); background: #fbfcfd;
+}
+.interview-row input[type=number]:focus {
+  outline: none; border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.interview-total { color: var(--accent); font-size: 14px; }
+.interview-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.interview-saved { font-size: 10.5px; color: var(--muted); }
+@media (max-width: 640px) {
+  .interview-meta { grid-template-columns: 1fr; gap: 0; }
+  .interview-row { grid-template-columns: 1fr 44px 70px; gap: 8px; }
+  .interview-col-look { display: none; }
+  .interview-row-head .interview-col-look { display: none; }
+}

@@ -6,6 +6,7 @@ import { RFP_PHASES, RFP_PHASE_ORDER, RFP_RUBRIC_INTRO, RFP_RUBRIC_NOTE, phaseTo
 import { isAdmin as checkIsAdmin } from '../lib/admin';
 import { useModalViewportLock } from '../lib/useViewportLock';
 import ScoringProgress, { CheckIcon, PHASE_UNLOCK_FLAG } from '../components/ScoringProgress';
+import InterviewSheet from '../components/InterviewSheet';
 
 function embedUrl(pdfUrl) {
   return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
@@ -131,6 +132,12 @@ function SummaryIcon() {
   );
 }
 
+function SheetIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h8l4 4v14H7z" /><path d="M14 3v5h5M10 12h6M10 16h6" /></svg>
+  );
+}
+
 function LockIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -163,10 +170,11 @@ function ChevronIcon({ open, className }) {
 }
 
 // Generic collapsible top-level section: a clickable ws-header with a chevron
-// that shows/hides its children. Every workstream-group on this page uses it
-// (Scoring Criteria started this way; the others were made to match).
+// that shows/hides its children. Every workstream-group on this page uses it.
+// Sections start COLLAPSED; pass defaultOpen to open one (only the Interviewer
+// Sheet at the top does).
 function CollapsibleSection({ icon, title, count, defaultOpen, children }) {
-  const [open, setOpen] = useState(defaultOpen !== false);
+  const [open, setOpen] = useState(defaultOpen === true);
   return (
     <div className="workstream-group">
       <button type="button" className="ws-header ws-header-btn" onClick={() => setOpen(!open)}
@@ -207,7 +215,7 @@ function writeGuidancePref(on) {
 // standalone reference and not only from inside a scoring modal.
 function ScoringGuide() {
   return (
-    <CollapsibleSection icon={<GuideIcon />} title="Scoring Criteria" defaultOpen={false}>
+    <CollapsibleSection icon={<GuideIcon />} title="Scoring Criteria">
       <div className="card static-card guide-card">
         <p className="guide-intro">{RFP_RUBRIC_INTRO}</p>
         {RFP_PHASE_ORDER.map((phase) => (
@@ -637,6 +645,10 @@ export default function Scoring() {
 
       <main>
         {error ? <div className="empty">{error}</div> : null}
+
+        <CollapsibleSection icon={<SheetIcon />} title="Interviewer Sheet" defaultOpen>
+          <InterviewSheet />
+        </CollapsibleSection>
 
         <ScoringGuide />
 
