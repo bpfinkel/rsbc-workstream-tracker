@@ -7,7 +7,7 @@ import { RFP_PHASES, RFP_PHASE_ORDER, RFP_RUBRIC_INTRO, RFP_RUBRIC_NOTE, phaseTo
 import { isAdmin as checkIsAdmin } from '../lib/admin';
 import { useModalViewportLock } from '../lib/useViewportLock';
 import ScoringProgress, { CheckIcon, PHASE_UNLOCK_FLAG } from '../components/ScoringProgress';
-import InterviewSheet from '../components/InterviewSheet';
+import InterviewSheet, { InterviewNotesView, sheetHasContent } from '../components/InterviewSheet';
 
 function embedUrl(pdfUrl) {
   return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
@@ -492,6 +492,74 @@ function ScoringSummary({ firms, allScores }) {
   );
 }
 
+function NotesIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h14v12l-4 4H5z" /><path d="M15 20v-4h4M9 9h6M9 13h4" /></svg>
+  );
+}
+
+// Admin-only: every member's saved Interviewer Sheet notes, grouped by firm.
+// Members can read only their own (enforced by /api/interview-notes); this is
+// the one place anyone sees another member's notes.
+function AdminInterviewNotes({ firms, notes, nameFor }) {
+  const [expanded, setExpanded] = useState({});
+  const withContent = notes.filter((n) => sheetHasContent(n));
+  const firmNames = firms.map((f) => f.firm).filter((f) => withContent.some((n) => n.firm === f));
+
+  return (
+    <CollapsibleSection icon={<NotesIcon />} title="Admin — Interview Notes" count={withContent.length}>
+      {!firmNames.length ? (
+        <p className="summary-legend">No member has saved interview notes yet.</p>
+      ) : (
+        <>
+          <p className="summary-legend">Each member’s Interviewer Sheet, as last saved. Only admins can see other members’ notes. Click a name to read them.</p>
+          {firmNames.map((firm) => (
+            <div className="summary-block" key={firm}>
+              <p className="summary-block-title">{firm}</p>
+              <div className="summary-table">
+                {withContent
+                  .filter((n) => n.firm === firm)
+                  .sort((a, b) => nameFor(a.scorerEmail).localeCompare(nameFor(b.scorerEmail)))
+                  .map((n) => {
+                    const key = `${firm}::${n.scorerEmail}`;
+                    const isOpen = !!expanded[key];
+                    const answered = n.notes.filter((t) => String(t || '').trim()).length;
+                    return (
+                      <div className="summary-item" key={n.scorerEmail}>
+                        <div
+                          className={'iv-admin-row summary-row-clickable' + (isOpen ? ' open' : '')}
+                          role="button" tabIndex={0} aria-expanded={isOpen}
+                          onClick={() => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+                            }
+                          }}
+                        >
+                          <span className="summary-col-firm" title={n.scorerEmail}>
+                            <ChevronIcon open={isOpen} className="summary-row-chevron" />
+                            {nameFor(n.scorerEmail)}
+                          </span>
+                          <span className="iv-admin-meta">{answered} of 6 questions noted</span>
+                        </div>
+                        {isOpen ? (
+                          <div className="summary-detail">
+                            <InterviewNotesView sheet={n} />
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </CollapsibleSection>
+  );
+}
+
 export default function Scoring() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [firms, setFirms] = useState([]);
@@ -504,6 +572,12 @@ export default function Scoring() {
   const [pdfViewer, setPdfViewer] = useState(null);
   const [scorerNames, setScorerNames] = useState({});
   const [memberName, setMemberName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [rosterNames, setRosterNames] = useState({});
+  // The member's own Interviewer Sheets (reported live by the sheet), shown in
+  // the scoring modal; and, for admins, everyone's saved notes.
+  const [sheets, setSheets] = useState({});
+  const [adminNotes, setAdminNotes] = useState([]);
   const [openSection, setOpenSection] = useState('');
   const router = useRouter();
 
@@ -513,6 +587,7 @@ export default function Scoring() {
     const email = data?.user?.email || '';
     const admin = checkIsAdmin(email);
     setIsAdmin(admin);
+    setUserEmail(email);
 
     const [firmsRes, myRes, membersRes] = await Promise.all([
       fetch('/api/scoring/firms').then((r) => r.json()),
@@ -523,12 +598,19 @@ export default function Scoring() {
     ]);
     const me = (membersRes.members || []).find((m) => m.email && m.email.toLowerCase() === email.toLowerCase());
     setMemberName(me ? me.name : '');
+    const names = {};
+    (membersRes.members || []).forEach((m) => { if (m.email && m.name) names[m.email.toLowerCase()] = m.name; });
+    setRosterNames(names);
     setFirms((firmsRes.firms || []).filter((f) => isFirmShown(f.firm)).sort((a, b) => a.firm.localeCompare(b.firm)));
     setMyScores((myRes.scores || []).filter((s) => isFirmShown(s.firm)));
 
     // Only the admin sections show everyone's scores, so those are fetched just for admins.
     if (admin) {
-      const allRes = await fetch('/api/scoring?all=1').then((r) => r.json());
+      const [allRes, notesRes] = await Promise.all([
+        fetch('/api/scoring?all=1').then((r) => r.json()),
+        fetch('/api/interview-notes?all=1').then((r) => r.json()).catch(() => ({}))
+      ]);
+      setAdminNotes(notesRes.notes || []);
       setAllScores((allRes.scores || []).filter((s) => isFirmShown(s.firm)));
       setScorerNames(buildScorerNames(membersRes.members));
     }
@@ -670,6 +752,8 @@ export default function Scoring() {
 
         <CollapsibleSection icon={<SheetIcon />} title="Interviewer Sheet" defaultOpen>
           <InterviewSheet
+            email={userEmail}
+            onSheetsChange={setSheets}
             firms={firms}
             myScores={myScores}
             memberName={memberName}
@@ -789,6 +873,8 @@ export default function Scoring() {
             </CollapsibleSection>
 
             <ScoringSummary firms={firms} allScores={allScores} />
+
+            <AdminInterviewNotes firms={firms} notes={adminNotes} nameFor={(e) => rosterNames[String(e || '').toLowerCase()] || e} />
           </>
         ) : null}
       </main>
@@ -799,6 +885,7 @@ export default function Scoring() {
           phase={editing.phase}
           existing={myScoreFor(editing.firm, editing.phase)}
           prefill={editing.prefill}
+          interviewSheet={editing.phase === 'Interview' ? sheets[editing.firm] : null}
           onCancel={() => setEditing(null)}
           onSubmit={handleSubmit}
           onClear={handleClear}
@@ -825,7 +912,7 @@ export default function Scoring() {
   );
 }
 
-function ScoreModal({ firm, phase, existing, prefill, onCancel, onSubmit, onClear }) {
+function ScoreModal({ firm, phase, existing, prefill, interviewSheet, onCancel, onSubmit, onClear }) {
   const criteria = RFP_PHASES[phase].criteria;
   // `prefill` carries the Interviewer Sheet's scores; they win over any earlier
   // submission so "Update my submitted scores" shows the new numbers.
@@ -871,6 +958,15 @@ function ScoreModal({ firm, phase, existing, prefill, onCancel, onSubmit, onClea
         <h3>{firm} — {RFP_PHASES[phase].label}</h3>
         {prefill ? (
           <p className="modal-prefill-note">Filled in from your Interviewer Sheet. Adjust if needed, add any notes, then Submit.</p>
+        ) : null}
+        {sheetHasContent(interviewSheet) ? (
+          <details className="iv-recall" open>
+            <summary>Your Interviewer Sheet notes for {firm}</summary>
+            <InterviewNotesView
+              sheet={interviewSheet}
+              onUseScores={(sheetScores) => setScores((prev) => prev.map((v, i) => (i < sheetScores.length ? sheetScores[i] : v)))}
+            />
+          </details>
         ) : null}
         <div className="guidance-bar">
           <span className="guidance-bar-total">{maxTotal} points across {criteria.length} criteria</span>
