@@ -213,11 +213,23 @@
   outline: none; border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .interview-total { color: var(--accent); font-size: 14px; }
+.interview-send {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin-top: 14px; padding: 12px 14px; background: var(--accent-soft); border-radius: 9px;
+}
+.interview-send-note { font-size: 12px; line-height: 1.5; color: var(--slate); flex: 1 1 240px; }
+.interview-send .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.modal-prefill-note {
+  margin: 0 0 14px 0; padding: 8px 11px; font-size: 11.5px; line-height: 1.5; color: var(--slate);
+  background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0;
+}
 .interview-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
 .interview-saved { font-size: 10.5px; color: var(--muted); }
 @media (max-width: 640px) {
   .interview-meta { grid-template-columns: 1fr; gap: 0; }
-  .interview-row { grid-template-columns: 1fr 44px 70px; gap: 8px; }
-  .interview-col-look { display: none; }
-  .interview-row-head .interview-col-look { display: none; }
+  .interview-row { grid-template-columns: 1fr 44px 70px; gap: 4px 8px; }
+  /* Guidance drops below the criterion on phones rather than disappearing. */
+  .interview-row .interview-col-look { grid-column: 1 / -1; grid-row: 2; font-size: 11px; }
+  .interview-row-head .interview-col-look, .interview-row-total .interview-col-look { display: none; }
+  .interview-send .btn-primary { width: 100%; }
 }

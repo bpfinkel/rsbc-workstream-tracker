@@ -229,7 +229,7 @@ function RfpScoringPanel({ data }) {
         )}
         {phases.length ? (
           <div className="home-next-actions">
-            <Link href="/scoring" className={allDone ? 'btn-secondary' : 'btn-primary'}>
+            <Link href={allDone ? '/scoring#my-scores' : '/scoring#score-firms'} className={allDone ? 'btn-secondary' : 'btn-primary'}>
               {allDone ? 'Review my scores' : 'Score the firms'}
             </Link>
           </div>

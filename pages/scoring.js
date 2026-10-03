@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import Header from '../components/Header';
 import { createClient } from '../lib/supabase/client';
 import { RFP_PHASES, RFP_PHASE_ORDER, RFP_RUBRIC_INTRO, RFP_RUBRIC_NOTE, phaseTotal, isFirmShown } from '../lib/rfpCriteria';
@@ -173,10 +174,13 @@ function ChevronIcon({ open, className }) {
 // that shows/hides its children. Every workstream-group on this page uses it.
 // Sections start COLLAPSED; pass defaultOpen to open one (only the Interviewer
 // Sheet at the top does).
-function CollapsibleSection({ icon, title, count, defaultOpen, children }) {
+// `forceOpen` lets the page open a section after mount (the home page's
+// #score-firms / #my-scores deep links).
+function CollapsibleSection({ id, icon, title, count, defaultOpen, forceOpen, children }) {
   const [open, setOpen] = useState(defaultOpen === true);
+  useEffect(() => { if (forceOpen) setOpen(true); }, [forceOpen]);
   return (
-    <div className="workstream-group">
+    <div className="workstream-group" id={id}>
       <button type="button" className="ws-header ws-header-btn" onClick={() => setOpen(!open)}
         aria-expanded={open}>
         {icon}
@@ -256,7 +260,7 @@ function ScoreBar({ value, max }) {
 // ordered the firms without reopening each score. Each row expands into the
 // per-category breakdown and their notes; "Expand all" opens every row at once.
 // Only the member's own rows are used (myScores), never anyone else's.
-function MyScoresSummary({ firms, myScores, onEdit }) {
+function MyScoresSummary({ firms, myScores, onEdit, forceOpen }) {
   const [expanded, setExpanded] = useState({});
 
   const blocks = RFP_PHASE_ORDER.map((phase) => {
@@ -294,7 +298,7 @@ function MyScoresSummary({ firms, myScores, onEdit }) {
   }
 
   return (
-    <CollapsibleSection icon={<SummaryIcon />} title="My Scores" count={myScores.length}>
+    <CollapsibleSection id="my-scores" icon={<SummaryIcon />} title="My Scores" count={myScores.length} forceOpen={forceOpen}>
       <div className="myscores-bar">
         <p className="summary-legend">
           Your submitted scores, ranked by your total. Click a firm to see your score in each category.
@@ -499,6 +503,9 @@ export default function Scoring() {
   const [editing, setEditing] = useState(null);
   const [pdfViewer, setPdfViewer] = useState(null);
   const [scorerNames, setScorerNames] = useState({});
+  const [memberName, setMemberName] = useState('');
+  const [openSection, setOpenSection] = useState('');
+  const router = useRouter();
 
   async function load() {
     const supabase = createClient();
@@ -507,19 +514,21 @@ export default function Scoring() {
     const admin = checkIsAdmin(email);
     setIsAdmin(admin);
 
-    const [firmsRes, myRes] = await Promise.all([
+    const [firmsRes, myRes, membersRes] = await Promise.all([
       fetch('/api/scoring/firms').then((r) => r.json()),
-      fetch('/api/scoring').then((r) => r.json())
+      fetch('/api/scoring').then((r) => r.json()),
+      // Roster lookup supplies the Interviewer Sheet's default name; a failure
+      // here must never block scoring.
+      fetch('/api/members').then((r) => r.json()).catch(() => ({}))
     ]);
+    const me = (membersRes.members || []).find((m) => m.email && m.email.toLowerCase() === email.toLowerCase());
+    setMemberName(me ? me.name : '');
     setFirms((firmsRes.firms || []).filter((f) => isFirmShown(f.firm)).sort((a, b) => a.firm.localeCompare(b.firm)));
     setMyScores((myRes.scores || []).filter((s) => isFirmShown(s.firm)));
 
-    // Only the admin section names scorers, so the roster is fetched just for admins.
+    // Only the admin sections show everyone's scores, so those are fetched just for admins.
     if (admin) {
-      const [allRes, membersRes] = await Promise.all([
-        fetch('/api/scoring?all=1').then((r) => r.json()),
-        fetch('/api/members').then((r) => r.json())
-      ]);
+      const allRes = await fetch('/api/scoring?all=1').then((r) => r.json());
       setAllScores((allRes.scores || []).filter((s) => isFirmShown(s.firm)));
       setScorerNames(buildScorerNames(membersRes.members));
     }
@@ -529,6 +538,19 @@ export default function Scoring() {
   useEffect(() => {
     load().catch((e) => setError(e.message));
   }, []);
+
+  // The home page links to /scoring#score-firms ("Score the firms") and
+  // /scoring#my-scores ("Review my scores"). Those sections start collapsed, so
+  // open the one named in the hash. router.asPath carries the hash on client-side
+  // navigation, window.location on a full load. My Scores renders only after the
+  // data loads, hence the dependency on `loaded`.
+  useEffect(() => {
+    const hash = (window.location.hash || (router.asPath.split('#')[1] ? '#' + router.asPath.split('#')[1] : '')).slice(1);
+    if (hash !== 'score-firms' && hash !== 'my-scores') return;
+    setOpenSection(hash);
+    if (!loaded) return;
+    setTimeout(() => document.getElementById(hash)?.scrollIntoView({ block: 'start' }), 50);
+  }, [router.asPath, loaded]);
 
   useModalViewportLock(!!pdfViewer);
 
@@ -647,12 +669,17 @@ export default function Scoring() {
         {error ? <div className="empty">{error}</div> : null}
 
         <CollapsibleSection icon={<SheetIcon />} title="Interviewer Sheet" defaultOpen>
-          <InterviewSheet />
+          <InterviewSheet
+            firms={firms}
+            myScores={myScores}
+            memberName={memberName}
+            onUseScores={(firm, scores) => setEditing({ firm, phase: 'Interview', prefill: scores })}
+          />
         </CollapsibleSection>
 
         <ScoringGuide />
 
-        <CollapsibleSection icon={<ScoringIcon />} title={'Owner’s Rep RFP — Score the Firms'} count={firms.length}>
+        <CollapsibleSection id="score-firms" icon={<ScoringIcon />} title={'Owner’s Rep RFP — Score the Firms'} count={firms.length} forceOpen={openSection === 'score-firms'}>
           {!loaded ? null : (
             <>
             <ScoringProgress firms={firms} myScores={myScores} />
@@ -716,7 +743,7 @@ export default function Scoring() {
         </CollapsibleSection>
 
         {loaded ? (
-          <MyScoresSummary firms={firms} myScores={myScores} onEdit={(firm, phase) => setEditing({ firm, phase })} />
+          <MyScoresSummary firms={firms} myScores={myScores} onEdit={(firm, phase) => setEditing({ firm, phase })} forceOpen={openSection === 'my-scores'} />
         ) : null}
 
         {isAdmin ? (
@@ -771,6 +798,7 @@ export default function Scoring() {
           firm={editing.firm}
           phase={editing.phase}
           existing={myScoreFor(editing.firm, editing.phase)}
+          prefill={editing.prefill}
           onCancel={() => setEditing(null)}
           onSubmit={handleSubmit}
           onClear={handleClear}
@@ -797,11 +825,14 @@ export default function Scoring() {
   );
 }
 
-function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
+function ScoreModal({ firm, phase, existing, prefill, onCancel, onSubmit, onClear }) {
   const criteria = RFP_PHASES[phase].criteria;
+  // `prefill` carries the Interviewer Sheet's scores; they win over any earlier
+  // submission so "Update my submitted scores" shows the new numbers.
   const [scores, setScores] = useState(() => {
     const base = emptyScores();
     if (existing) existing.scores.forEach((v, i) => { base[i] = v; });
+    if (prefill) prefill.forEach((v, i) => { if (v !== null && v !== undefined) base[i] = v; });
     return base;
   });
   const [notes, setNotes] = useState(existing?.notes || '');
@@ -838,6 +869,9 @@ function ScoreModal({ firm, phase, existing, onCancel, onSubmit, onClear }) {
     <div className="overlay open" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
       <div className="modal">
         <h3>{firm} — {RFP_PHASES[phase].label}</h3>
+        {prefill ? (
+          <p className="modal-prefill-note">Filled in from your Interviewer Sheet. Adjust if needed, add any notes, then Submit.</p>
+        ) : null}
         <div className="guidance-bar">
           <span className="guidance-bar-total">{maxTotal} points across {criteria.length} criteria</span>
           <button type="button" className="guidance-toggle" onClick={toggleGuidance} aria-expanded={showGuidance}>
