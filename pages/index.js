@@ -8,6 +8,7 @@ import { UNKNOWN_LOCATION, normalizeLocation } from '../lib/meetingLocation';
 import { ZOOM_LINK, ZOOM_MEETING_ID, ZOOM_PASSCODE } from '../lib/zoom';
 import { RFP_PHASE_ORDER, RFP_SCORES_DUE } from '../lib/rfpCriteria';
 import ScoringProgress, { phaseProgress } from '../components/ScoringProgress';
+import { SHOW_RFP_SCORING } from '../lib/features';
 
 function ChevronRightIcon() {
   return (
@@ -95,7 +96,7 @@ const HUB_ITEMS = [
   { href: '/key-documents', title: 'Key Documents', tone: 'purple', Icon: DocumentsIcon },
   { href: '/scoring', title: 'RFP Scoring', tone: 'amber', Icon: ScoringIcon },
   { href: '/my-account', title: 'My Account', tone: 'slate', Icon: AccountIcon }
-];
+].filter((i) => i.href !== '/scoring' || SHOW_RFP_SCORING);
 
 // Same conventions as the Tasks page, so a deadline reads identically wherever
 // it appears: local midnight-to-midnight day counting, M/D/YYYY dates.
@@ -316,12 +317,14 @@ export default function HomePage() {
     fetch('/api/meetings').then((r) => r.json()).then(setMeetingData).catch(() => setMeetingData({ meetings: [], nextIndex: -1 }));
     fetch('/api/tasks').then((r) => r.json()).then(setTaskData).catch(() => setTaskData({ tasks: [], members: [] }));
     fetch('/api/key-documents').then((r) => r.json()).then((d) => setDocuments(d.documents || [])).catch(() => setDocuments([]));
-    Promise.all([
-      fetch('/api/scoring/firms').then((r) => r.json()),
-      fetch('/api/scoring').then((r) => r.json())
-    ])
-      .then(([f, s]) => setScoringData({ firms: f.firms || [], myScores: s.scores || [] }))
-      .catch(() => setScoringData({ firms: [], myScores: [] }));
+    if (SHOW_RFP_SCORING) {
+      Promise.all([
+        fetch('/api/scoring/firms').then((r) => r.json()),
+        fetch('/api/scoring').then((r) => r.json())
+      ])
+        .then(([f, s]) => setScoringData({ firms: f.firms || [], myScores: s.scores || [] }))
+        .catch(() => setScoringData({ firms: [], myScores: [] }));
+    }
   }, []);
 
   const tasks = taskData?.tasks || [];
@@ -360,10 +363,12 @@ export default function HomePage() {
                 <div className="home-section-label">Meetings</div>
                 <NextMeetingPanel data={meetingData} />
               </div>
-              <div className="home-main-block">
-                <div className="home-section-label">RFP Scoring</div>
-                <RfpScoringPanel data={scoringData} />
-              </div>
+              {SHOW_RFP_SCORING ? (
+                <div className="home-main-block">
+                  <div className="home-section-label">RFP Scoring</div>
+                  <RfpScoringPanel data={scoringData} />
+                </div>
+              ) : null}
               <div className="home-main-block">
                 <div className="home-section-label">Tasks</div>
                 <MyTasksPanel tasks={tasks} myName={myName} loaded={!!taskData} />

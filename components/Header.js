@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../lib/supabase/client';
 import { isAdmin } from '../lib/admin';
+import { SHOW_RFP_SCORING } from '../lib/features';
 
 function HomeIcon() {
   return (
@@ -57,7 +58,7 @@ function AdminIcon() {
   );
 }
 
-const NAV_ITEMS = [
+const ALL_NAV_ITEMS = [
   { key: 'home', href: '/', label: 'Home', Icon: HomeIcon },
   { key: 'tasks', href: '/tasks', label: 'Tasks', Icon: TasksIcon },
   { key: 'roster', href: '/roster', label: 'Roster', Icon: RosterIcon },
@@ -67,6 +68,9 @@ const NAV_ITEMS = [
   { key: 'scoring', href: '/scoring', label: 'RFP Scoring', Icon: ScoringIcon },
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
 ];
+
+// Menus list only the sections currently switched on (see lib/features.js).
+const NAV_ITEMS = ALL_NAV_ITEMS.filter((i) => i.key !== 'scoring' || SHOW_RFP_SCORING);
 
 const PAGE_NAME_STYLE = {
   fontSize: 'clamp(10px, 3.1vw, 13px)',
@@ -81,7 +85,8 @@ const PAGE_NAME_STYLE = {
 function pageLabel(active) {
   if (!active || active === 'home') return null;
   if (active === 'admin') return 'Admin';
-  const item = NAV_ITEMS.find((i) => i.key === active);
+  // ALL_NAV_ITEMS, so a hidden page reached by URL still shows its name.
+  const item = ALL_NAV_ITEMS.find((i) => i.key === active);
   return item ? item.label : null;
 }
 
