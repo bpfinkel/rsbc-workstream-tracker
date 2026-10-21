@@ -302,6 +302,15 @@ export default function HomePage() {
   const [taskData, setTaskData] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [scoringData, setScoringData] = useState(null);
+  // The greeting and date depend on the visitor's clock, so they're filled in
+  // only once the page is running in the browser. Rendered into the static
+  // page at build time they'd describe the moment of the deploy, and React
+  // would log a hydration mismatch whenever that differed from now.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     getCurrentEmail().then((email) => {
@@ -365,8 +374,8 @@ export default function HomePage() {
 
       <main className="hub">
         <div className="home-inner">
-          <h1 className="home-greet">{greetingFor(myName)}</h1>
-          <div className="home-date">{todayInET()}</div>
+          <h1 className="home-greet">{mounted ? greetingFor(myName) : '\u00a0'}</h1>
+          <div className="home-date">{mounted ? todayInET() : '\u00a0'}</div>
 
           <div className="home-cols">
             <div className="home-main">

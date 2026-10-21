@@ -119,7 +119,7 @@ export default function Header({ active }) {
   }, [menuOpen]);
 
   return (
-    <div className="site-header">
+    <div className={'site-header' + (SHOW_RFP_SCORING ? ' nav-wide' : '')}>
       <header>
         <div className="header-left">
           <Link href="/" aria-label="Home" style={{ display: 'flex', flex: 'none' }}>
@@ -135,8 +135,9 @@ export default function Header({ active }) {
           </div>
         </div>
         <div className="nav-menu-wrap" ref={menuRef}>
-          {/* Every destination inline above 1280px; the CSS hides this whole nav
-              below that and hands navigation back to the hamburger. */}
+          {/* Every destination inline on a wide enough window (see
+              styles/desktopNav.css); below that the CSS hides this whole nav
+              and hands navigation back to the hamburger. */}
           <nav className="desktop-nav" aria-label="Main">
             {NAV_ITEMS.map(({ key, href, label }) => (
               <Link key={key} href={href} className={'desktop-nav-link' + (active === key ? ' active' : '')}>
