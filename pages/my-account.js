@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
+import { forgetCurrentUser, getCurrentEmail } from '../lib/currentUser';
 import Header from '../components/Header';
 import { useModalViewportLock } from '../lib/useViewportLock';
 import { clearCache, loadWithCache } from '../lib/dataCache';
@@ -57,9 +58,8 @@ export default function Account() {
   useModalViewportLock(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.email) setEmail(data.user.email);
+    getCurrentEmail().then((email) => {
+      if (email) setEmail(email);
     });
   }, []);
 
@@ -83,6 +83,7 @@ export default function Account() {
     if (!window.confirm('Are you sure you want to sign out?')) return;
     const supabase = createClient();
     clearCache();
+    forgetCurrentUser();
     await supabase.auth.signOut();
     router.push('/login');
   }

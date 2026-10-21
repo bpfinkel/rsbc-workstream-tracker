@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '../lib/supabase/client';
+import { getCurrentEmail } from '../lib/currentUser';
 import { isAdmin } from '../lib/admin';
 import { SHOW_RFP_SCORING } from '../lib/features';
 
@@ -97,9 +97,8 @@ export default function Header({ active }) {
   const pageName = pageLabel(active);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (isAdmin(data?.user?.email)) setAdmin(true);
+    getCurrentEmail().then((email) => {
+      if (isAdmin(email)) setAdmin(true);
     });
   }, []);
 

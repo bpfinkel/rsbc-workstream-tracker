@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Header from '../components/Header';
-import { createClient } from '../lib/supabase/client';
+import { getCurrentEmail } from '../lib/currentUser';
 import { RFP_PHASES, RFP_PHASE_ORDER, RFP_RUBRIC_INTRO, RFP_RUBRIC_NOTE, phaseTotal, isFirmShown } from '../lib/rfpCriteria';
 import { isAdmin as checkIsAdmin } from '../lib/admin';
 import { useModalViewportLock } from '../lib/useViewportLock';
@@ -582,9 +582,7 @@ export default function Scoring() {
   const router = useRouter();
 
   async function load() {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    const email = data?.user?.email || '';
+    const email = (await getCurrentEmail()) || '';
     const admin = checkIsAdmin(email);
     setIsAdmin(admin);
     setUserEmail(email);

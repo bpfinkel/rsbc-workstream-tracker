@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
-import { createClient } from '../lib/supabase/client';
+import { getCurrentEmail } from '../lib/currentUser';
 import { loadJson, loadWithCache } from '../lib/dataCache';
 
 const EMPTY_FORM = {
@@ -131,8 +131,7 @@ export default function TasksPage() {
   }, []);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setMyEmail(data?.user?.email || null));
+    getCurrentEmail().then(setMyEmail);
   }, []);
 
   function setView(mode) {

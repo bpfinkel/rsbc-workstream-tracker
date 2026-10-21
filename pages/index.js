@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../components/Header';
-import { createClient } from '../lib/supabase/client';
+import { getCurrentEmail } from '../lib/currentUser';
 import { isAdmin } from '../lib/admin';
 import { UNKNOWN_LOCATION, normalizeLocation } from '../lib/meetingLocation';
 import { ZOOM_LINK, ZOOM_MEETING_ID, ZOOM_PASSCODE } from '../lib/zoom';
@@ -304,9 +304,7 @@ export default function HomePage() {
   const [scoringData, setScoringData] = useState(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      const email = data?.user?.email || null;
+    getCurrentEmail().then((email) => {
       setMyEmail(email);
       if (isAdmin(email)) setAdmin(true);
     });

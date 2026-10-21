@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { isAdmin } from './lib/admin';
+import { USER_EMAIL_HEADER, USER_ID_HEADER } from './lib/userHeaders';
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth/callback', '/rsbc-logo.jpg', '/api/favicon', '/api/apple-touch-icon'];
 const SERVICE_PATHS = ['/api/drafts/import'];
+// Images every page shows, the same for everyone. No session check needed, so
+// they skip the round trip to Supabase's auth server.
+const ASSET_PATHS = ['/rsbc-logo.jpg', '/api/favicon', '/api/apple-touch-icon'];
 
 // Activity tracking for the Admin page's "Member Activity" section. Supabase's
 // last_sign_in_at barely moves because sessions persist, so instead record a
@@ -20,6 +24,15 @@ function activityPath(request, isApiRoute) {
     if (referer.host === request.nextUrl.host) return referer.pathname;
   } catch (e) {}
   return request.nextUrl.pathname;
+}
+
+// Passes a request through unchecked, minus any user headers the browser
+// tried to supply: only the verified path below may set them.
+function passThrough(request) {
+  const headers = new Headers(request.headers);
+  headers.delete(USER_ID_HEADER);
+  headers.delete(USER_EMAIL_HEADER);
+  return NextResponse.next({ request: { headers } });
 }
 
 async function logActivity(user, path) {
@@ -43,11 +56,25 @@ export async function middleware(request, event) {
   // Server-to-server routes (e.g. the recurring Cowork task importing draft
   // tasks) authenticate with their own shared secret, not a browser session —
   // skip the Supabase cookie check entirely rather than trying to fake a user.
-  if (SERVICE_PATHS.includes(earlyPathname)) {
-    return NextResponse.next();
+  if (SERVICE_PATHS.includes(earlyPathname) || ASSET_PATHS.includes(earlyPathname)) {
+    return passThrough(request);
   }
 
-  let response = NextResponse.next({ request: { headers: request.headers } });
+  // Link prefetches: with middleware present, Next asks about every link on
+  // the page in the background (eight on Home alone), each one a Supabase
+  // auth call. Pages are static shells that hold no data (each fetches its
+  // own through the API, which stays checked), and the real navigation is
+  // checked as usual, so these are answered without the call. Both headers
+  // can be sent by anyone, so this never applies to an API route.
+  if (
+    !earlyPathname.startsWith('/api') &&
+    request.headers.get('x-middleware-prefetch') &&
+    request.headers.get('x-nextjs-data')
+  ) {
+    return passThrough(request);
+  }
+
+  let response = passThrough(request);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -59,7 +86,7 @@ export async function middleware(request, event) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request: { headers: request.headers } });
+          response = passThrough(request);
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         }
       }
@@ -99,6 +126,15 @@ export async function middleware(request, event) {
     url.pathname = '/';
     return NextResponse.redirect(url);
   }
+
+  // Forward the verified user to the route. request.headers is read only now,
+  // after getUser(), so it includes any session cookie refreshed above.
+  const forwardHeaders = new Headers(request.headers);
+  forwardHeaders.set(USER_ID_HEADER, user.id);
+  forwardHeaders.set(USER_EMAIL_HEADER, user.email || '');
+  const forwarded = NextResponse.next({ request: { headers: forwardHeaders } });
+  response.cookies.getAll().forEach((cookie) => forwarded.cookies.set(cookie));
+  response = forwarded;
 
   if (!isPublicPath && !request.cookies.get(ACTIVITY_COOKIE)) {
     event.waitUntil(logActivity(user, activityPath(request, isApiRoute)));
