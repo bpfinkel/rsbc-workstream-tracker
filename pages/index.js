@@ -9,6 +9,7 @@ import { ZOOM_LINK, ZOOM_MEETING_ID, ZOOM_PASSCODE } from '../lib/zoom';
 import { RFP_PHASE_ORDER, RFP_SCORES_DUE } from '../lib/rfpCriteria';
 import ScoringProgress, { phaseProgress } from '../components/ScoringProgress';
 import { SHOW_RFP_SCORING } from '../lib/features';
+import { loadWithCache, preload } from '../lib/dataCache';
 
 function ChevronRightIcon() {
   return (
@@ -313,10 +314,22 @@ export default function HomePage() {
 
   // Independent loads: a panel that fails leaves the rest of the page
   // intact rather than blanking the hub, which is still the page's main job.
+  // They go through lib/dataCache, so Tasks, Meetings and Key Documents open
+  // with this same data already in hand.
   useEffect(() => {
-    fetch('/api/meetings').then((r) => r.json()).then(setMeetingData).catch(() => setMeetingData({ meetings: [], nextIndex: -1 }));
-    fetch('/api/tasks').then((r) => r.json()).then(setTaskData).catch(() => setTaskData({ tasks: [], members: [] }));
-    fetch('/api/key-documents').then((r) => r.json()).then((d) => setDocuments(d.documents || [])).catch(() => setDocuments([]));
+    const loads = [
+      loadWithCache('/api/meetings', setMeetingData).catch(() => setMeetingData({ meetings: [], nextIndex: -1 })),
+      loadWithCache('/api/tasks', setTaskData).catch(() => setTaskData({ tasks: [], members: [] })),
+      loadWithCache('/api/key-documents', (d) => setDocuments(d.documents || [])).catch(() => setDocuments([]))
+    ];
+    // Once Home's own panels are in, warm the pages it doesn't show: the
+    // roster (Roster, My Account) and the public board calendar, the slowest
+    // route in the portal. Deferred so they never compete with Home's loads.
+    Promise.all(loads).then(() => {
+      const warm = () => preload(['/api/members', '/api/public-meetings']);
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(warm, { timeout: 2000 });
+      else setTimeout(warm, 500);
+    });
     if (SHOW_RFP_SCORING) {
       Promise.all([
         fetch('/api/scoring/firms').then((r) => r.json()),

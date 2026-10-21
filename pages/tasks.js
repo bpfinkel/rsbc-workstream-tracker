@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
 import { createClient } from '../lib/supabase/client';
+import { loadJson, loadWithCache } from '../lib/dataCache';
 
 const EMPTY_FORM = {
   id: '',
@@ -144,9 +145,7 @@ export default function TasksPage() {
     setTimeout(() => setToast(''), 2200);
   }
 
-  async function loadData() {
-    const res = await fetch('/api/tasks');
-    const data = await res.json();
+  function applyData(data) {
     setTasks(data.tasks || []);
     setMembers(data.members || []);
     setStatuses(data.statuses || []);
@@ -154,8 +153,13 @@ export default function TasksPage() {
     setLoaded(true);
   }
 
+  // After an edit on this page: skip the cache so the board shows the change.
+  async function loadData() {
+    applyData(await loadJson('/api/tasks', { force: true }));
+  }
+
   useEffect(() => {
-    loadData().catch((e) => showToast('Error: ' + e.message));
+    loadWithCache('/api/tasks', applyData).catch((e) => showToast('Error: ' + e.message));
   }, []);
 
   function openAddModal() {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
+import { loadWithCache } from '../lib/dataCache';
 
 const GROUP_ORDER = ['Officer', 'Voting Member', 'Ex-Officio Member', 'External'];
 const GROUP_LABEL = {
@@ -33,13 +34,10 @@ export default function Roster() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    fetch('/api/members')
-      .then((res) => res.json())
-      .then((data) => {
-        setMembers(data.members || []);
-        setLoaded(true);
-      })
-      .catch((e) => setError(e.message));
+    loadWithCache('/api/members', (data) => {
+      setMembers(data.members || []);
+      setLoaded(true);
+    }).catch((e) => setError(e.message));
   }, []);
 
   const groups = GROUP_ORDER

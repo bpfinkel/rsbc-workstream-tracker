@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Header from '../components/Header';
 import { BOARDS, BOARD_ORDER } from '../lib/publicBoards';
 import { useModalViewportLock } from '../lib/useViewportLock';
+import { loadWithCache } from '../lib/dataCache';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
@@ -114,26 +115,29 @@ export default function PublicMeetings() {
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/public-meetings')
-      .then((res) => res.json())
-      .then((d) => {
-        setData(d);
-        if (d.error) setError(d.error);
-        const today = d.todayET || new Date().toISOString().slice(0, 10);
-        // Boards break for weeks at a time, so the current month is often empty
-        // — opening on an empty grid reads like a broken page. Anchor on the
-        // current month when it has something in it, otherwise on the month of
-        // the next scheduled meeting.
-        const all = d.events || [];
-        const thisMonth = today.slice(0, 7);
-        const hasThisMonth = all.some((e) => e.primary && e.date.slice(0, 7) === thisMonth);
-        const nextUp = all.find((e) => e.primary && e.date >= today);
-        const anchor = hasThisMonth || !nextUp ? today : nextUp.date;
-        const [y, m] = anchor.split('-').map(Number);
-        setCursor({ year: y, month: m - 1 });
-        setLoaded(true);
-      })
-      .catch((e) => { setError(e.message); setLoaded(true); });
+    // The month is anchored on the first data only, so the background refresh
+    // after a cached render doesn't jump the calendar away from where the
+    // member has paged to.
+    let anchored = false;
+    loadWithCache('/api/public-meetings', (d) => {
+      setData(d);
+      setError(d.error || '');
+      if (anchored) return;
+      anchored = true;
+      const today = d.todayET || new Date().toISOString().slice(0, 10);
+      // Boards break for weeks at a time, so the current month is often empty
+      // — opening on an empty grid reads like a broken page. Anchor on the
+      // current month when it has something in it, otherwise on the month of
+      // the next scheduled meeting.
+      const all = d.events || [];
+      const thisMonth = today.slice(0, 7);
+      const hasThisMonth = all.some((e) => e.primary && e.date.slice(0, 7) === thisMonth);
+      const nextUp = all.find((e) => e.primary && e.date >= today);
+      const anchor = hasThisMonth || !nextUp ? today : nextUp.date;
+      const [y, m] = anchor.split('-').map(Number);
+      setCursor({ year: y, month: m - 1 });
+      setLoaded(true);
+    }).catch((e) => { setError(e.message); setLoaded(true); });
   }, []);
 
   useModalViewportLock(!!dayModal);

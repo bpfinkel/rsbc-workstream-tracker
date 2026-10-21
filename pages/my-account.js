@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
 import Header from '../components/Header';
 import { useModalViewportLock } from '../lib/useViewportLock';
+import { clearCache, loadWithCache } from '../lib/dataCache';
 
 function formatPhoneInput(raw) {
   const digits = raw.replace(/\D/g, '').slice(0, 10);
@@ -63,13 +64,10 @@ export default function Account() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/members')
-      .then((res) => res.json())
-      .then((data) => {
-        setMembers(data.members || []);
-        setMembersLoaded(true);
-      })
-      .catch(() => setMembersLoaded(true));
+    loadWithCache('/api/members', (data) => {
+      setMembers(data.members || []);
+      setMembersLoaded(true);
+    }).catch(() => setMembersLoaded(true));
   }, []);
 
   const myMember = members.find((m) => m.email && email && m.email.toLowerCase() === email.toLowerCase());
@@ -84,6 +82,7 @@ export default function Account() {
   async function handleSignOut() {
     if (!window.confirm('Are you sure you want to sign out?')) return;
     const supabase = createClient();
+    clearCache();
     await supabase.auth.signOut();
     router.push('/login');
   }

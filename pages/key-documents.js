@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Header from '../components/Header';
 import { driveEmbedUrl } from '../lib/driveEmbed';
 import { useModalViewportLock } from '../lib/useViewportLock';
+import { loadWithCache } from '../lib/dataCache';
 
 function ExternalLinkIcon({ className }) {
   return (
@@ -59,13 +60,10 @@ export default function KeyDocuments() {
   const searching = terms.length > 0;
 
   useEffect(() => {
-    fetch('/api/key-documents')
-      .then((res) => res.json())
-      .then((data) => {
-        setDocuments(data.documents || []);
-        setLoaded(true);
-      })
-      .catch((e) => setError(e.message));
+    loadWithCache('/api/key-documents', (data) => {
+      setDocuments(data.documents || []);
+      setLoaded(true);
+    }).catch((e) => setError(e.message));
   }, []);
 
   useModalViewportLock(!!pdfViewer);

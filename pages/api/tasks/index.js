@@ -1,4 +1,4 @@
-import { listTasks, addTask, STATUSES, listMembers } from '../../../lib/sheets';
+import { listTasks, addTask, STATUSES, listMembers } from '../../../lib/db';
 
 export default async function handler(req, res) {
   try {

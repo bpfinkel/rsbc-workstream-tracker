@@ -6,6 +6,7 @@ import { UNKNOWN_LOCATION, mapLinks, normalizeLocation } from '../lib/meetingLoc
 // Moved to lib/zoom.js when the home page's next-meeting panel started showing
 // the same details — one definition, two readers.
 import { ZOOM_LINK, ZOOM_DIAL_IN, ZOOM_MEETING_ID, ZOOM_PASSCODE } from '../lib/zoom';
+import { loadWithCache } from '../lib/dataCache';
 
 function formatFullDate(dateStr) {
   if (!dateStr) return '';
@@ -181,14 +182,11 @@ export default function Meetings() {
   const [expandedYears, setExpandedYears] = useState(null);
 
   useEffect(() => {
-    fetch('/api/meetings')
-      .then((res) => res.json())
-      .then((d) => {
-        setData(d);
-        if (d.error) setError('Live meeting schedule is temporarily unavailable — showing what we have.');
-        setLoaded(true);
-      })
-      .catch((e) => { setError(e.message); setLoaded(true); });
+    loadWithCache('/api/meetings', (d) => {
+      setData(d);
+      setError(d.error ? 'Live meeting schedule is temporarily unavailable — showing what we have.' : '');
+      setLoaded(true);
+    }).catch((e) => { setError(e.message); setLoaded(true); });
   }, []);
 
   useModalViewportLock(!!pdfViewer || !!mapTarget);

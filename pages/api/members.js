@@ -1,4 +1,4 @@
-import { listMembers, updateMember } from '../../lib/sheets';
+import { listMembers, updateMember } from '../../lib/db';
 import { getUserFromRequest } from '../../lib/supabase/server';
 import { isAdmin } from '../../lib/admin';
 
