@@ -5,9 +5,10 @@
 
    The breakpoint is where the links genuinely fit beside the committee's full
    name, the logo and the header's padding; below it something would have to
-   be truncated, so the hamburger takes over instead. Measured October 21, 2026:
-   - 1180px with RFP Scoring hidden: seven links plus Admin need about 1,170px.
-   - 1280px with RFP Scoring shown (one more link, about 95px wider). Header.js
+   be truncated, so the hamburger takes over instead. Measured October 28, 2026,
+   after Presentations and Invoices were added:
+   - 1350px with RFP Scoring hidden: nine links plus Admin need about 1,345px.
+   - 1450px with RFP Scoring shown (one more link, about 95px wider). Header.js
      marks that case with .nav-wide, so the breakpoint follows the
      SHOW_RFP_SCORING switch in lib/features.js without anyone editing this. */
 .desktop-nav { display: none; }
@@ -26,7 +27,7 @@
 .desktop-nav-div { width: 1px; height: 20px; background: rgba(255,255,255,0.18); margin: 0 6px; flex: none; }
 .desktop-nav-link.admin { font-style: italic; }
 
-@media (min-width: 1180px) {
+@media (min-width: 1350px) {
   .site-header:not(.nav-wide) header { gap: 20px; }
   .site-header:not(.nav-wide) .desktop-nav { display: flex; align-items: center; gap: 2px; }
   /* The hamburger and its menu are the phone's navigation; at this width the
@@ -35,7 +36,7 @@
   .site-header:not(.nav-wide) .nav-menu-wrap > .nav-menu { display: none; }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1450px) {
   header { gap: 20px; }
   .desktop-nav { display: flex; align-items: center; gap: 2px; }
   .nav-menu-wrap > .hamburger-btn,

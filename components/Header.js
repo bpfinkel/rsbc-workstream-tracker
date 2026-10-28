@@ -40,6 +40,18 @@ function DocumentsIcon() {
   );
 }
 
+function PresentationsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5" /><path d="M12 16v4M8.5 20h7" /><path d="M7.5 12l3-3 2.5 2.5 3.5-4" /></svg>
+  );
+}
+
+function InvoicesIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
+  );
+}
+
 function ScoringIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
@@ -65,6 +77,8 @@ const ALL_NAV_ITEMS = [
   { key: 'meetings', href: '/meetings', label: 'Meetings', Icon: MeetingsIcon },
   { key: 'public-meetings', href: '/public-meetings', label: 'Public Board Calendar', Icon: PublicCalendarIcon },
   { key: 'documents', href: '/key-documents', label: 'Key Documents', Icon: DocumentsIcon },
+  { key: 'presentations', href: '/presentations', label: 'Presentations', Icon: PresentationsIcon },
+  { key: 'invoices', href: '/invoices', label: 'Invoices', Icon: InvoicesIcon },
   { key: 'scoring', href: '/scoring', label: 'RFP Scoring', Icon: ScoringIcon },
   { key: 'account', href: '/my-account', label: 'My Account', Icon: AccountIcon }
 ];

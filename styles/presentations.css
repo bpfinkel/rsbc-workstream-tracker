@@ -1,0 +1,34 @@
+/* External Presentations — search, audience chips and the deck list. */
+.pres-page { max-width: 980px; margin: 0 auto; }
+.pres-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px 0; }
+.pres-chip {
+  background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+  padding: 5px 14px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--slate); cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.pres-chip:hover { border-color: var(--navy-light); }
+.pres-chip.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+.pres-list {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.pres-row { display: flex; align-items: center; gap: 12px; padding: 0 14px 0 0; }
+.pres-row + .pres-row { border-top: 1px solid var(--border); }
+.pres-main {
+  flex: 1; min-width: 0; display: grid; grid-template-columns: 150px 1fr auto; align-items: center; gap: 14px;
+  padding: 12px 14px; background: none; border: none; font: inherit; text-align: left; cursor: pointer; color: inherit;
+  transition: background .12s;
+}
+.pres-main:hover { background: var(--bg); }
+.pres-date { font-size: 12.5px; color: var(--slate); font-variant-numeric: tabular-nums; }
+.pres-title { font-size: 14px; font-weight: 600; color: var(--navy); }
+.pres-meta { font-size: 12px; color: var(--slate); white-space: nowrap; }
+.pres-download {
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none; flex: none;
+  font-size: 12.5px; padding: 6px 12px;
+}
+@media (max-width: 640px) {
+  .pres-row { flex-wrap: wrap; padding: 0 14px 12px 0; }
+  .pres-main { grid-template-columns: 1fr; gap: 3px; padding-bottom: 6px; }
+  .pres-download { margin-left: 14px; }
+}

@@ -1,0 +1,97 @@
+/* Invoices — dashboard tiles, review queue, contracts table, invoice list.
+   Built from the shared card/list/badge vocabulary in globals.css. */
+.inv-page { max-width: 1180px; margin: 0 auto; }
+
+.inv-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; }
+.inv-tile {
+  background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--navy-light);
+  border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow-sm);
+  text-align: left; font: inherit; color: inherit; min-width: 0;
+}
+.inv-tile.paid { border-left-color: var(--accent); }
+.inv-tile.accrue { border-left-color: var(--amber); }
+.inv-tile.balance { border-left-color: var(--blue); }
+.inv-tile.overdue { cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.inv-tile.overdue:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.inv-tile.overdue.has { border-left-color: var(--red); }
+.inv-tile.overdue.has .inv-tile-value { color: var(--red); }
+.inv-tile.overdue.active { box-shadow: 0 0 0 3px rgba(164,52,58,0.15); transform: none; }
+.inv-tile-label { font-size: 11.5px; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.4px; }
+.inv-tile-value { font-size: 24px; font-weight: 700; color: var(--navy); margin: 4px 0 2px 0; font-variant-numeric: tabular-nums; }
+.inv-tile-note { font-size: 12px; color: var(--slate); line-height: 1.45; }
+
+.inv-section { margin-top: 26px; }
+.inv-section .ws-header { margin-top: 0; }
+.inv-hint { font-size: 12.5px; color: var(--slate); margin: -4px 0 12px 0; line-height: 1.5; }
+.inv-section .inv-hint:last-child { margin: 10px 0 0 0; }
+.inv-link-btn {
+  margin-left: auto; background: none; border: none; padding: 2px 4px; cursor: pointer;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--blue);
+}
+.inv-link-btn:hover { text-decoration: underline; }
+
+.inv-review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+.inv-review { border-left-color: var(--amber); }
+.inv-review-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; color: var(--navy); }
+.inv-review .field { margin-bottom: 12px; }
+.inv-review-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+.inv-table-wrap {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow-sm); overflow-x: auto;
+}
+.inv-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.inv-table th {
+  text-align: left; font-size: 11px; font-weight: 700; color: var(--slate); text-transform: uppercase;
+  letter-spacing: 0.4px; padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.inv-table td { padding: 11px 14px; vertical-align: top; color: var(--navy); }
+.inv-table tbody tr + tr td { border-top: 1px solid var(--border); }
+.inv-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inv-vendor { font-weight: 600; }
+.inv-sub { font-size: 11.5px; color: var(--slate); font-weight: 400; margin-top: 2px; }
+.inv-sub-inline { color: var(--slate); font-weight: 400; }
+
+.inv-filters { margin: 0 0 12px 0; }
+.inv-filter-clear { margin-left: 4px; color: var(--red); }
+
+.inv-row { gap: 14px; }
+.inv-row-date { width: 96px; flex: none; font-size: 12.5px; color: var(--slate); font-variant-numeric: tabular-nums; }
+.inv-row-amount { width: 120px; flex: none; text-align: right; font-weight: 600; color: var(--navy); font-variant-numeric: tabular-nums; }
+.inv-status {
+  font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; flex: none;
+  background: #e6e9ec; color: var(--slate);
+}
+.inv-status.s-pending { background: #faf0dc; color: var(--amber); }
+.inv-status.s-approved { background: var(--blue-soft); color: var(--blue); }
+.inv-status.s-submitted { background: #e5e9f0; color: var(--navy-light); }
+.inv-status.s-paid { background: #dcefe1; color: var(--accent); }
+.inv-status.s-rejected { background: rgba(164,52,58,0.1); color: var(--red); }
+.inv-late {
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; flex: none;
+  background: rgba(164,52,58,0.1); color: var(--red); white-space: nowrap;
+}
+
+.modal.inv-detail { max-width: 620px; }
+.inv-detail-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: -6px 0 16px 0; }
+.inv-next { display: flex; align-items: flex-end; justify-content: flex-end; gap: 12px; padding: 12px 0 4px 0; border-top: 1px solid var(--border); }
+.inv-next .inv-paid-date { margin: 0; width: 170px; }
+.inv-dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px 14px; margin: 0; font-size: 14px; }
+.inv-dl dt { color: var(--slate); font-size: 12.5px; font-weight: 600; }
+.inv-dl dd { margin: 0; color: var(--navy); font-variant-numeric: tabular-nums; }
+.inv-history { margin-top: 14px; font-size: 12.5px; color: var(--slate); }
+.inv-history summary { cursor: pointer; font-weight: 600; }
+.inv-history ul { margin: 8px 0 0 0; padding-left: 18px; line-height: 1.6; }
+.inv-detail-actions { gap: 8px; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .inv-tiles { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .inv-tile-value { font-size: 20px; }
+  .inv-review-grid { grid-template-columns: 1fr; }
+  .inv-row { flex-wrap: wrap; gap: 6px 10px; }
+  .inv-row .roster-name { flex: 1 1 60%; }
+  .inv-row-date { width: auto; }
+  .inv-row-amount { width: auto; margin-left: auto; }
+}

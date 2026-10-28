@@ -47,6 +47,18 @@ function DocumentsIcon() {
   );
 }
 
+function PresentationsIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5" /><path d="M12 16v4M8.5 20h7" /><path d="M7.5 12l3-3 2.5 2.5 3.5-4" /></svg>
+  );
+}
+
+function InvoicesIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
+  );
+}
+
 function ScoringIcon() {
   return (
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></svg>
@@ -95,6 +107,8 @@ const HUB_ITEMS = [
   { href: '/meetings', title: 'Meetings', tone: 'navy', Icon: MeetingsIcon },
   { href: '/public-meetings', title: 'Public Board Calendar', tone: 'teal', Icon: PublicCalendarIcon },
   { href: '/key-documents', title: 'Key Documents', tone: 'purple', Icon: DocumentsIcon },
+  { href: '/presentations', title: 'Presentations', tone: 'indigo', Icon: PresentationsIcon },
+  { href: '/invoices', title: 'Invoices', tone: 'gold', Icon: InvoicesIcon },
   { href: '/scoring', title: 'RFP Scoring', tone: 'amber', Icon: ScoringIcon },
   { href: '/my-account', title: 'My Account', tone: 'slate', Icon: AccountIcon }
 ].filter((i) => i.href !== '/scoring' || SHOW_RFP_SCORING);
@@ -330,10 +344,11 @@ export default function HomePage() {
       loadWithCache('/api/key-documents', (d) => setDocuments(d.documents || [])).catch(() => setDocuments([]))
     ];
     // Once Home's own panels are in, warm the pages it doesn't show: the
-    // roster (Roster, My Account) and the public board calendar, the slowest
-    // route in the portal. Deferred so they never compete with Home's loads.
+    // roster (Roster, My Account), the public board calendar (the slowest
+    // route in the portal), presentations and invoices. Deferred so they
+    // never compete with Home's loads.
     Promise.all(loads).then(() => {
-      const warm = () => preload(['/api/members', '/api/public-meetings']);
+      const warm = () => preload(['/api/members', '/api/public-meetings', '/api/presentations', '/api/invoices']);
       if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(warm, { timeout: 2000 });
       else setTimeout(warm, 500);
     });
