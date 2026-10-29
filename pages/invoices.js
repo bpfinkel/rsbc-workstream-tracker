@@ -21,6 +21,15 @@ const OVERDUE_DAYS = 30;
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 const usdWhole = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
+function ChevronIcon({ open, className }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .15s', flexShrink: 0 }}>
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function money(n) {
   return n === null || n === undefined ? '—' : usd.format(n);
 }
@@ -132,6 +141,7 @@ export default function InvoicesPage() {
   const [detailForm, setDetailForm] = useState(null);
   const [paidDate, setPaidDate] = useState('');
   const [reviewForms, setReviewForms] = useState({});
+  const [pendingOpen, setPendingOpen] = useState(true);
   const [contractEdit, setContractEdit] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -316,10 +326,13 @@ export default function InvoicesPage() {
 
             {canEdit && pending.length ? (
               <section className="inv-section">
-                <div className="ws-header">
+                <button type="button" className="ws-header ws-header-btn" onClick={() => setPendingOpen((o) => !o)} aria-expanded={pendingOpen}>
                   <h2>Pending review</h2>
                   <span className="ws-count">{pending.length}</span>
-                </div>
+                  <ChevronIcon open={pendingOpen} className="ws-header-chevron" />
+                </button>
+                {pendingOpen ? (
+                <>
                 <p className="inv-hint">Read from the PDFs by the intake skill. Check the figures against the invoice, correct anything that&rsquo;s off, then accept it into the ledger.</p>
                 <div className="inv-review-grid">
                   {pending.map((inv) => (
@@ -342,6 +355,8 @@ export default function InvoicesPage() {
                     </div>
                   ))}
                 </div>
+                </>
+                ) : null}
               </section>
             ) : null}
 
