@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { getCurrentEmail } from '../lib/currentUser';
-import { isAdmin } from '../lib/admin';
+import { isAdmin, isLimited, limitedMayOpen } from '../lib/admin';
 import { SHOW_RFP_SCORING } from '../lib/features';
 
 function HomeIcon() {
@@ -106,6 +106,7 @@ function pageLabel(active) {
 
 export default function Header({ active }) {
   const [admin, setAdmin] = useState(false);
+  const [limited, setLimited] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const pageName = pageLabel(active);
@@ -113,8 +114,12 @@ export default function Header({ active }) {
   useEffect(() => {
     getCurrentEmail().then((email) => {
       if (isAdmin(email)) setAdmin(true);
+      if (isLimited(email)) setLimited(true);
     });
   }, []);
+
+  // Limited-access accounts see only the sections middleware lets them open.
+  const navItems = limited ? NAV_ITEMS.filter((i) => limitedMayOpen(i.href)) : NAV_ITEMS;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -153,7 +158,7 @@ export default function Header({ active }) {
               styles/desktopNav.css); below that the CSS hides this whole nav
               and hands navigation back to the hamburger. */}
           <nav className="desktop-nav" aria-label="Main">
-            {NAV_ITEMS.map(({ key, href, label }) => (
+            {navItems.map(({ key, href, label }) => (
               <Link key={key} href={href} className={'desktop-nav-link' + (active === key ? ' active' : '')}>
                 {label}
               </Link>
@@ -185,7 +190,7 @@ export default function Header({ active }) {
                 </button>
               </div>
               <div className="nav-menu-list">
-                {NAV_ITEMS.map(({ key, href, label, Icon }) => (
+                {navItems.map(({ key, href, label, Icon }) => (
                   <Link
                     key={key}
                     href={href}

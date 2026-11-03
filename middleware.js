@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { isAdmin } from './lib/admin';
+import { isAdmin, isLimited, limitedMayOpen } from './lib/admin';
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from './lib/userHeaders';
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth/callback', '/rsbc-logo.jpg', '/api/favicon', '/api/apple-touch-icon'];
@@ -119,6 +119,18 @@ export async function middleware(request, event) {
 
   const isAdminPath = pathname === '/admin' || pathname === '/drafts' || pathname.startsWith('/api/drafts') || pathname.startsWith('/api/documents');
   if (isAdminPath && !isAdmin(user.email)) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
+
+  // Limited-access accounts (e.g. the Owner's Representative) reach only the
+  // pages and API routes listed in lib/admin.js. Everything else is refused
+  // here, so a hidden page or endpoint stays closed even by direct URL.
+  if (isLimited(user.email) && !limitedMayOpen(pathname)) {
     if (isApiRoute) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

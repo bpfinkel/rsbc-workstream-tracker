@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../components/Header';
 import { getCurrentEmail } from '../lib/currentUser';
-import { isAdmin } from '../lib/admin';
+import { isAdmin, isLimited, limitedMayOpen } from '../lib/admin';
 import { UNKNOWN_LOCATION, normalizeLocation } from '../lib/meetingLocation';
 import { ZOOM_LINK, ZOOM_MEETING_ID, ZOOM_PASSCODE } from '../lib/zoom';
 import { RFP_PHASE_ORDER, RFP_SCORES_DUE } from '../lib/rfpCriteria';
@@ -311,6 +311,7 @@ function MyTasksPanel({ tasks, myName, loaded }) {
 
 export default function HomePage() {
   const [admin, setAdmin] = useState(false);
+  const [limited, setLimited] = useState(false);
   const [myEmail, setMyEmail] = useState(null);
   const [meetingData, setMeetingData] = useState(null);
   const [taskData, setTaskData] = useState(null);
@@ -326,21 +327,28 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
+  // Independent loads: a panel that fails leaves the rest of the page
+  // intact rather than blanking the hub, which is still the page's main job.
+  // They go through lib/dataCache, so Tasks, Meetings and Key Documents open
+  // with this same data already in hand. They wait for the email (read from
+  // the session cookie, no network call) so a limited-access account only
+  // asks for what it may see.
   useEffect(() => {
     getCurrentEmail().then((email) => {
       setMyEmail(email);
       if (isAdmin(email)) setAdmin(true);
+      const lim = isLimited(email);
+      setLimited(lim);
+      loadAll(lim);
     });
   }, []);
 
-  // Independent loads: a panel that fails leaves the rest of the page
-  // intact rather than blanking the hub, which is still the page's main job.
-  // They go through lib/dataCache, so Tasks, Meetings and Key Documents open
-  // with this same data already in hand.
-  useEffect(() => {
+  function loadAll(lim) {
     const loads = [
       loadWithCache('/api/meetings', setMeetingData).catch(() => setMeetingData({ meetings: [], nextIndex: -1 })),
-      loadWithCache('/api/tasks', setTaskData).catch(() => setTaskData({ tasks: [], members: [] })),
+      lim
+        ? Promise.resolve(setTaskData({ tasks: [], members: [] }))
+        : loadWithCache('/api/tasks', setTaskData).catch(() => setTaskData({ tasks: [], members: [] })),
       loadWithCache('/api/key-documents', (d) => setDocuments(d.documents || [])).catch(() => setDocuments([]))
     ];
     // Once Home's own panels are in, warm the pages it doesn't show: the
@@ -348,11 +356,12 @@ export default function HomePage() {
     // route in the portal), presentations and invoices. Deferred so they
     // never compete with Home's loads.
     Promise.all(loads).then(() => {
-      const warm = () => preload(['/api/members', '/api/public-meetings', '/api/presentations', '/api/invoices']);
+      const urls = ['/api/members', '/api/public-meetings', '/api/presentations', '/api/invoices'].filter((u) => !lim || limitedMayOpen(u));
+      const warm = () => preload(urls);
       if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(warm, { timeout: 2000 });
       else setTimeout(warm, 500);
     });
-    if (SHOW_RFP_SCORING) {
+    if (SHOW_RFP_SCORING && !lim) {
       Promise.all([
         fetch('/api/scoring/firms').then((r) => r.json()),
         fetch('/api/scoring').then((r) => r.json())
@@ -360,7 +369,7 @@ export default function HomePage() {
         .then(([f, s]) => setScoringData({ firms: f.firms || [], myScores: s.scores || [] }))
         .catch(() => setScoringData({ firms: [], myScores: [] }));
     }
-  }, []);
+  }
 
   const tasks = taskData?.tasks || [];
   const members = taskData?.members || [];
@@ -398,23 +407,25 @@ export default function HomePage() {
                 <div className="home-section-label">Meetings</div>
                 <NextMeetingPanel data={meetingData} />
               </div>
-              {SHOW_RFP_SCORING ? (
+              {SHOW_RFP_SCORING && !limited ? (
                 <div className="home-main-block">
                   <div className="home-section-label">RFP Scoring</div>
                   <RfpScoringPanel data={scoringData} />
                 </div>
               ) : null}
-              <div className="home-main-block">
-                <div className="home-section-label">Tasks</div>
-                <MyTasksPanel tasks={tasks} myName={myName} loaded={!!taskData} />
-              </div>
+              {!limited ? (
+                <div className="home-main-block">
+                  <div className="home-section-label">Tasks</div>
+                  <MyTasksPanel tasks={tasks} myName={myName} loaded={!!taskData} />
+                </div>
+              ) : null}
             </div>
 
             <div className="home-rail">
               <div className="home-rail-block">
                 <div className="home-section-label">Go to</div>
                 <div className="home-rail-links">
-                  {HUB_ITEMS.map(({ href, title, tone, Icon }) => (
+                  {(limited ? HUB_ITEMS.filter((i) => limitedMayOpen(i.href)) : HUB_ITEMS).map(({ href, title, tone, Icon }) => (
                     <Link href={href} className="hub-card" key={href}>
                       <div className="hub-card-head">
                         <div className={'hub-icon hub-icon-' + tone}>

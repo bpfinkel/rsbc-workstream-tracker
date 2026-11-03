@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { createClient } from '../lib/supabase/client';
 import { forgetCurrentUser, getCurrentEmail } from '../lib/currentUser';
 import Header from '../components/Header';
+import { isLimited } from '../lib/admin';
 import { useModalViewportLock } from '../lib/useViewportLock';
 import { clearCache, loadWithCache } from '../lib/dataCache';
 
@@ -63,11 +64,16 @@ export default function Account() {
     });
   }, []);
 
+  // Limited-access accounts (lib/admin.js) aren't on the roster and can't
+  // read it, so they get no contact card section.
   useEffect(() => {
-    loadWithCache('/api/members', (data) => {
-      setMembers(data.members || []);
-      setMembersLoaded(true);
-    }).catch(() => setMembersLoaded(true));
+    getCurrentEmail().then((email) => {
+      if (isLimited(email)) return;
+      loadWithCache('/api/members', (data) => {
+        setMembers(data.members || []);
+        setMembersLoaded(true);
+      }).catch(() => setMembersLoaded(true));
+    });
   }, []);
 
   const myMember = members.find((m) => m.email && email && m.email.toLowerCase() === email.toLowerCase());
